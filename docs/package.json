@@ -1,0 +1,26 @@
+{
+  "name": "docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview",
+    "photos": "node scripts/demo-photos.mjs"
+  },
+  "dependencies": {
+    "@toneflix/flipbook-react": "workspace:*",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "@toneflix/flipbook": "workspace:*",
+    "@toneflix/flipbook-vue": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^4.7.0",
+    "playwright": "1.63.0",
+    "vitepress": "^1.6.4",
+    "vue": "^3.5.13"
+  }
+}
