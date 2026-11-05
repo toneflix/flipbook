@@ -3,8 +3,8 @@ layout: home
 
 hero:
   name: Toneflix Flipbook
-  text: A photo book you can hold
-  tagline: Pages that peel, fold and fall with real physics. Photos printed into textured paper. For React and React Native.
+  text: Photos deserve a book.
+  tagline: Turn any set of photos into an album that bends, settles and feels like paper. For the web, Vue, React and React Native.
   actions:
     - theme: brand
       text: Get started
@@ -17,14 +17,14 @@ hero:
       link: https://github.com/toneflix/flipbook
 
 features:
-  - title: Real page turns
-    details: Grab any corner or edge and the page folds along the line your finger makes. Let go and it falls open or shut on a spring, carried by the speed of your flick.
+  - title: A page that answers your hand
+    details: Grab any corner or edge and the page folds exactly where your finger bends it. Let go and it drifts open or shut with the weight of your flick, never a canned animation.
   - title: Printed, not pasted
-    details: Photos take on the paper's ink, grain and the curve into the spine. Fourteen frames from a hairline rule to gilt, on ivory, white, kraft or charcoal paper.
-  - title: Made for phones
-    details: Phones read the book sideways, two pages across, like the real thing. Reading one page at a time is one tap away.
-  - title: Web and native
-    details: The same book and the same physics in React and React Native, built on a framework-free core you can drive yourself.
+    details: Photos take on the paper's ink, its grain and the curve into the spine. Fourteen frames from a hairline rule to gilt, twelve layouts from full bleed to loose prints, on ivory, white, kraft or charcoal stock.
+  - title: Opens like a book on phones
+    details: Turn the phone sideways and the album lies open across two pages, the way it would in your hands. One page at a time is a tap away.
+  - title: One book, every screen
+    details: The same book data and the same physics in plain JavaScript, Vue, React and React Native, on a framework-free core you can drive yourself.
 ---
 
 <div class="home-demo vp-raw">

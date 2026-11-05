@@ -1,6 +1,6 @@
 # @toneflix/flipbook
 
-A photo book for any web page, no framework needed. Pages peel, fold and fall with real physics, photos are printed into textured paper, and phones read the book sideways.
+Turn any set of photos into an album that bends, settles and feels like paper, on any web page, with no framework or from a single script tag. A page folds exactly where a finger bends it, photos sink into the paper's grain, and phones open the book sideways across two pages.
 
 ```bash
 npm install @toneflix/flipbook

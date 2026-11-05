@@ -1,6 +1,11 @@
 # Toneflix Flipbook
 
-A photo book you can hold. Pages peel, fold and fall with real physics, photos are printed into textured paper, and phones read the book sideways like the real thing.
+**Photos deserve a book.** Toneflix Flipbook turns any set of photos into an album that bends, settles and feels like paper.
+
+- **A page that answers your hand.** It folds exactly where a finger bends it and drifts open or shut with the weight of the flick.
+- **Printed, not pasted.** Photos take on the paper's ink and grain, with fourteen frames, twelve layouts and four paper stocks.
+- **Opens like a book on phones.** Turn the phone sideways and the album lies open across two pages.
+- **One book, every screen.** The same book data and physics in plain JavaScript, Vue, React and React Native.
 
 **[Documentation, live demo and playground](https://toneflix.github.io/flipbook/)**
 

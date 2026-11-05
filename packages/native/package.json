@@ -1,7 +1,7 @@
 {
   "name": "@toneflix/flipbook-native",
   "version": "0.1.0",
-  "description": "A photo book for React Native: peel-and-fold page turns, printed photos, frames and paper textures.",
+  "description": "Bind photos into a page-turning album in React Native and Expo: fingertip page turns, prints set into paper, frames and layouts.",
   "license": "MIT",
   "repository": {
     "type": "git",
