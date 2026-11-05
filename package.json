@@ -1,7 +1,7 @@
 {
   "name": "toneflix-flipbook",
   "private": true,
-  "description": "Bind photos into a page-turning album for the web, Vue, React and React Native.",
+  "description": "An expressive flipbook for creating personalised and interactive reading and photo viewing experiences.",
   "packageManager": "pnpm@10.28.0",
   "engines": {
     "node": ">=22"

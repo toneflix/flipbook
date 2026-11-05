@@ -3,8 +3,7 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   title: 'Toneflix Flipbook',
-  description:
-    'Bind photos into an album people want to keep turning, with page turns that follow the fingertip and prints set into real paper. For the web, Vue, React and React Native.',
+  description: 'An expressive flipbook for creating personalised and interactive reading and photo viewing experiences.',
   base: process.env.DOCS_BASE ?? '/flipbook/',
   cleanUrls: true,
   head: [

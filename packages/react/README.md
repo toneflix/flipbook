@@ -1,6 +1,6 @@
 # @toneflix/flipbook-react
 
-Turn any set of photos into an album that bends, settles and feels like paper, as a React component that also renders on the server. A page folds exactly where a finger bends it, photos sink into the paper's grain, and phones open the book sideways across two pages.
+An expressive flipbook for creating personalised and interactive reading and photo viewing experiences, for React.
 
 ```bash
 npm install @toneflix/flipbook-react

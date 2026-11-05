@@ -1,7 +1,7 @@
 {
   "name": "@toneflix/flipbook-core",
   "version": "0.1.0",
-  "description": "Page-turn physics and book model behind Toneflix Flipbook. Framework free.",
+  "description": "The framework-free engine behind Toneflix Flipbook, an expressive flipbook for creating personalised and interactive reading and photo viewing experiences.",
   "license": "MIT",
   "type": "module",
   "repository": {

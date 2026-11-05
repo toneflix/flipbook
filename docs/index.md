@@ -3,8 +3,8 @@ layout: home
 
 hero:
   name: Toneflix Flipbook
-  text: Photos deserve a book.
-  tagline: Turn any set of photos into an album that bends, settles and feels like paper. For the web, Vue, React and React Native.
+  text: An expressive flipbook
+  tagline: For creating personalised and interactive reading and photo viewing experiences.
   actions:
     - theme: brand
       text: Get started

@@ -1,6 +1,6 @@
 # Getting started
 
-Toneflix Flipbook binds your photos into an album that behaves like one. A page bends wherever a finger takes it and settles with the weight of the flick. Photos sink into the paper's grain and curve into the spine, and on phones the book lies open sideways, two pages across.
+Toneflix Flipbook is an expressive flipbook for creating personalised and interactive reading and photo viewing experiences: albums, stories, portfolios and keepsakes that people turn through rather than scroll past.
 
 You describe a book as plain data. The same data looks and turns the same in every package, because they all share one framework-free core.
 

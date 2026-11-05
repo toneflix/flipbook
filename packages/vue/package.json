@@ -1,7 +1,7 @@
 {
   "name": "@toneflix/flipbook-vue",
   "version": "0.1.0",
-  "description": "Bind photos into a page-turning album in Vue: fingertip page turns, prints set into paper, frames and layouts.",
+  "description": "An expressive flipbook for creating personalised and interactive reading and photo viewing experiences, for Vue.",
   "license": "MIT",
   "type": "module",
   "repository": {
