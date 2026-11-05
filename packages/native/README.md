@@ -1,6 +1,6 @@
 # @toneflix/flipbook-native
 
-Turn any set of photos into an album that bends, settles and feels like paper, in React Native and Expo, with page turns drawn by native views. A page folds exactly where a finger bends it, photos sink into the paper's grain, and phones open the book sideways across two pages.
+An expressive flipbook for creating personalised and interactive reading and photo viewing experiences, for React Native and Expo.
 
 ```bash
 npx expo install @toneflix/flipbook-native react-native-svg expo-screen-orientation
@@ -21,4 +21,4 @@ export function Book({ book }) {
 }
 ```
 
-See the [documentation](https://toneflix.github.io/flipbook/guide/react-native).
+See the [documentation](https://toneflix.github.io/flipbook/frameworks/react-native).

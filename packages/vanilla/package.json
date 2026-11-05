@@ -1,8 +1,12 @@
 {
   "name": "@toneflix/flipbook",
   "version": "0.1.0",
-  "description": "Bind photos into a page-turning album on any web page: fingertip page turns, prints set into paper, frames and layouts. No framework needed.",
+  "description": "An expressive flipbook for creating personalised and interactive reading and photo viewing experiences, for any web page, no framework needed.",
   "license": "MIT",
+  "homepage": "https://toneflix.github.io/flipbook/frameworks/vanilla",
+  "bugs": {
+    "url": "https://github.com/toneflix/flipbook/issues"
+  },
   "type": "module",
   "repository": {
     "type": "git",
