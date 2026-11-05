@@ -31,3 +31,7 @@ pnpm docs:dev    # docs site at http://localhost:5173/flipbook/
 ```
 
 Built for [Toneflix Photos](https://github.com/toneflix/photos). Released under the [MIT License](LICENSE).
+
+## Releasing
+
+All packages share one version. Publishing a GitHub release tagged `v1.2.3` publishes them to npm, or run the **Publish** workflow by hand with a version. Pre-releases (`1.2.3-beta.1`) go out under the `next` tag. The workflow needs an `NPM_TOKEN` repository secret.
