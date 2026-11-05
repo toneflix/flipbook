@@ -1,0 +1,54 @@
+{
+  "name": "@toneflix/flipbook-native",
+  "version": "0.1.0",
+  "description": "A photo book for React Native: peel-and-fold page turns, printed photos, frames and paper textures.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/toneflix/flipbook",
+    "directory": "packages/native"
+  },
+  "keywords": [
+    "flipbook",
+    "page turn",
+    "photo book",
+    "react-native",
+    "expo"
+  ],
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "react-native": "./src/index.ts",
+  "source": "./src/index.ts",
+  "files": [
+    "lib",
+    "src",
+    "assets"
+  ],
+  "scripts": {
+    "assets": "mkdir -p assets/textures && for f in ../core/textures/*.webp; do cp \"$f\" \"assets/textures/$(basename \"$f\" .webp)@2x.webp\"; done",
+    "build": "pnpm assets && rm -rf lib && tsc -p tsconfig.build.json",
+    "typecheck": "pnpm assets && tsc --noEmit",
+    "prepack": "pnpm build"
+  },
+  "dependencies": {
+    "@toneflix/flipbook-core": "workspace:^"
+  },
+  "peerDependencies": {
+    "expo-screen-orientation": "*",
+    "react": ">=18",
+    "react-native": ">=0.74",
+    "react-native-svg": ">=15"
+  },
+  "peerDependenciesMeta": {
+    "expo-screen-orientation": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "react": "19.3.0",
+    "react-native": "0.88.1",
+    "react-native-svg": "^15.16.1",
+    "typescript": "~6.0.3"
+  }
+}
