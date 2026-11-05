@@ -1,7 +1,7 @@
 {
   "name": "toneflix-flipbook",
   "private": true,
-  "description": "A photo book you can hold: peel-and-fold page turns, printed photos and paper textures for React and React Native.",
+  "description": "A photo book you can hold: peel-and-fold page turns, printed photos and paper textures for the web, Vue, React and React Native.",
   "packageManager": "pnpm@10.28.0",
   "engines": {
     "node": ">=22"
