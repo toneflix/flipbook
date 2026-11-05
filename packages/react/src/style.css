@@ -1,0 +1,840 @@
+/*
+ * Toneflix Flipbook for React. Everything is scoped under `fb-` classes.
+ * Override the custom properties on `.fb-root` (or any ancestor) to restyle.
+ */
+
+.fb-root,
+.fb-page,
+.fb-cover {
+  --fb-serif: 'Fraunces', ui-serif, Georgia, 'Times New Roman', serif;
+  --fb-accent: #00afff;
+  --fb-highlight: #fcd34d;
+}
+
+/* ---------------------------------------------------------------- Viewer */
+
+.fb-root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  overflow: hidden;
+  color: #fff;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.fb-root *,
+.fb-page *,
+.fb-cover * {
+  box-sizing: border-box;
+}
+/* Neutralise host styles for headings and paragraphs, e.g. a docs site's prose. */
+.fb-root :is(h1, h2, p),
+.fb-page :is(h1, h2, p),
+.fb-cover :is(h1, h2, p) {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+}
+.fb-root button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  cursor: pointer;
+}
+
+.fb-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  pointer-events: none;
+  transition: opacity 300ms;
+}
+.fb-bar.is-hidden {
+  opacity: 0;
+}
+.fb-bar:not(.is-hidden) > * {
+  pointer-events: auto;
+}
+.fb-bar-top {
+  top: 0;
+  justify-content: space-between;
+  background: linear-gradient(to bottom, rgb(0 0 0 / 0.6), transparent);
+}
+.fb-bar-bottom {
+  bottom: 0;
+  justify-content: center;
+  padding-top: 24px;
+  padding-bottom: 16px;
+  background: linear-gradient(to top, rgb(0 0 0 / 0.6), transparent);
+}
+.fb-bar-group {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+.fb-heading {
+  min-width: 0;
+  text-align: left;
+}
+.fb-root .fb-title {
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--fb-serif);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fb-root .fb-byline {
+  margin: 0;
+  overflow: hidden;
+  font-size: 12px;
+  color: rgb(255 255 255 / 0.6);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fb-button {
+  display: inline-flex;
+  padding: 10px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.1);
+  transition: background 150ms;
+}
+.fb-button:hover {
+  background: rgb(255 255 255 / 0.2);
+}
+.fb-button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.fb-button svg {
+  width: 20px;
+  height: 20px;
+}
+.fb-pages-button {
+  display: inline-flex;
+  min-width: 160px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.1);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  color: rgb(255 255 255 / 0.9);
+}
+.fb-pages-button:hover {
+  background: rgb(255 255 255 / 0.2);
+}
+.fb-pages-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.fb-stage {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+}
+
+.fb-book {
+  position: relative;
+  transition: transform 900ms cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+.fb-spine {
+  position: absolute;
+  top: 0;
+}
+
+/* Shadow cast by the book on the stage. */
+.fb-book-shadow {
+  position: absolute;
+  bottom: -32px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.6);
+  filter: blur(40px);
+  pointer-events: none;
+  transition: all 700ms;
+}
+
+/* One side of a leaf. Turning pages are clipped and moved from script. */
+.fb-face {
+  position: absolute;
+  top: 0;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  container-type: size;
+}
+
+/* Light or shadow around a turning page's fold, clipped to one region of it. */
+.fb-overlay {
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+}
+.fb-light {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+
+/* Stacked page edges beside an open book. */
+.fb-edge {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  background: repeating-linear-gradient(to right, #efe7d6 0 1px, #d9cfbb 1px 2px);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.35);
+}
+
+/* Thumbnails of every spread. */
+.fb-strip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 80px;
+  z-index: 30;
+  padding: 0 16px;
+}
+.fb-strip-list {
+  display: flex;
+  max-width: 1024px;
+  gap: 16px;
+  margin: 0 auto;
+  padding: 16px;
+  overflow-x: auto;
+  border-radius: 16px;
+  background: rgb(0 0 0 / 0.6);
+  backdrop-filter: blur(12px);
+}
+.fb-strip-stop {
+  display: flex;
+  flex-shrink: 0;
+  height: 96px;
+  padding: 0;
+  border-radius: 2px;
+  background: none;
+  outline: 2px solid transparent;
+  box-shadow: 0 10px 15px rgb(0 0 0 / 0.3);
+  opacity: 0.8;
+  transition:
+    opacity 150ms,
+    outline-color 150ms;
+}
+.fb-strip-stop:hover,
+.fb-strip-stop[aria-current='true'] {
+  opacity: 1;
+}
+.fb-strip-stop[aria-current='true'] {
+  outline-color: var(--fb-highlight);
+}
+.fb-strip-face {
+  position: relative;
+  height: 100%;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  container-type: size;
+}
+@media (min-width: 640px) {
+  .fb-strip-stop {
+    height: 112px;
+  }
+}
+
+/* Shown on phones held upright: books are read sideways. */
+.fb-rotate {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 0 32px;
+  background: rgb(0 0 0 / 0.85);
+  backdrop-filter: blur(4px);
+  text-align: center;
+}
+.fb-rotate-hint {
+  width: 80px;
+  height: 80px;
+  animation: fb-rotate-hint 2.6s ease-in-out infinite;
+}
+.fb-root .fb-rotate-title {
+  margin: 0;
+  font-family: var(--fb-serif);
+  font-size: 24px;
+}
+.fb-root .fb-rotate-body {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: rgb(255 255 255 / 0.7);
+}
+.fb-rotate-primary {
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  color: #2c343e !important;
+}
+.fb-rotate-secondary {
+  background: none;
+  font-size: 14px;
+  color: rgb(255 255 255 / 0.7) !important;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+@keyframes fb-rotate-hint {
+  0%,
+  20% {
+    transform: rotate(0deg);
+  }
+  50%,
+  80% {
+    transform: rotate(-90deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fb-book {
+    transition-duration: 1ms;
+  }
+  .fb-rotate-hint {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------- Pages */
+
+.fb-page,
+.fb-cover {
+  position: absolute;
+  inset: 0;
+}
+.fb-page {
+  display: flex;
+  flex-direction: column;
+}
+.fb-serif {
+  margin: 0;
+  font-family: var(--fb-serif);
+}
+.fb-italic {
+  font-style: italic;
+}
+.fb-center {
+  text-align: center;
+}
+.fb-column {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+}
+.fb-row {
+  display: flex;
+}
+.fb-grow {
+  position: relative;
+  min-height: 0;
+  flex: 1;
+}
+
+.fb-slot {
+  position: relative;
+  overflow: hidden;
+}
+.fb-slot.is-framed {
+  overflow: visible;
+}
+.fb-slot.is-editable {
+  cursor: pointer;
+}
+.fb-slot.is-active {
+  box-shadow: 0 0 0 0.8cqw var(--fb-accent);
+}
+.fb-slot[data-over='true'] {
+  box-shadow: 0 0 0 1cqw var(--fb-highlight);
+}
+.fb-slot-empty {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  opacity: 0.8;
+  font-size: 3.2cqw;
+}
+.fb-slot.is-editable .fb-slot-empty {
+  border: 0.4cqw dashed color-mix(in srgb, currentColor 30%, transparent);
+}
+.fb-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+.fb-caption-over {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 14cqw 7cqw 7cqw;
+  background: linear-gradient(to top, rgb(0 0 0 / 0.7), rgb(0 0 0 / 0.3), transparent);
+  font-family: var(--fb-serif);
+  font-size: 4.2cqw;
+  font-style: italic;
+  line-height: 1.35;
+  color: #fff;
+}
+.fb-page-number {
+  position: absolute;
+  bottom: 0;
+  padding: 0 5cqw 2.6cqw;
+  font-family: var(--fb-serif);
+  font-size: 2.8cqw;
+  opacity: 0.6;
+}
+.fb-photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.fb-placeholder {
+  width: 100%;
+  height: 100%;
+  background: color-mix(in srgb, currentColor 15%, transparent);
+}
+
+/* The front and back covers: cloth with a hinge along the spine. */
+.fb-hinge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 4cqw;
+}
+.fb-hinge.is-left {
+  left: 0;
+  background: linear-gradient(to right, rgb(0 0 0 / 0.35), rgb(0 0 0 / 0.1), transparent);
+}
+.fb-hinge.is-right {
+  right: 0;
+  background: linear-gradient(to left, rgb(0 0 0 / 0.35), rgb(0 0 0 / 0.1), transparent);
+}
+.fb-cover-panel {
+  position: absolute;
+  inset: 6cqw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8cqw 6cqw;
+  border: 1px solid color-mix(in srgb, currentColor 40%, transparent);
+  text-align: center;
+}
+.fb-cover .fb-kicker {
+  margin: 0;
+  font-size: 2.6cqw;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+.fb-cover-photo {
+  position: relative;
+  width: 100%;
+  max-height: 62%;
+  flex: 1;
+  margin-top: 7cqw;
+  overflow: hidden;
+  border: 0.8cqw solid color-mix(in srgb, currentColor 60%, transparent);
+  box-shadow: inset 0 0 2cqw rgb(0 0 0 / 0.4);
+}
+.fb-imprint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 10cqw;
+  text-align: center;
+}
+.fb-ornament {
+  display: block;
+  width: 9cqw;
+  height: 9cqw;
+  margin: 0 auto;
+}
+
+/* ---------------------------------------------------------------- Print */
+
+/* Ink on paper: slightly lifted blacks, warmed toward the paper colour. */
+.fb-print-photo {
+  filter: sepia(0.06) saturate(0.94) contrast(0.94) brightness(1.01);
+}
+.fb-paper-kraft .fb-print-photo {
+  filter: sepia(0.22) saturate(0.88) contrast(0.9) brightness(0.98);
+}
+.fb-paper-charcoal .fb-print-photo {
+  filter: saturate(0.92) contrast(0.94) brightness(0.9);
+}
+
+/*
+ * Photo frames. Everything is ink or a press on the paper: translucent tints, printed rules and a blind
+ * plate mark, so the page grain shows through and nothing stands off the page. Sizes are in em, which
+ * PrintedPhoto sets to 1% of the page width.
+ */
+.fb-print-frame-box {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  container-type: size;
+}
+.fb-print-frame {
+  --frame-pad: 0em;
+  --frame-line: 0px;
+  --frame-edge: calc(var(--frame-pad) + var(--frame-line));
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border: var(--frame-line) solid transparent;
+}
+.fb-print-frame.is-contained {
+  --frame-width: min(100cqw, (100cqh - 2 * var(--frame-edge)) * var(--ratio) + 2 * var(--frame-edge));
+  width: var(--frame-width);
+  height: calc((var(--frame-width) - 2 * var(--frame-edge)) / var(--ratio) + 2 * var(--frame-edge));
+}
+.fb-print-frame-photo {
+  position: absolute;
+  inset: var(--frame-pad);
+  width: calc(100% - 2 * var(--frame-pad));
+  height: calc(100% - 2 * var(--frame-pad));
+  object-fit: cover;
+}
+
+.fb-frame-hairline {
+  --frame-pad: 1.6em;
+  --frame-line: max(1px, 0.22em);
+  border-color: color-mix(in srgb, currentColor 70%, transparent);
+}
+.fb-frame-double {
+  --frame-pad: 1.4em;
+  --frame-line: max(3px, 0.7em);
+  border-style: double;
+  border-color: color-mix(in srgb, currentColor 75%, transparent);
+}
+.fb-frame-mat {
+  --frame-pad: 4.5em;
+  --frame-line: max(1px, 0.7em);
+  border-color: color-mix(in srgb, currentColor 85%, transparent);
+  background: var(--frame-tint);
+}
+.fb-frame-mat .fb-print-frame-photo {
+  outline: max(1px, 0.25em) solid color-mix(in srgb, currentColor 18%, transparent);
+}
+.fb-frame-corners {
+  --frame-pad: 0.7em;
+}
+.fb-print-frame-corner {
+  position: absolute;
+  width: 5.5em;
+  height: 5.5em;
+  background: color-mix(in srgb, currentColor 82%, transparent);
+}
+.fb-print-frame-corner.is-tl {
+  top: 0;
+  left: 0;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+.fb-print-frame-corner.is-tr {
+  top: 0;
+  right: 0;
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+}
+.fb-print-frame-corner.is-bl {
+  bottom: 0;
+  left: 0;
+  clip-path: polygon(0 0, 100% 100%, 0 100%);
+}
+.fb-print-frame-corner.is-br {
+  bottom: 0;
+  right: 0;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+.fb-frame-deckle {
+  --frame-pad: 2.6em;
+  --scallop: 1.6em;
+  background: color-mix(in srgb, currentColor 11%, transparent);
+  mask:
+    linear-gradient(#000 0 0) center / calc(100% - var(--scallop)) calc(100% - var(--scallop)) no-repeat,
+    radial-gradient(closest-side, #000 97%, transparent) top left / var(--scallop) var(--scallop) repeat-x,
+    radial-gradient(closest-side, #000 97%, transparent) bottom left / var(--scallop) var(--scallop) repeat-x,
+    radial-gradient(closest-side, #000 97%, transparent) top left / var(--scallop) var(--scallop) repeat-y,
+    radial-gradient(closest-side, #000 97%, transparent) top right / var(--scallop) var(--scallop) repeat-y;
+}
+.fb-frame-plate {
+  --frame-pad: 3.2em;
+  background: var(--plate-tint);
+  box-shadow:
+    inset 0.2em 0.2em 0 var(--plate-low),
+    inset -0.2em -0.2em 0 var(--plate-high);
+}
+.fb-frame-feather .fb-print-frame-photo {
+  mask:
+    linear-gradient(to right, transparent, #000 8%, #000 92%, transparent),
+    linear-gradient(to bottom, transparent, #000 8%, #000 92%, transparent);
+  mask-composite: intersect;
+}
+
+.fb-frame-oval {
+  --frame-pad: 1.5em;
+  --frame-line: max(1px, 0.22em);
+  border-color: color-mix(in srgb, currentColor 70%, transparent);
+  border-radius: 50%;
+}
+.fb-frame-oval .fb-print-frame-photo {
+  border-radius: 50%;
+}
+.fb-frame-botanical {
+  --frame-pad: 5em;
+}
+.fb-frame-botanical .fb-print-frame-photo {
+  outline: max(1px, 0.18em) solid color-mix(in srgb, currentColor 60%, transparent);
+  outline-offset: 1.6em;
+}
+.fb-print-frame-sprig {
+  position: absolute;
+  width: 26em;
+  height: 10.4em;
+  color: color-mix(in srgb, currentColor 80%, transparent);
+}
+.fb-print-frame-sprig.is-tl {
+  top: -1.8em;
+  left: 1.4em;
+}
+.fb-print-frame-sprig.is-br {
+  right: 1.4em;
+  bottom: -1.8em;
+  transform: rotate(180deg);
+}
+
+/* A patterned band printed around a mat. The mask keeps the pattern to the band. */
+.fb-print-frame-band {
+  position: absolute;
+  inset: 0;
+  padding: var(--band);
+  mix-blend-mode: var(--ink-blend);
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+.fb-frame-watercolor,
+.fb-frame-arcs,
+.fb-frame-gilt,
+.fb-frame-woodgrain {
+  --band: 3em;
+  --frame-pad: calc(var(--band) + 2.6em);
+  background: var(--frame-tint);
+}
+.fb-frame-watercolor .fb-print-frame-band {
+  background: linear-gradient(135deg, #f0a993, #f3d27c 30%, #9fd3bf 62%, #8fb6e2);
+  opacity: 0.7;
+}
+.fb-frame-arcs .fb-print-frame-band {
+  background: radial-gradient(
+      circle at 50% 100%,
+      #e9967a 0 0.3em,
+      #f2c95c 0.3em 0.6em,
+      #79c2a2 0.6em 0.9em,
+      #7ea7d8 0.9em 1.2em,
+      transparent 1.2em
+    )
+    0 0 / 2.4em 1.3em;
+  opacity: 0.8;
+}
+.fb-frame-gilt {
+  --band: 2.6em;
+}
+.fb-frame-gilt .fb-print-frame-band {
+  border: max(1px, 0.35em) solid #b48a32;
+  background:
+    repeating-linear-gradient(45deg, rgb(180 138 50 / 0.75) 0 0.22em, transparent 0.22em 0.8em),
+    repeating-linear-gradient(-45deg, rgb(180 138 50 / 0.75) 0 0.22em, transparent 0.22em 0.8em), rgb(214 178 92 / 0.45);
+}
+.fb-frame-gilt .fb-print-frame-photo,
+.fb-frame-watercolor .fb-print-frame-photo,
+.fb-frame-arcs .fb-print-frame-photo,
+.fb-frame-woodgrain .fb-print-frame-photo {
+  outline: max(1px, 0.2em) solid color-mix(in srgb, currentColor 22%, transparent);
+}
+.fb-frame-woodgrain .fb-print-frame-band {
+  background:
+    repeating-linear-gradient(
+      8deg,
+      rgb(110 70 30 / 0.4) 0 0.12em,
+      transparent 0.12em 0.55em,
+      rgb(110 70 30 / 0.22) 0.55em 0.8em,
+      transparent 0.75em 1.5em
+    ),
+    #cfa874;
+  opacity: 0.85;
+}
+
+/* Lighting over a whole page, photos included: grain, the curve into the spine and a soft sheen where the page rises. */
+.fb-page-surface,
+.fb-page-surface > * {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.fb-page-surface {
+  z-index: 5;
+}
+.fb-page-surface-grain {
+  background: var(--paper-grain) 0 0 / 256px 256px;
+  opacity: 0.45;
+}
+.fb-paper-kraft .fb-page-surface-grain {
+  opacity: 0.35;
+}
+.fb-paper-charcoal .fb-page-surface-grain {
+  opacity: 0.22;
+}
+.fb-page-surface-gutter {
+  background: linear-gradient(
+    var(--to-edge),
+    rgb(20 12 4 / 0.5) 0%,
+    rgb(20 12 4 / 0.3) 1.5%,
+    rgb(20 12 4 / 0.14) 4%,
+    rgb(20 12 4 / 0.05) 8%,
+    transparent 15%,
+    transparent 94%,
+    rgb(20 12 4 / 0.07) 100%
+  );
+}
+.fb-page-surface-sheen {
+  background: linear-gradient(var(--to-edge), transparent 6%, rgb(255 250 240 / 0.07) 13%, rgb(255 250 240 / 0.02) 26%, transparent 40%);
+}
+.fb-page-surface.is-right {
+  --to-edge: to right;
+}
+.fb-page-surface.is-left {
+  --to-edge: to left;
+}
+
+/* Page paper: a texture tile multiplied over the paper colour, plus soft light and vignetting. */
+.fb-paper {
+  --paper-texture: url('./textures/paper-fine.webp');
+  --paper-grain: url('./textures/grain-fine.webp');
+  --frame-tint: rgb(255 255 255 / 0.4);
+  --ink-blend: multiply;
+  --plate-tint: rgb(90 70 40 / 0.03);
+  --plate-low: rgb(90 70 40 / 0.12);
+  --plate-high: rgb(255 255 255 / 0.6);
+  color: #3d372f;
+  background-color: #fdf9f0;
+  background-image:
+    radial-gradient(ellipse at 30% 20%, rgb(255 255 255 / 0.5), transparent 55%),
+    radial-gradient(ellipse at 50% 50%, transparent 60%, rgb(110 90 60 / 0.08)), var(--paper-texture);
+  background-size:
+    100% 100%,
+    100% 100%,
+    256px 256px;
+  background-blend-mode: normal, normal, multiply;
+}
+
+.fb-paper-white {
+  --frame-tint: rgb(150 125 90 / 0.08);
+  background-color: #ffffff;
+}
+.fb-paper-kraft {
+  --paper-texture: url('./textures/paper-kraft.webp');
+  --paper-grain: url('./textures/grain-kraft.webp');
+  --frame-tint: rgb(255 248 235 / 0.35);
+  --plate-low: rgb(80 50 20 / 0.16);
+  --plate-high: rgb(255 245 225 / 0.35);
+  background-color: #d8c4a2;
+  background-image:
+    radial-gradient(ellipse at 30% 20%, rgb(255 255 255 / 0.18), transparent 55%),
+    radial-gradient(ellipse at 50% 50%, transparent 60%, rgb(80 50 20 / 0.12)), var(--paper-texture);
+  color: #3d2f1d;
+}
+.fb-paper-charcoal {
+  --paper-texture: url('./textures/paper-charcoal.webp');
+  --paper-grain: url('./textures/grain-charcoal.webp');
+  --frame-tint: rgb(255 255 255 / 0.07);
+  --ink-blend: screen;
+  --plate-tint: rgb(0 0 0 / 0.08);
+  --plate-low: rgb(0 0 0 / 0.35);
+  --plate-high: rgb(255 255 255 / 0.07);
+  background-color: #2a2826;
+  background-image:
+    radial-gradient(ellipse at 30% 20%, rgb(255 255 255 / 0.05), transparent 55%),
+    radial-gradient(ellipse at 50% 50%, transparent 55%, rgb(0 0 0 / 0.25)), var(--paper-texture);
+  background-blend-mode: normal, normal, soft-light;
+  color: #e8e2d6;
+}
+
+.fb-cover-classic {
+  background-color: #5a1d22;
+  background-image:
+    radial-gradient(circle at 30% 20%, rgb(255 255 255 / 0.08), transparent 45%),
+    repeating-radial-gradient(circle at 50% 50%, rgb(0 0 0 / 0.04) 0 1px, transparent 1px 3px);
+  color: #e2c58f;
+}
+.fb-cover-linen {
+  background-color: #e6dcc6;
+  background-image:
+    repeating-linear-gradient(0deg, rgb(90 70 40 / 0.05) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgb(90 70 40 / 0.05) 0 1px, transparent 1px 3px);
+  color: #3d3226;
+}
+.fb-cover-midnight {
+  background-color: #141b2e;
+  background-image:
+    radial-gradient(circle at 70% 15%, rgb(150 170 255 / 0.12), transparent 45%),
+    repeating-radial-gradient(circle at 50% 50%, rgb(255 255 255 / 0.02) 0 1px, transparent 1px 3px);
+  color: #d5dbe8;
+}
+
+.fb-fill {
+  width: 100%;
+  height: 100%;
+}
+.fb-grow-large {
+  position: relative;
+  min-height: 0;
+  flex: 1.4;
+}
+.fb-slot.fb-bleed {
+  position: absolute;
+  inset: 0;
+}
