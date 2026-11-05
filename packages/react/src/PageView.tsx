@@ -1,5 +1,5 @@
 import type { DragEvent } from 'react'
-import { frameOf, type CoverTheme, type FlipbookBook, type FlipbookPage, type FlipbookPhoto } from '@toneflix/flipbook-core'
+import { photoFrame, type CoverTheme, type FlipbookBook, type FlipbookPage, type FlipbookPhoto } from '@toneflix/flipbook-core'
 import { useBookLook } from './BookLook'
 import { PrintedPhoto } from './PrintedPhoto'
 
@@ -32,7 +32,7 @@ export interface PageViewProps {
 export function PageView({ page, number, side, showImages = true, onSlotClick, onSlotDrop, activeSlot }: PageViewProps) {
   const { layout, caption, photos } = page
   const paper = usePaper()
-  const frame = frameOf(page, useBookLook().frame)
+  const bookFrame = useBookLook().frame
   const editable = !!onSlotClick
 
   const dropHandlers = (index: number) =>
@@ -57,6 +57,7 @@ export function PageView({ page, number, side, showImages = true, onSlotClick, o
 
   const slot = (index: number, className = '', framed = false) => {
     const photo = photos[index] ?? null
+    const frame = photoFrame(page, photo, bookFrame)
     const classes = [
       'fb-slot',
       className,

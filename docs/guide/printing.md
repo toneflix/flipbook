@@ -15,7 +15,7 @@ Photos aren't pasted on top of the page. They take on the paper's ink, sit under
 
 ## Frames
 
-Every frame is printed into the paper: rules, tints, a pressed plate, never a raised border. A page's `frame` wins over the book's, and full-bleed pages are never framed.
+Every frame is printed into the paper: rules, tints, a pressed plate, never a raised border. A photo's `frame` wins over its page's, a page's wins over the book's, and full-bleed pages are never framed. `photoFrame(page, photo, book.frame)` gives the frame a photo ends up with.
 
 | `frame`      |                                                 |
 | ------------ | ----------------------------------------------- |

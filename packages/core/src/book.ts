@@ -76,6 +76,8 @@ export const BANDED_FRAMES: Partial<Record<FrameStyle, number>> = { watercolor: 
 
 export interface FlipbookPhoto {
   src: string
+  /** This photo's frame, or nothing to use the page's. */
+  frame?: FrameStyle | null
   alt?: string | null
   /** Natural size, used to keep the photo's shape on framed pages. */
   width?: number | null
@@ -111,6 +113,15 @@ export interface FlipbookBook {
   colophon?: string | null
   /** The name printed on the back cover. */
   imprint?: string | null
+}
+
+/** The frame a photo is printed with: its own, else its page's, else the book's. Full-bleed pages have none. */
+export function photoFrame(
+  page: Pick<FlipbookPage, 'layout' | 'frame'>,
+  photo: Pick<FlipbookPhoto, 'frame'> | null | undefined,
+  bookFrame: FrameStyle = 'none',
+): FrameStyle {
+  return page.layout === 'single' ? 'none' : (photo?.frame ?? frameOf(page, bookFrame))
 }
 
 /** The frame a page is printed with: its own, else the book's. Full-bleed pages have none. */

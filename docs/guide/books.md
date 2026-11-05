@@ -24,13 +24,14 @@ The viewer adds the cover, a title page, a blank page when a spread needs one, t
 ```ts
 interface FlipbookPhoto {
   src: string
+  frame?: FrameStyle
   alt?: string
   width?: number
   height?: number
 }
 ```
 
-Give `width` and `height` when you know them: framed pages use them to keep the photo's shape.
+Give `width` and `height` when you know them: framed pages use them to keep the photo's shape. A photo's `frame` sets its own frame, so one page can mix an oval cameo with plain prints.
 
 ## Pages
 

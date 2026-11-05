@@ -1,6 +1,6 @@
 import {
   BANDED_FRAMES,
-  frameOf,
+  photoFrame,
   type Face,
   type FlipbookBook,
   type FlipbookPage,
@@ -93,11 +93,11 @@ export function printedPhoto(photo: FlipbookPhoto | null, frame: FrameStyle, fit
 export function renderPage(page: FlipbookPage, look: PageLook, options: PageOptions = {}) {
   const { layout, caption, photos } = page
   const { number, side, showImages = true, onSlotClick, activeSlot } = options
-  const frame = frameOf(page, look.frame)
   const root = h('div', { class: `fb-paper fb-paper-${look.paper} fb-page` })
 
   const slot = (index: number, className = '', framed = false) => {
     const photo = photos[index] ?? null
+    const frame = photoFrame(page, photo, look.frame)
     const el = h('div', {
       class: ['fb-slot', className, framed && 'is-framed', onSlotClick && 'is-editable', onSlotClick && activeSlot === index && 'is-active']
         .filter(Boolean)

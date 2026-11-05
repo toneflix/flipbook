@@ -1,7 +1,7 @@
 import { useId, type ReactNode } from 'react'
 import { Image, Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native'
 import Svg, { Circle, Defs, Path, RadialGradient, Rect, Stop } from 'react-native-svg'
-import { COVER_THEMES, frameOf, type FlipbookBook, type FlipbookPage } from '@toneflix/flipbook-core'
+import { COVER_THEMES, photoFrame, type FlipbookBook, type FlipbookPage } from '@toneflix/flipbook-core'
 import { Gradient } from './Gradient'
 import { ink, useBookLook, usePaper, useSerif, type PaperLook } from './look'
 import { PrintedPhoto } from './PrintedPhoto'
@@ -34,11 +34,12 @@ export function PageView({ page, width, number, side, showImages = true, onSlotP
   const serif = useSerif()
   const unit = width / 100
   const { layout, caption, photos } = page
-  const frame = frameOf(page, useBookLook().frame)
+  const bookFrame = useBookLook().frame
   const captionStyle = [serif.italic, styles.caption, { fontSize: 3.8 * unit, lineHeight: 5.2 * unit, color: ink(look) }]
 
   const slot = (index: number, style: ViewStyle, fit: 'cover' | 'contain' = 'cover') => {
     const photo = photos[index] ?? null
+    const frame = photoFrame(page, photo, bookFrame)
 
     return (
       <Pressable
