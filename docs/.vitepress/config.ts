@@ -69,7 +69,7 @@ export default defineConfig({
     ],
     footer: {
       message: 'Released under the MIT License.',
-      copyright: 'Made for Toneflix Photos',
+      copyright: 'Made for <a href="https://photos.toneflix.net">Toneflix Photos</a>',
     },
     search: { provider: 'local' },
   },
