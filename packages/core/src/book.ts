@@ -6,8 +6,15 @@
  * - grid: up to four photos in a 2×2 grid.
  * - collage: one large photo over two smaller ones.
  * - text: no photos, just the caption set as a page of writing.
+ * - triptych: three tall photos side by side.
+ * - mosaic: one tall photo beside two smaller ones.
+ * - strip: three wide photos stacked like a film strip.
+ * - contact: six photos in a contact sheet.
+ * - scatter: three loose prints dropped on the page at an angle.
+ * - story: one photo over a paragraph of writing.
  */
-export type PageLayout = 'single' | 'framed' | 'pair' | 'grid' | 'collage' | 'text'
+export type PageLayout =
+  'single' | 'framed' | 'pair' | 'grid' | 'collage' | 'text' | 'triptych' | 'mosaic' | 'strip' | 'contact' | 'scatter' | 'story'
 
 export const PAGE_LAYOUTS: Record<PageLayout, { label: string; slots: number }> = {
   single: { label: 'Full bleed', slots: 1 },
@@ -16,6 +23,72 @@ export const PAGE_LAYOUTS: Record<PageLayout, { label: string; slots: number }> 
   grid: { label: 'Grid', slots: 4 },
   collage: { label: 'Collage', slots: 3 },
   text: { label: 'Words', slots: 0 },
+  triptych: { label: 'Triptych', slots: 3 },
+  mosaic: { label: 'Mosaic', slots: 3 },
+  strip: { label: 'Film strip', slots: 3 },
+  contact: { label: 'Contact sheet', slots: 6 },
+  scatter: { label: 'Loose prints', slots: 3 },
+  story: { label: 'Story', slots: 1 },
+}
+
+/**
+ * A box on a page in page units: 1 unit is 1% of the page width, so a 3:4 page is 100 × 133⅓.
+ * `rotate` is in degrees.
+ */
+export interface PageBox {
+  x: number
+  y: number
+  width: number
+  height: number
+  rotate?: number
+}
+
+export interface PlacedLayout {
+  slots: PageBox[]
+  caption: PageBox
+  /** Set the caption as a paragraph of writing instead of a short italic line. */
+  prose?: boolean
+  /** Photos are loose prints that cast a shadow on the page. */
+  loose?: boolean
+}
+
+const column = (x: number, width: number, count: number, top = 7, height = 108, gap = 3) => {
+  const each = (height - gap * (count - 1)) / count
+
+  return Array.from({ length: count }, (_, i) => ({ x, y: top + i * (each + gap), width, height: each }))
+}
+
+const BELOW: PageBox = { x: 7, y: 118, width: 86, height: 10 }
+
+/** Layouts drawn from fixed boxes, which every renderer places the same way. */
+export const PLACED_LAYOUTS: Partial<Record<PageLayout, PlacedLayout>> = {
+  triptych: {
+    slots: [7, 36.67, 66.33].map((x) => ({ x, y: 14, width: 26.67, height: 94 })),
+    caption: { ...BELOW, y: 114 },
+  },
+  mosaic: {
+    slots: [{ x: 7, y: 7, width: 51, height: 108 }, ...column(61, 32, 2)],
+    caption: BELOW,
+  },
+  strip: { slots: column(7, 86, 3), caption: BELOW },
+  contact: {
+    slots: column(7, 41.5, 3).flatMap((left, row) => [left, column(51.5, 41.5, 3)[row]]),
+    caption: BELOW,
+  },
+  scatter: {
+    slots: [
+      { x: 9, y: 9, width: 54, height: 41, rotate: -4 },
+      { x: 38, y: 43, width: 54, height: 41, rotate: 3 },
+      { x: 11, y: 80, width: 48, height: 35, rotate: -2 },
+    ],
+    caption: { ...BELOW, x: 63, y: 92, width: 30, height: 28 },
+    loose: true,
+  },
+  story: {
+    slots: [{ x: 7, y: 7, width: 86, height: 66 }],
+    caption: { x: 9, y: 80, width: 82, height: 45 },
+    prose: true,
+  },
 }
 
 /** The cloth of the cover, which also tints the stage behind the book. */
@@ -76,6 +149,8 @@ export const BANDED_FRAMES: Partial<Record<FrameStyle, number>> = { watercolor: 
 
 export interface FlipbookPhoto {
   src: string
+  /** This photo's frame, or nothing to use the page's. */
+  frame?: FrameStyle | null
   alt?: string | null
   /** Natural size, used to keep the photo's shape on framed pages. */
   width?: number | null
@@ -111,6 +186,15 @@ export interface FlipbookBook {
   colophon?: string | null
   /** The name printed on the back cover. */
   imprint?: string | null
+}
+
+/** The frame a photo is printed with: its own, else its page's, else the book's. Full-bleed pages have none. */
+export function photoFrame(
+  page: Pick<FlipbookPage, 'layout' | 'frame'>,
+  photo: Pick<FlipbookPhoto, 'frame'> | null | undefined,
+  bookFrame: FrameStyle = 'none',
+): FrameStyle {
+  return page.layout === 'single' ? 'none' : (photo?.frame ?? frameOf(page, bookFrame))
 }
 
 /** The frame a page is printed with: its own, else the book's. Full-bleed pages have none. */

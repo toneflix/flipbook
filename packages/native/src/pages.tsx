@@ -1,7 +1,7 @@
 import { useId, type ReactNode } from 'react'
 import { Image, Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native'
 import Svg, { Circle, Defs, Path, RadialGradient, Rect, Stop } from 'react-native-svg'
-import { COVER_THEMES, frameOf, type FlipbookBook, type FlipbookPage } from '@toneflix/flipbook-core'
+import { COVER_THEMES, PLACED_LAYOUTS, photoFrame, type FlipbookBook, type FlipbookPage, type PageBox } from '@toneflix/flipbook-core'
 import { Gradient } from './Gradient'
 import { ink, useBookLook, usePaper, useSerif, type PaperLook } from './look'
 import { PrintedPhoto } from './PrintedPhoto'
@@ -34,11 +34,13 @@ export function PageView({ page, width, number, side, showImages = true, onSlotP
   const serif = useSerif()
   const unit = width / 100
   const { layout, caption, photos } = page
-  const frame = frameOf(page, useBookLook().frame)
+  const bookFrame = useBookLook().frame
+  const placed = PLACED_LAYOUTS[layout]
   const captionStyle = [serif.italic, styles.caption, { fontSize: 3.8 * unit, lineHeight: 5.2 * unit, color: ink(look) }]
 
   const slot = (index: number, style: ViewStyle, fit: 'cover' | 'contain' = 'cover') => {
     const photo = photos[index] ?? null
+    const frame = photoFrame(page, photo, bookFrame)
 
     return (
       <Pressable
@@ -69,6 +71,15 @@ export function PageView({ page, width, number, side, showImages = true, onSlotP
       </Pressable>
     )
   }
+
+  const boxStyle = ({ x, y, width: w, height: h, rotate }: PageBox): ViewStyle => ({
+    position: 'absolute',
+    left: x * unit,
+    top: y * unit,
+    width: w * unit,
+    height: h * unit,
+    transform: rotate ? [{ rotate: `${rotate}deg` }] : undefined,
+  })
 
   const pageCaption = caption ? <Text style={captionStyle}>{caption}</Text> : null
 
@@ -134,6 +145,21 @@ export function PageView({ page, width, number, side, showImages = true, onSlotP
           </View>
           {pageCaption}
         </View>
+      )}
+
+      {placed && (
+        <>
+          {placed.slots.map((box, i) => slot(i, { ...boxStyle(box), ...(placed.loose && styles.loose) }))}
+          {caption ? (
+            <View pointerEvents="none" style={[boxStyle(placed.caption), !placed.prose && styles.centered]}>
+              <Text
+                style={placed.prose ? [serif.upright, { fontSize: 4.4 * unit, lineHeight: 6.8 * unit, color: ink(look) }] : captionStyle}
+              >
+                {caption}
+              </Text>
+            </View>
+          ) : null}
+        </>
       )}
 
       {layout === 'text' && (
@@ -399,6 +425,7 @@ const styles = StyleSheet.create({
   centered: { alignItems: 'center', justifyContent: 'center' },
   center: { textAlign: 'center' },
   clip: { overflow: 'hidden' },
+  loose: { boxShadow: '0 2px 6px rgba(0,0,0,0.25)' },
   empty: { alignItems: 'center', justifyContent: 'center', borderStyle: 'dashed' },
   overlay: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   caption: { textAlign: 'center' },

@@ -194,6 +194,15 @@
     grid-column: 2 / -1;
   }
 }
+.pg-photo-frames {
+  display: flex;
+  grid-column: 2 / -1;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.pg-photo-frames select {
+  font-size: 12px;
+}
 .pg-code {
   padding: 16px 20px;
 }
@@ -219,4 +228,33 @@
 }
 .pg-code-head select {
   width: auto !important;
+}
+
+/* The story under the home demo. */
+.home-story {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 24px 72px;
+}
+.home-story h2 {
+  margin: 0 0 20px;
+  font-family: Fraunces, Georgia, serif;
+  font-size: 32px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+.home-story p {
+  margin: 0 0 16px;
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--vp-c-text-2);
+}
+.home-story a {
+  color: var(--vp-c-brand-1);
+  text-decoration: underline;
+}
+.home-story .home-story-sign {
+  font-family: Fraunces, Georgia, serif;
+  font-style: italic;
+  color: var(--vp-c-text-1);
 }

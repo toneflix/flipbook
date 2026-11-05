@@ -74,6 +74,9 @@ export function Playground() {
   const setPage = (index: number, page: Partial<FlipbookPage>) =>
     setBook((b) => ({ ...b, pages: b.pages.map((p, i) => (i === index ? fitPhotos({ ...p, ...page }, index) : p)) }))
 
+  const setPhotoFrame = (index: number, slot: number, frame: FrameStyle | null) =>
+    setPage(index, { photos: book.pages[index].photos.map((photo, s) => (s === slot && photo ? { ...photo, frame } : photo)) })
+
   const setPageCount = (count: number) =>
     setBook((b) => ({
       ...b,
@@ -228,6 +231,21 @@ export function Playground() {
                   onChange={(e) => setPage(i, { caption: e.target.value || null })}
                   aria-label={`Page ${i + 1} caption`}
                 />
+                {page.layout !== 'single' && page.photos.length > 0 && (
+                  <div className="pg-photo-frames">
+                    {page.photos.map((photo, s) => (
+                      <select
+                        key={s}
+                        value={photo?.frame ?? ''}
+                        onChange={(e) => setPhotoFrame(i, s, (e.target.value || null) as FrameStyle | null)}
+                        aria-label={`Page ${i + 1} photo ${s + 1} frame`}
+                      >
+                        <option value="">Photo {s + 1}: page frame</option>
+                        {options(FRAME_STYLES)}
+                      </select>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>

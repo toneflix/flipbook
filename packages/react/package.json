@@ -1,7 +1,7 @@
 {
   "name": "@toneflix/flipbook-react",
   "version": "0.1.0",
-  "description": "A photo book for React: peel-and-fold page turns, printed photos, frames and paper textures.",
+  "description": "Bind photos into a page-turning album in React: fingertip page turns, prints set into paper, frames and layouts.",
   "license": "MIT",
   "type": "module",
   "repository": {

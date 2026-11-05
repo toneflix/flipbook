@@ -1,4 +1,4 @@
-import type { FlipbookBook, FlipbookPage, FlipbookPhoto, PageLayout } from '@toneflix/flipbook-react'
+import type { FlipbookBook, FlipbookPage, FlipbookPhoto, FrameStyle, PageLayout } from '@toneflix/flipbook-react'
 import manifest from '../../../public/demo/photos.json'
 
 /** The demo photos, painted by `scripts/demo-photos.mjs`. */
@@ -24,7 +24,7 @@ const captions = [
   'The sky lit up at midnight',
 ]
 
-const plan: [PageLayout, number[], string | null][] = [
+const plan: [PageLayout, number[], string | null, FrameStyle?][] = [
   ['single', [0], captions[0]],
   ['framed', [1], captions[1]],
   ['pair', [2, 3], null],
@@ -32,15 +32,27 @@ const plan: [PageLayout, number[], string | null][] = [
   ['text', [], 'We packed light and took the long way, stopping wherever the light was good.'],
   ['collage', [8, 9, 10], null],
   ['framed', [11], captions[11]],
+  ['scatter', [2, 6, 9], 'Prints from the road'],
+  [
+    'story',
+    [3],
+    'The dunes went on for miles. We walked until the wind filled our footprints behind us, then sat at the top and watched the light go.',
+  ],
+  ['mosaic', [10, 4, 7], null, 'hairline'],
   ['single', [5], captions[5]],
 ]
 
 /** Builds pages that cycle through the demo layouts. */
 export function demoPages(count = plan.length): FlipbookPage[] {
   return Array.from({ length: count }, (_, i) => {
-    const [layout, slots, caption] = plan[i % plan.length]
+    const [layout, slots, caption, frame] = plan[i % plan.length]
+    const pick = (s: number, slot: number) => {
+      const photo = photos[(s + Math.floor(i / plan.length)) % photos.length]
 
-    return { layout, photos: slots.map((s) => photos[(s + Math.floor(i / plan.length)) % photos.length]), caption }
+      return frame && slot > 0 ? { ...photo, frame } : photo
+    }
+
+    return { layout, photos: slots.map(pick), caption }
   })
 }
 

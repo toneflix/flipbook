@@ -1,8 +1,8 @@
 # Getting started
 
-Toneflix Flipbook turns a list of photos into a book you can hold. Pages fold along the line your finger makes and fall open or shut on a spring. Photos are printed into textured paper, and phones read the book sideways, two pages across.
+Toneflix Flipbook binds your photos into an album that behaves like one. A page bends wherever a finger takes it and settles with the weight of the flick. Photos sink into the paper's grain and curve into the spine, and on phones the book lies open sideways, two pages across.
 
-It comes in one package per platform, all built on the same framework-free core, so a book looks and turns the same everywhere.
+You describe a book as plain data. The same data looks and turns the same in every package, because they all share one framework-free core.
 
 | Package                     | For                                                      |
 | --------------------------- | -------------------------------------------------------- |

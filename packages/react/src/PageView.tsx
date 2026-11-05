@@ -1,5 +1,13 @@
-import type { DragEvent } from 'react'
-import { frameOf, type CoverTheme, type FlipbookBook, type FlipbookPage, type FlipbookPhoto } from '@toneflix/flipbook-core'
+import type { CSSProperties, DragEvent } from 'react'
+import {
+  PLACED_LAYOUTS,
+  photoFrame,
+  type CoverTheme,
+  type FlipbookBook,
+  type FlipbookPage,
+  type FlipbookPhoto,
+  type PageBox,
+} from '@toneflix/flipbook-core'
 import { useBookLook } from './BookLook'
 import { PrintedPhoto } from './PrintedPhoto'
 
@@ -9,6 +17,14 @@ export const PHOTO_DRAG_TYPE = 'application/x-flipbook-photo'
 type Side = 'left' | 'right'
 
 const usePaper = () => `fb-paper fb-paper-${useBookLook().paper}`
+
+const boxStyle = ({ x, y, width, height, rotate }: PageBox): CSSProperties => ({
+  left: `${x}cqw`,
+  top: `${y}cqw`,
+  width: `${width}cqw`,
+  height: `${height}cqw`,
+  transform: rotate ? `rotate(${rotate}deg)` : undefined,
+})
 
 export interface PageViewProps {
   page: FlipbookPage
@@ -32,7 +48,8 @@ export interface PageViewProps {
 export function PageView({ page, number, side, showImages = true, onSlotClick, onSlotDrop, activeSlot }: PageViewProps) {
   const { layout, caption, photos } = page
   const paper = usePaper()
-  const frame = frameOf(page, useBookLook().frame)
+  const bookFrame = useBookLook().frame
+  const placed = PLACED_LAYOUTS[layout]
   const editable = !!onSlotClick
 
   const dropHandlers = (index: number) =>
@@ -55,8 +72,9 @@ export function PageView({ page, number, side, showImages = true, onSlotClick, o
       },
     }
 
-  const slot = (index: number, className = '', framed = false) => {
+  const slot = (index: number, className = '', framed = false, style?: CSSProperties) => {
     const photo = photos[index] ?? null
+    const frame = photoFrame(page, photo, bookFrame)
     const classes = [
       'fb-slot',
       className,
@@ -72,6 +90,7 @@ export function PageView({ page, number, side, showImages = true, onSlotClick, o
         onClick={editable ? () => onSlotClick(index) : undefined}
         role={editable ? 'button' : undefined}
         aria-label={editable ? `Photo slot ${index + 1}` : undefined}
+        style={style}
         {...dropHandlers(index)}
       >
         {photo ? (
@@ -136,6 +155,17 @@ export function PageView({ page, number, side, showImages = true, onSlotClick, o
           </div>
           {smallCaption}
         </div>
+      )}
+
+      {placed && (
+        <>
+          {placed.slots.map((box, i) => slot(i, `fb-placed ${placed.loose ? 'is-loose' : ''}`, false, boxStyle(box)))}
+          {caption && (
+            <p className={`fb-placed-caption fb-serif ${placed.prose ? 'is-prose' : 'fb-italic'}`} style={boxStyle(placed.caption)}>
+              {caption}
+            </p>
+          )}
+        </>
       )}
 
       {layout === 'text' && (
