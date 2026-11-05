@@ -29,7 +29,8 @@ import {
   type Vec,
 } from '@toneflix/flipbook-core'
 import { BookLookProvider } from './BookLook'
-import { BackCoverView, BlankPageView, ColophonView, CoverView, PageView, TitlePageView } from './PageView'
+import { BackCoverView, CoverView } from './Cover'
+import { BlankPageView, ColophonView, PageView, TitlePageView } from './PageView'
 import { enterLandscape, playPageTurn } from '@toneflix/flipbook'
 import { useElementSize, useOrientation } from './viewport'
 

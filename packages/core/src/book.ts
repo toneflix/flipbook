@@ -92,12 +92,35 @@ export const PLACED_LAYOUTS: Partial<Record<PageLayout, PlacedLayout>> = {
 }
 
 /** The cloth of the cover, which also tints the stage behind the book. */
-export type CoverTheme = 'classic' | 'linen' | 'midnight'
+export type CoverTheme = 'classic' | 'linen' | 'midnight' | 'leather' | 'sage' | 'blush'
 
 export const COVER_THEMES: Record<CoverTheme, { label: string; cloth: string; ink: string; stage: [string, string, string] }> = {
   classic: { label: 'Classic', cloth: '#5a1d22', ink: '#e2c58f', stage: ['#4a2a27', '#22140f', '#0d0807'] },
   linen: { label: 'Linen', cloth: '#e6dcc6', ink: '#3d3226', stage: ['#4a4134', '#241f18', '#0e0c09'] },
   midnight: { label: 'Midnight', cloth: '#141b2e', ink: '#d5dbe8', stage: ['#27324d', '#121827', '#07090f'] },
+  leather: { label: 'Tan leather', cloth: '#6b3f24', ink: '#ecc77d', stage: ['#4d3121', '#24170f', '#0d0805'] },
+  sage: { label: 'Sage', cloth: '#5d6f5c', ink: '#f1e9d2', stage: ['#3c4a3c', '#1c241c', '#0a0d0a'] },
+  blush: { label: 'Blush', cloth: '#d8b4a8', ink: '#5a2f2a', stage: ['#5a4440', '#2a1f1d', '#100b0a'] },
+}
+
+/**
+ * How the front cover is laid out.
+ * - classic: a ruled panel with the title over an inset photo.
+ * - gilt: gold rules and corner flourishes around an oval portrait.
+ * - window: the photo sits in a window pressed into the board, the title stamped below.
+ * - label: a print held by photo corners over a paper title label.
+ * - deco: art deco rays rising to an arched photo.
+ * - image: the cover photo printed across the whole cover, with optional text.
+ */
+export type CoverDesign = 'classic' | 'gilt' | 'window' | 'label' | 'deco' | 'image'
+
+export const COVER_DESIGNS: Record<CoverDesign, { label: string; description: string }> = {
+  classic: { label: 'Classic', description: 'A ruled panel with the title over an inset photo' },
+  gilt: { label: 'Gilt', description: 'Gold rules and corner flourishes around an oval portrait' },
+  window: { label: 'Window', description: 'The photo set into a window pressed into the board' },
+  label: { label: 'Tipped-in print', description: 'A print held by photo corners over a paper title label' },
+  deco: { label: 'Art deco', description: 'Gold rays rising to an arched photo' },
+  image: { label: 'Full image', description: 'Your photo across the whole cover, finished like the board' },
 }
 
 /** The colour of the pages inside a book. */
@@ -176,6 +199,10 @@ export interface FlipbookBook {
   /** The photo set into the front cover. */
   cover?: FlipbookPhoto | null
   theme?: CoverTheme
+  /** How the front cover is laid out. Defaults to `classic`. */
+  coverDesign?: CoverDesign
+  /** Print the title on the cover. Defaults to on, except for the `image` design. */
+  coverText?: boolean
   paper?: PaperColor
   /** How photos are framed on pages that don't choose their own. */
   frame?: FrameStyle
@@ -186,6 +213,11 @@ export interface FlipbookBook {
   colophon?: string | null
   /** The name printed on the back cover. */
   imprint?: string | null
+}
+
+/** Whether the cover carries its title: on by default, off for full-image covers unless asked for. */
+export function coverHasText(book: Pick<FlipbookBook, 'coverDesign' | 'coverText'>): boolean {
+  return book.coverText ?? book.coverDesign !== 'image'
 }
 
 /** The frame a photo is printed with: its own, else its page's, else the book's. Full-bleed pages have none. */

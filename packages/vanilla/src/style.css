@@ -805,6 +805,313 @@
   color: #e8e2d6;
 }
 
+.fb-cover-leather {
+  background-color: #6b3f24;
+  background-image:
+    radial-gradient(ellipse at 30% 18%, rgb(255 220 170 / 0.12), transparent 50%),
+    radial-gradient(ellipse at 50% 55%, transparent 50%, rgb(0 0 0 / 0.35)),
+    repeating-radial-gradient(circle at 20% 30%, rgb(0 0 0 / 0.06) 0 1px, transparent 1px 4px),
+    repeating-radial-gradient(circle at 70% 80%, rgb(255 255 255 / 0.03) 0 1px, transparent 1px 5px);
+  color: #ecc77d;
+}
+.fb-cover-sage {
+  background-color: #5d6f5c;
+  background-image:
+    radial-gradient(circle at 30% 20%, rgb(255 255 255 / 0.08), transparent 45%),
+    repeating-linear-gradient(0deg, rgb(0 0 0 / 0.05) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.03) 0 1px, transparent 1px 3px);
+  color: #f1e9d2;
+}
+.fb-cover-blush {
+  background-color: #d8b4a8;
+  background-image:
+    radial-gradient(circle at 30% 20%, rgb(255 255 255 / 0.18), transparent 45%),
+    repeating-linear-gradient(0deg, rgb(90 40 30 / 0.05) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgb(90 40 30 / 0.04) 0 1px, transparent 1px 3px);
+  color: #5a2f2a;
+}
+
+/* Cover designs. Ink is the cover's text colour; foil and stamping come from layered text shadows. */
+.fb-cover .fb-cover-title {
+  margin-top: 5cqw;
+  font-size: 9cqw;
+  font-weight: 500;
+  line-height: 1.05;
+  text-wrap: balance;
+  text-shadow:
+    0 0.15cqw 0 rgb(0 0 0 / 0.35),
+    0 -0.1cqw 0 rgb(255 255 255 / 0.12);
+}
+.fb-cover .fb-cover-subtitle {
+  margin-top: 5cqw;
+  font-size: 4cqw;
+  opacity: 0.85;
+}
+.fb-cover-finish {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(115deg, rgb(255 255 255 / 0.1), transparent 35%, transparent 70%, rgb(255 255 255 / 0.05)),
+    radial-gradient(ellipse at 50% 50%, transparent 60%, rgb(0 0 0 / 0.22)), url('./textures/grain-fine.webp');
+  background-size: auto, auto, 40cqw;
+  box-shadow:
+    inset 0 0 0 0.3cqw rgb(0 0 0 / 0.12),
+    inset 0 0 2cqw rgb(0 0 0 / 0.18);
+  mix-blend-mode: soft-light;
+}
+
+.fb-cover-stack {
+  position: absolute;
+  inset: 14cqw 12cqw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.fb-cover-frame {
+  position: absolute;
+  inset: 5cqw;
+  border: 0.35cqw solid currentColor;
+  outline: 0.15cqw solid currentColor;
+  outline-offset: -1.6cqw;
+  opacity: 0.85;
+}
+.fb-fleuron {
+  position: absolute;
+  width: 18cqw;
+  height: 18cqw;
+}
+.fb-fleuron.is-tl {
+  top: 3.6cqw;
+  left: 3.6cqw;
+}
+.fb-fleuron.is-tr {
+  top: 3.6cqw;
+  right: 3.6cqw;
+  transform: scaleX(-1);
+}
+.fb-fleuron.is-bl {
+  bottom: 3.6cqw;
+  left: 3.6cqw;
+  transform: scaleY(-1);
+}
+.fb-fleuron.is-br {
+  right: 3.6cqw;
+  bottom: 3.6cqw;
+  transform: scale(-1);
+}
+.fb-design-gilt .fb-cover-frame,
+.fb-design-gilt .fb-fleuron {
+  filter: drop-shadow(0 0.15cqw 0 rgb(0 0 0 / 0.3));
+}
+.fb-cover-photo.is-oval {
+  width: 52cqw;
+  height: 64cqw;
+  max-height: none;
+  flex: none;
+  margin: 6cqw 0 0;
+  border-radius: 50%;
+  border: 0.6cqw solid currentColor;
+  box-shadow:
+    0 0 0 1.2cqw color-mix(in srgb, currentColor 0%, transparent),
+    0 0 0 1.5cqw color-mix(in srgb, currentColor 55%, transparent),
+    inset 0 0 3cqw rgb(0 0 0 / 0.45);
+}
+.fb-design-gilt .fb-cover-title {
+  font-size: 8cqw;
+}
+
+.fb-cover-window {
+  position: absolute;
+  top: 10cqw;
+  left: 12cqw;
+  right: 12cqw;
+  height: 76cqw;
+  overflow: hidden;
+  border-radius: 0.6cqw;
+  box-shadow:
+    inset 0 0.8cqw 1.6cqw rgb(0 0 0 / 0.55),
+    inset 0 -0.3cqw 0.6cqw rgb(255 255 255 / 0.12),
+    0 0.3cqw 0 rgb(255 255 255 / 0.1),
+    0 -0.3cqw 0 rgb(0 0 0 / 0.25);
+}
+.fb-cover-window::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  box-shadow:
+    inset 0 1.2cqw 2cqw rgb(0 0 0 / 0.5),
+    inset 0.6cqw 0 1.2cqw rgb(0 0 0 / 0.25),
+    inset -0.6cqw 0 1.2cqw rgb(0 0 0 / 0.2);
+  pointer-events: none;
+}
+.fb-cover-window.is-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 0.12);
+}
+.fb-cover-window.is-empty .fb-ornament {
+  width: 16cqw;
+  height: 16cqw;
+  opacity: 0.6;
+}
+.fb-cover-stamp {
+  position: absolute;
+  left: 10cqw;
+  right: 10cqw;
+  top: 92cqw;
+  bottom: 8cqw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.fb-cover-stamp .fb-cover-title {
+  margin-top: 1.5cqw;
+  font-size: 7.5cqw;
+  text-shadow:
+    0 -0.15cqw 0 rgb(0 0 0 / 0.45),
+    0 0.15cqw 0 rgb(255 255 255 / 0.18);
+}
+.fb-cover-stamp .fb-cover-subtitle {
+  margin-top: 2cqw;
+  font-size: 3.4cqw;
+}
+
+.fb-cover-print {
+  position: absolute;
+  top: 11cqw;
+  left: 16cqw;
+  right: 16cqw;
+  height: 62cqw;
+  padding: 2.4cqw;
+  background: #f7f2e7;
+  box-shadow:
+    0 0.6cqw 1.2cqw rgb(0 0 0 / 0.35),
+    0 2cqw 4cqw -1.6cqw rgb(0 0 0 / 0.45);
+  transform: rotate(-2.5deg);
+  color: #2b2520;
+  font-size: 1.1cqw;
+}
+.fb-cover-print-photo {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.fb-cover-print .fb-print-frame-corner {
+  z-index: 1;
+  background: #1f1b18;
+}
+.fb-cover-label {
+  position: absolute;
+  left: 18cqw;
+  right: 18cqw;
+  top: 84cqw;
+  padding: 4cqw 4cqw 4.5cqw;
+  background: #f4eddc url('./textures/paper-fine.webp');
+  background-size: 50cqw;
+  box-shadow:
+    0 0.3cqw 0.8cqw rgb(0 0 0 / 0.3),
+    inset 0 0 0 1.2cqw #f4eddc,
+    inset 0 0 0 1.4cqw rgb(60 45 30 / 0.5);
+  color: #3a2f25;
+  text-align: center;
+}
+.fb-cover-label.is-alone {
+  top: 44cqw;
+}
+.fb-cover-label .fb-cover-title {
+  margin-top: 1cqw;
+  font-size: 6.4cqw;
+  text-shadow: none;
+}
+.fb-cover-label .fb-kicker {
+  font-size: 2.2cqw;
+}
+.fb-cover-label .fb-cover-subtitle {
+  margin-top: 1.5cqw;
+  font-size: 3cqw;
+}
+
+.fb-cover-rays {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.9;
+}
+.fb-cover-stack.is-deco {
+  inset: 17cqw 14cqw 10cqw;
+  justify-content: flex-start;
+}
+.fb-cover-photo.is-arch {
+  width: 56cqw;
+  height: 62cqw;
+  max-height: none;
+  flex: none;
+  margin: 4cqw 0 0;
+  border: 0.5cqw solid currentColor;
+  border-radius: 28cqw 28cqw 0 0;
+  box-shadow:
+    0 0 0 1.4cqw transparent,
+    0 0 0 1.7cqw color-mix(in srgb, currentColor 60%, transparent),
+    inset 0 0 3cqw rgb(0 0 0 / 0.45);
+}
+.fb-design-deco .fb-cover-title {
+  margin-top: 7cqw;
+  font-size: 6.6cqw;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.fb-design-deco .fb-cover-subtitle {
+  margin-top: 2.5cqw;
+  font-size: 3.4cqw;
+}
+
+.fb-cover-art {
+  position: absolute;
+  inset: 0;
+}
+.fb-cover-tint {
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  mix-blend-mode: soft-light;
+  opacity: 0.18;
+}
+.fb-design-image .fb-cover-finish {
+  mix-blend-mode: overlay;
+  opacity: 0.9;
+}
+.fb-cover-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 26cqw 10cqw 10cqw;
+  background: linear-gradient(to top, rgb(0 0 0 / 0.65), rgb(0 0 0 / 0.25) 55%, transparent);
+  color: #fff;
+  text-align: center;
+}
+.fb-cover-caption.is-plain {
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: none;
+  color: inherit;
+}
+.fb-cover-caption .fb-cover-title {
+  margin-top: 2cqw;
+  text-shadow: 0 0.3cqw 1.2cqw rgb(0 0 0 / 0.5);
+}
+
 .fb-cover-classic {
   background-color: #5a1d22;
   background-image:

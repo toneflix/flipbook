@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState, type ReactNode } from 'react'
 import {
+  COVER_DESIGNS,
   COVER_THEMES,
   DEFAULT_GRIP,
   DEFAULT_PHYSICS,
@@ -7,6 +8,8 @@ import {
   Flipbook,
   PAGE_LAYOUTS,
   PAPER_COLORS,
+  coverHasText,
+  type CoverDesign,
   type CoverTheme,
   type FlipbookBook,
   type FlipbookHandle,
@@ -160,6 +163,17 @@ export function Playground() {
             </Field>
             <Field label="Year">
               <input value={book.year ?? ''} onChange={(e) => setBookField('year', e.target.value || null)} />
+            </Field>
+            <Field label="Cover design" hint={COVER_DESIGNS[book.coverDesign ?? 'classic'].description}>
+              <select value={book.coverDesign ?? 'classic'} onChange={(e) => setBookField('coverDesign', e.target.value as CoverDesign)}>
+                {options(COVER_DESIGNS)}
+              </select>
+            </Field>
+            <Field label="Cover text">
+              <label className="pg-check">
+                <input type="checkbox" checked={coverHasText(book)} onChange={(e) => setBookField('coverText', e.target.checked)} />
+                Print the title on the cover
+              </label>
             </Field>
             <Field label="Cover cloth">
               <select value={book.theme} onChange={(e) => setBookField('theme', e.target.value as CoverTheme)}>

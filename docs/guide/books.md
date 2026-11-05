@@ -2,20 +2,22 @@
 
 ## The book
 
-| Field      | Type                                          |                                                                                   |
-| ---------- | --------------------------------------------- | --------------------------------------------------------------------------------- |
-| `title`    | `string`                                      | On the cover, the title page and the viewer's top bar.                            |
-| `subtitle` | `string`                                      | Under the title on the title page, and on the cover when there is no cover photo. |
-| `author`   | `string`                                      | Credited on the title page and in the top bar.                                    |
-| `year`     | `number \| string`                            | Printed beside the author on the title page.                                      |
-| `cover`    | `FlipbookPhoto`                               | The photo set into the front cover.                                               |
-| `theme`    | `'classic' \| 'linen' \| 'midnight'`          | The cover cloth, which also tints the stage.                                      |
-| `paper`    | `'ivory' \| 'white' \| 'kraft' \| 'charcoal'` | The paper of every page.                                                          |
-| `frame`    | `FrameStyle`                                  | How photos are framed on pages that don't choose their own.                       |
-| `pages`    | `FlipbookPage[]`                              | The pages, in order.                                                              |
-| `kicker`   | `string`                                      | Small capitals above the title on the cover, like "A photo book".                 |
-| `colophon` | `string`                                      | A closing line inside the back cover.                                             |
-| `imprint`  | `string`                                      | The name printed on the back cover.                                               |
+| Field         | Type                                          |                                                                                       |
+| ------------- | --------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `title`       | `string`                                      | On the cover, the title page and the viewer's top bar.                                |
+| `subtitle`    | `string`                                      | Under the title on the title page, and on the cover when there is no cover photo.     |
+| `author`      | `string`                                      | Credited on the title page and in the top bar.                                        |
+| `year`        | `number \| string`                            | Printed beside the author on the title page.                                          |
+| `cover`       | `FlipbookPhoto`                               | The photo set into the front cover.                                                   |
+| `theme`       | `CoverTheme`                                  | The cover cloth, which also tints the stage.                                          |
+| `coverDesign` | `CoverDesign`                                 | How the front cover is made, `classic` by default. See [covers](./printing#covers).   |
+| `coverText`   | `boolean`                                     | Whether the title is printed on the cover. On by default, off for the `image` design. |
+| `paper`       | `'ivory' \| 'white' \| 'kraft' \| 'charcoal'` | The paper of every page.                                                              |
+| `frame`       | `FrameStyle`                                  | How photos are framed on pages that don't choose their own.                           |
+| `pages`       | `FlipbookPage[]`                              | The pages, in order.                                                                  |
+| `kicker`      | `string`                                      | Small capitals above the title on the cover, like "A photo book".                     |
+| `colophon`    | `string`                                      | A closing line inside the back cover.                                                 |
+| `imprint`     | `string`                                      | The name printed on the back cover.                                                   |
 
 The viewer adds the cover, a title page, a blank page when a spread needs one, the colophon and the back cover around your pages.
 

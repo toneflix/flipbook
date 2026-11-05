@@ -41,7 +41,8 @@ import {
 import { FoldLayout, type Band, type Role } from './geometry'
 import { Gradient } from './Gradient'
 import { BookLookProvider, type BookFonts } from './look'
-import { BackCoverView, BlankPageView, ColophonView, CoverView, PAGE_RATIO, PageView, TitlePageView } from './pages'
+import { BackCoverView, CoverView } from './Cover'
+import { BlankPageView, ColophonView, PAGE_RATIO, PageView, TitlePageView } from './pages'
 import { lockLandscape } from './orientation'
 
 export interface FlipbookPlace {

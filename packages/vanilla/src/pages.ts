@@ -11,6 +11,7 @@ import {
   type PaperColor,
 } from '@toneflix/flipbook-core'
 import { h, svg } from './dom'
+import { renderBackCover, renderCover } from './cover'
 
 export type Side = 'left' | 'right'
 
@@ -41,14 +42,14 @@ const sprig = (corner: string) =>
     ).join('')}
   </svg>`)
 
-const ornament = () =>
+export const ornament = () =>
   svg(`<svg viewBox="0 0 40 40" class="fb-ornament" aria-hidden="true">
     <circle cx="20" cy="20" r="18.5" fill="none" stroke="currentColor" stroke-opacity="0.6"/>
     <path d="M20 9 L 27 20 L 20 31 L 13 20 Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
     <circle cx="20" cy="20" r="2.2" fill="currentColor"/>
   </svg>`)
 
-const image = (photo: FlipbookPhoto, className: string) =>
+export const image = (photo: FlipbookPhoto, className: string) =>
   h('img', {
     src: photo.src,
     alt: photo.alt ?? '',
@@ -202,42 +203,6 @@ export function renderPage(page: FlipbookPage, look: PageLook, options: PageOpti
   root.append(surface(side))
 
   return root
-}
-
-/** The front cover: cloth with the title and an inset photo. */
-export function renderCover(book: FlipbookBook, showImages = true) {
-  const panel = h(
-    'div',
-    { class: 'fb-cover-panel' },
-    book.kicker && h('p', { class: 'fb-kicker' }, book.kicker),
-    h(
-      'h1',
-      { class: 'fb-serif', style: { marginTop: '5cqw', fontSize: '9cqw', fontWeight: '500', lineHeight: '1.05', textWrap: 'balance' } },
-      book.title,
-    ),
-  )
-
-  if (book.cover) {
-    panel.append(h('div', { class: 'fb-cover-photo' }, showImages ? image(book.cover, 'fb-photo') : h('div', { class: 'fb-placeholder' })))
-  } else if (book.subtitle) {
-    panel.append(serif(book.subtitle, { marginTop: '6cqw', fontSize: '4cqw', opacity: '0.8' }, true, false))
-  }
-
-  return h('div', { class: `fb-cover fb-cover-${book.theme ?? 'classic'}` }, h('div', { class: 'fb-hinge is-left' }), panel)
-}
-
-export function renderBackCover(book: FlipbookBook) {
-  return h(
-    'div',
-    { class: `fb-cover fb-cover-${book.theme ?? 'classic'}` },
-    h('div', { class: 'fb-hinge is-right' }),
-    h(
-      'div',
-      { class: 'fb-imprint' },
-      ornament(),
-      book.imprint && h('p', { class: 'fb-kicker', style: { marginTop: '2cqw', fontSize: '2.4cqw', opacity: '0.6' } }, book.imprint),
-    ),
-  )
 }
 
 export function renderTitlePage(book: FlipbookBook, look: PageLook, side?: Side) {
