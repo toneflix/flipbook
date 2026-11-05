@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { PAGE_LAYOUTS, PLACED_LAYOUTS, photoFrame, type PageLayout } from '../src'
+import { PAGE_LAYOUTS, PLACED_LAYOUTS, coverHasText, photoFrame, type PageLayout } from '../src'
 
 describe('placed layouts', () => {
   const placed = Object.entries(PLACED_LAYOUTS) as [PageLayout, NonNullable<(typeof PLACED_LAYOUTS)[PageLayout]>][]
@@ -28,5 +28,18 @@ describe('photoFrame', () => {
 
   it('never frames full-bleed pages', () => {
     expect(photoFrame({ layout: 'single' }, { frame: 'oval' }, 'gilt')).toBe('none')
+  })
+})
+
+describe('coverHasText', () => {
+  it('prints the title unless the cover is a full image', () => {
+    expect(coverHasText({})).toBe(true)
+    expect(coverHasText({ coverDesign: 'gilt' })).toBe(true)
+    expect(coverHasText({ coverDesign: 'image' })).toBe(false)
+  })
+
+  it('follows coverText when given', () => {
+    expect(coverHasText({ coverDesign: 'image', coverText: true })).toBe(true)
+    expect(coverHasText({ coverDesign: 'classic', coverText: false })).toBe(false)
   })
 })

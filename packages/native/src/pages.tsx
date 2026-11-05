@@ -1,7 +1,7 @@
 import { useId, type ReactNode } from 'react'
 import { Image, Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native'
 import Svg, { Circle, Defs, Path, RadialGradient, Rect, Stop } from 'react-native-svg'
-import { COVER_THEMES, PLACED_LAYOUTS, photoFrame, type FlipbookBook, type FlipbookPage, type PageBox } from '@toneflix/flipbook-core'
+import { PLACED_LAYOUTS, photoFrame, type FlipbookBook, type FlipbookPage, type PageBox } from '@toneflix/flipbook-core'
 import { Gradient } from './Gradient'
 import { ink, useBookLook, usePaper, useSerif, type PaperLook } from './look'
 import { PrintedPhoto } from './PrintedPhoto'
@@ -250,99 +250,6 @@ function Gutter({ side }: { side: Side }) {
   )
 }
 
-/** Cloth for a cover, with the hinge shadow along the spine. */
-function Cloth({ book, width, hinge, children }: { book: Pick<FlipbookBook, 'theme'>; width: number; hinge: Side; children?: ReactNode }) {
-  const theme = COVER_THEMES[book.theme ?? 'classic']
-  const id = useId().replace(/[^a-zA-Z0-9]/g, '')
-  const shade = (a: number, offset: number) => ({ offset, color: '#000', opacity: a })
-
-  return (
-    <View style={[styles.page, { width, height: width / PAGE_RATIO, backgroundColor: theme.cloth }]}>
-      <Svg style={StyleSheet.absoluteFill} width="100%" height="100%" pointerEvents="none">
-        <Defs>
-          <RadialGradient id={`sheen${id}`} cx="30%" cy="20%" rx="45%" ry="45%">
-            <Stop offset="0" stopColor="#fff" stopOpacity={0.08} />
-            <Stop offset="1" stopColor="#fff" stopOpacity={0} />
-          </RadialGradient>
-        </Defs>
-        <Rect width="100%" height="100%" fill={`url(#sheen${id})`} />
-      </Svg>
-      <Gradient
-        to={hinge === 'left' ? 'right' : 'left'}
-        style={[styles.hinge, hinge === 'left' ? styles.left : styles.right, { width: width * 0.04 }]}
-        stops={[shade(0.35, 0), shade(0.1, 0.5), shade(0, 1)]}
-      />
-      {children}
-    </View>
-  )
-}
-
-export interface CoverViewProps {
-  book: Pick<FlipbookBook, 'title' | 'subtitle' | 'theme' | 'cover' | 'kicker'>
-  width: number
-  showImages?: boolean
-}
-
-/** The front cover: cloth with the title and an inset photo. */
-export function CoverView({ book, width, showImages = true }: CoverViewProps) {
-  const color = COVER_THEMES[book.theme ?? 'classic'].ink
-  const serif = useSerif()
-  const unit = width / 100
-
-  return (
-    <Cloth book={book} width={width} hinge="left">
-      <View style={[styles.panel, { margin: 6 * unit, paddingVertical: 8 * unit, paddingHorizontal: 6 * unit, borderColor: color }]}>
-        {book.kicker ? (
-          <Text style={[styles.kicker, { fontSize: 2.6 * unit, letterSpacing: 0.78 * unit, color }]}>{book.kicker.toUpperCase()}</Text>
-        ) : null}
-        <Text
-          style={[
-            serif.upright,
-            styles.center,
-            { marginTop: 5 * unit, fontSize: 9 * unit, lineHeight: 9.5 * unit, fontWeight: '500', color },
-          ]}
-        >
-          {book.title}
-        </Text>
-        {book.cover ? (
-          <View style={[styles.coverPhoto, { marginTop: 7 * unit, borderWidth: 0.8 * unit, borderColor: color }]}>
-            {showImages && (
-              <Image
-                source={{ uri: book.cover.src }}
-                style={StyleSheet.absoluteFill}
-                resizeMode="cover"
-                aria-label={book.cover.alt ?? undefined}
-              />
-            )}
-          </View>
-        ) : book.subtitle ? (
-          <Text style={[serif.italic, styles.center, { marginTop: 6 * unit, fontSize: 4 * unit, color, opacity: 0.8 }]}>
-            {book.subtitle}
-          </Text>
-        ) : null}
-      </View>
-    </Cloth>
-  )
-}
-
-export function BackCoverView({ book, width }: { book: Pick<FlipbookBook, 'theme' | 'imprint'>; width: number }) {
-  const color = COVER_THEMES[book.theme ?? 'classic'].ink
-  const unit = width / 100
-
-  return (
-    <Cloth book={book} width={width} hinge="right">
-      <View style={[styles.imprint, { bottom: 10 * unit }]}>
-        <Ornament size={9 * unit} color={color} />
-        {book.imprint ? (
-          <Text style={[styles.kicker, { marginTop: 2 * unit, fontSize: 2.4 * unit, letterSpacing: 0.72 * unit, color, opacity: 0.6 }]}>
-            {book.imprint.toUpperCase()}
-          </Text>
-        ) : null}
-      </View>
-    </Cloth>
-  )
-}
-
 /** Inside the front cover: a title page. */
 export function TitlePageView({
   book,
@@ -406,7 +313,7 @@ export function BlankPageView({ width, side }: { width: number; side?: Side }) {
   return <Paper width={width} side={side} />
 }
 
-function Ornament({ size, color }: { size: number; color: string }) {
+export function Ornament({ size, color }: { size: number; color: string }) {
   return (
     <Svg viewBox="0 0 40 40" width={size} height={size}>
       <Circle cx="20" cy="20" r="18.5" fill="none" stroke={color} strokeOpacity={0.6} />

@@ -1,13 +1,5 @@
 import type { CSSProperties, DragEvent } from 'react'
-import {
-  PLACED_LAYOUTS,
-  photoFrame,
-  type CoverTheme,
-  type FlipbookBook,
-  type FlipbookPage,
-  type FlipbookPhoto,
-  type PageBox,
-} from '@toneflix/flipbook-core'
+import { PLACED_LAYOUTS, photoFrame, type FlipbookBook, type FlipbookPage, type FlipbookPhoto, type PageBox } from '@toneflix/flipbook-core'
 import { useBookLook } from './BookLook'
 import { PrintedPhoto } from './PrintedPhoto'
 
@@ -212,55 +204,6 @@ export function PhotoImage({ photo, show = true }: PhotoImageProps) {
   )
 }
 
-const coverClass = (theme?: CoverTheme) => `fb-cover fb-cover-${theme ?? 'classic'}`
-
-export interface CoverViewProps {
-  book: Pick<FlipbookBook, 'title' | 'subtitle' | 'theme' | 'cover' | 'kicker'>
-  showImages?: boolean
-}
-
-/** The front cover: cloth with the title and an inset photo. */
-export function CoverView({ book, showImages = true }: CoverViewProps) {
-  return (
-    <div className={coverClass(book.theme)}>
-      <div className="fb-hinge is-left" />
-      <div className="fb-cover-panel">
-        {book.kicker && <p className="fb-kicker">{book.kicker}</p>}
-        <h1 className="fb-serif" style={{ marginTop: '5cqw', fontSize: '9cqw', fontWeight: 500, lineHeight: 1.05, textWrap: 'balance' }}>
-          {book.title}
-        </h1>
-        {book.cover && (
-          <div className="fb-cover-photo">
-            <PhotoImage photo={book.cover} show={showImages} />
-          </div>
-        )}
-        {!book.cover && book.subtitle && (
-          <p className="fb-serif fb-italic" style={{ marginTop: '6cqw', fontSize: '4cqw', opacity: 0.8 }}>
-            {book.subtitle}
-          </p>
-        )}
-      </div>
-    </div>
-  )
-}
-
-/** The back cover, with the imprint if the book has one. */
-export function BackCoverView({ book }: { book: Pick<FlipbookBook, 'theme' | 'imprint'> }) {
-  return (
-    <div className={coverClass(book.theme)}>
-      <div className="fb-hinge is-right" />
-      <div className="fb-imprint">
-        <Ornament />
-        {book.imprint && (
-          <p className="fb-kicker" style={{ marginTop: '2cqw', fontSize: '2.4cqw', opacity: 0.6 }}>
-            {book.imprint}
-          </p>
-        )}
-      </div>
-    </div>
-  )
-}
-
 /** Inside the front cover: a title page. */
 export function TitlePageView({ book, side }: { book: Pick<FlipbookBook, 'title' | 'subtitle' | 'author' | 'year'>; side?: Side }) {
   const credit = [book.author, book.year].filter(Boolean).join(' · ')
@@ -323,7 +266,7 @@ function PageSurface({ side }: { side?: Side }) {
 }
 
 /** A small printer's ornament for the title page and back cover. */
-function Ornament() {
+export function Ornament() {
   return (
     <svg viewBox="0 0 40 40" className="fb-ornament" aria-hidden>
       <circle cx="20" cy="20" r="18.5" fill="none" stroke="currentColor" strokeOpacity="0.6" />
