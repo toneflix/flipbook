@@ -1,0 +1,62 @@
+[
+  {
+    "name": "dawn-lake",
+    "width": 1200,
+    "height": 800
+  },
+  {
+    "name": "snow-peaks",
+    "width": 900,
+    "height": 1200
+  },
+  {
+    "name": "night-moon",
+    "width": 1200,
+    "height": 800
+  },
+  {
+    "name": "desert-dunes",
+    "width": 1200,
+    "height": 800
+  },
+  {
+    "name": "green-valley",
+    "width": 1200,
+    "height": 800
+  },
+  {
+    "name": "ocean-sunset",
+    "width": 900,
+    "height": 1200
+  },
+  {
+    "name": "misty-forest",
+    "width": 1200,
+    "height": 800
+  },
+  {
+    "name": "autumn-hills",
+    "width": 1200,
+    "height": 800
+  },
+  {
+    "name": "blue-hour",
+    "width": 1200,
+    "height": 800
+  },
+  {
+    "name": "meadow-morning",
+    "width": 900,
+    "height": 1200
+  },
+  {
+    "name": "canyon",
+    "width": 1200,
+    "height": 800
+  },
+  {
+    "name": "aurora",
+    "width": 1200,
+    "height": 800
+  }
+]

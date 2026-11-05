@@ -5,3 +5,4 @@ lib
 docs/.vitepress/cache
 docs/.vitepress/dist
 .DS_Store
+packages/native/assets
