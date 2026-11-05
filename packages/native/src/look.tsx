@@ -20,7 +20,7 @@ export interface PaperLook {
   vignette: string
 }
 
-const fine = { texture: require('../assets/textures/paper-fine@2x.webp'), grain: require('../assets/textures/grain-fine@2x.webp') }
+const fine = { texture: require('../assets/textures/paper-fine.webp'), grain: require('../assets/textures/grain-fine.webp') }
 
 const ivory: PaperLook = {
   background: '#fdf9f0',
@@ -46,9 +46,9 @@ export const PAPERS: Record<PaperColor, PaperLook> = {
     plateTint: 'rgba(90,70,40,0.03)',
     plateLow: 'rgba(80,50,20,0.16)',
     plateHigh: 'rgba(255,245,225,0.35)',
-    texture: require('../assets/textures/paper-kraft@2x.webp'),
+    texture: require('../assets/textures/paper-kraft.webp'),
     textureOpacity: 0.45,
-    grain: require('../assets/textures/grain-kraft@2x.webp'),
+    grain: require('../assets/textures/grain-kraft.webp'),
     grainOpacity: 0.35,
     light: 'rgba(255,255,255,0.18)',
     vignette: 'rgba(80,50,20,0.12)',
@@ -60,9 +60,9 @@ export const PAPERS: Record<PaperColor, PaperLook> = {
     plateTint: 'rgba(0,0,0,0.08)',
     plateLow: 'rgba(0,0,0,0.35)',
     plateHigh: 'rgba(255,255,255,0.07)',
-    texture: require('../assets/textures/paper-charcoal@2x.webp'),
+    texture: require('../assets/textures/paper-charcoal.webp'),
     textureOpacity: 0.25,
-    grain: require('../assets/textures/grain-charcoal@2x.webp'),
+    grain: require('../assets/textures/grain-charcoal.webp'),
     grainOpacity: 0.22,
     light: 'rgba(255,255,255,0.05)',
     vignette: 'rgba(0,0,0,0.25)',
