@@ -44,16 +44,24 @@ interface FlipbookPage {
 }
 ```
 
-| Layout    | Photos |                                                          |
-| --------- | ------ | -------------------------------------------------------- |
-| `single`  | 1      | Printed to the edges, the caption over it. Never framed. |
-| `framed`  | 1      | On a mat with its caption below, keeping its shape.      |
-| `pair`    | 2      | Stacked.                                                 |
-| `grid`    | 4      | Two by two.                                              |
-| `collage` | 3      | One large over two small.                                |
-| `text`    | 0      | The caption set as a page of writing.                    |
+| Layout     | Photos |                                                                 |
+| ---------- | ------ | --------------------------------------------------------------- |
+| `single`   | 1      | Printed to the edges, the caption over it. Never framed.        |
+| `framed`   | 1      | On a mat with its caption below, keeping its shape.             |
+| `pair`     | 2      | Stacked.                                                        |
+| `grid`     | 4      | Two by two.                                                     |
+| `collage`  | 3      | One large over two small.                                       |
+| `text`     | 0      | The caption set as a page of writing.                           |
+| `triptych` | 3      | Three tall photos side by side.                                 |
+| `mosaic`   | 3      | One tall photo beside two smaller ones.                         |
+| `strip`    | 3      | Three wide photos stacked like a film strip.                    |
+| `contact`  | 6      | A contact sheet, two across and three down.                     |
+| `scatter`  | 3      | Loose prints dropped on the page at an angle, casting a shadow. |
+| `story`    | 1      | A photo over a paragraph of writing from the caption.           |
 
 `PAGE_LAYOUTS` lists them with their labels and slot counts, handy for a layout picker. A `null` photo leaves its slot blank.
+
+The newer layouts are drawn from fixed boxes in `PLACED_LAYOUTS`, measured in page units (1 unit is 1% of the page width, so a page is 100 × 133⅓). Every renderer places them the same way, and a custom renderer can read them too.
 
 ## Opening at a page
 

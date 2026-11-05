@@ -1,11 +1,13 @@
 import {
   BANDED_FRAMES,
+  PLACED_LAYOUTS,
   photoFrame,
   type Face,
   type FlipbookBook,
   type FlipbookPage,
   type FlipbookPhoto,
   type FrameStyle,
+  type PageBox,
   type PaperColor,
 } from '@toneflix/flipbook-core'
 import { h, svg } from './dom'
@@ -57,6 +59,14 @@ const image = (photo: FlipbookPhoto, className: string) =>
     class: className,
   })
 
+const boxStyle = ({ x, y, width, height, rotate }: PageBox): Record<string, string> => ({
+  left: `${x}cqw`,
+  top: `${y}cqw`,
+  width: `${width}cqw`,
+  height: `${height}cqw`,
+  ...(rotate ? { transform: `rotate(${rotate}deg)` } : {}),
+})
+
 /** Light and grain over a whole page, with the curve into the spine on a spread. */
 const surface = (side?: Side) =>
   h(
@@ -93,9 +103,10 @@ export function printedPhoto(photo: FlipbookPhoto | null, frame: FrameStyle, fit
 export function renderPage(page: FlipbookPage, look: PageLook, options: PageOptions = {}) {
   const { layout, caption, photos } = page
   const { number, side, showImages = true, onSlotClick, activeSlot } = options
+  const placed = PLACED_LAYOUTS[layout]
   const root = h('div', { class: `fb-paper fb-paper-${look.paper} fb-page` })
 
-  const slot = (index: number, className = '', framed = false) => {
+  const slot = (index: number, className = '', framed = false, style?: Record<string, string>) => {
     const photo = photos[index] ?? null
     const frame = photoFrame(page, photo, look.frame)
     const el = h('div', {
@@ -104,6 +115,7 @@ export function renderPage(page: FlipbookPage, look: PageLook, options: PageOpti
         .join(' '),
       role: onSlotClick ? 'button' : undefined,
       'aria-label': onSlotClick ? `Photo slot ${index + 1}` : undefined,
+      style,
     })
 
     if (onSlotClick) el.addEventListener('click', () => onSlotClick(index))
@@ -171,6 +183,18 @@ export function renderPage(page: FlipbookPage, look: PageLook, options: PageOpti
         ),
       )
       break
+  }
+
+  if (placed) {
+    root.append(...placed.slots.map((box, i) => slot(i, `fb-placed ${placed.loose ? 'is-loose' : ''}`, false, boxStyle(box))))
+    if (caption)
+      root.append(
+        h(
+          'p',
+          { class: `fb-placed-caption fb-serif ${placed.prose ? 'is-prose' : 'fb-italic'}`, style: boxStyle(placed.caption) },
+          caption,
+        ),
+      )
   }
 
   if (number !== undefined && layout !== 'single')
