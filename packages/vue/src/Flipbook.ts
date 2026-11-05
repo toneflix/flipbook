@@ -23,6 +23,7 @@ export const flipbookProps = {
   soundButton: flag,
   sound: flag,
   fullscreenButton: flag,
+  fullscreenPrompt: flag,
   landscape: flag,
   keyboard: { type: [Boolean, String] as PropType<boolean | 'global'>, default: undefined },
   stiffCovers: flag,

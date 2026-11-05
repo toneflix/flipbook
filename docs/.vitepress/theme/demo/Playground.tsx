@@ -26,7 +26,16 @@ import { demoBook, demoPages, photos } from './book'
 type ViewerOptions = Required<
   Pick<
     FlipbookProps,
-    'layout' | 'controls' | 'thumbnails' | 'soundButton' | 'sound' | 'fullscreenButton' | 'landscape' | 'stiffCovers' | 'shading'
+    | 'layout'
+    | 'controls'
+    | 'thumbnails'
+    | 'soundButton'
+    | 'sound'
+    | 'fullscreenButton'
+    | 'fullscreenPrompt'
+    | 'landscape'
+    | 'stiffCovers'
+    | 'shading'
   >
 > & { autoHide: number; keyboard: 'focus' | 'global' | 'off'; startPage: number; background: string }
 
@@ -38,6 +47,7 @@ const DEFAULT_VIEWER: ViewerOptions = {
   soundButton: true,
   sound: false,
   fullscreenButton: true,
+  fullscreenPrompt: false,
   landscape: true,
   keyboard: 'focus',
   stiffCovers: true,
@@ -95,6 +105,7 @@ export function Playground() {
     soundButton: viewer.soundButton,
     sound: viewer.sound,
     fullscreenButton: viewer.fullscreenButton,
+    fullscreenPrompt: viewer.fullscreenPrompt,
     landscape: viewer.landscape,
     keyboard: viewer.keyboard === 'off' ? false : viewer.keyboard === 'global' ? 'global' : true,
     stiffCovers: viewer.stiffCovers,
@@ -320,6 +331,7 @@ export function Playground() {
                 ['soundButton', 'Sound button'],
                 ['sound', 'Sound on'],
                 ['fullscreenButton', 'Full screen button'],
+                ['fullscreenPrompt', 'Ask to open full screen'],
                 ['landscape', 'Ask phones to turn sideways'],
                 ['stiffCovers', 'Stiff covers'],
               ] as const
@@ -457,6 +469,7 @@ function snippet(framework: Framework, viewer: ViewerOptions, physics: TurnPhysi
     if (!viewer[key]) options.push([key, 'false'])
   }
   if (viewer.sound && framework !== 'native') options.push(['sound', 'true'])
+  if (viewer.fullscreenPrompt && framework !== 'native') options.push(['fullscreenPrompt', 'true'])
 
   const physicsChanged = changed(physics, DEFAULT_PHYSICS)
   const gripChanged = changed(grip, DEFAULT_GRIP)
