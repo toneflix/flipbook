@@ -60,6 +60,9 @@ importers:
 
   packages/react:
     dependencies:
+      '@toneflix/flipbook':
+        specifier: workspace:^
+        version: link:../vanilla
       '@toneflix/flipbook-core':
         specifier: workspace:^
         version: link:../core
@@ -76,6 +79,19 @@ importers:
       react-dom:
         specifier: ^19.3.1
         version: 19.3.1(react@19.3.1)
+      tsdown:
+        specifier: ^0.23.5
+        version: 0.23.5(typescript@6.0.3)
+      typescript:
+        specifier: ~6.0.3
+        version: 6.0.3
+
+  packages/vanilla:
+    dependencies:
+      '@toneflix/flipbook-core':
+        specifier: workspace:^
+        version: link:../core
+    devDependencies:
       tsdown:
         specifier: ^0.23.5
         version: 0.23.5(typescript@6.0.3)

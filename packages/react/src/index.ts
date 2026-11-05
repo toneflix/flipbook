@@ -1,5 +1,5 @@
 export * from '@toneflix/flipbook-core'
-export { Flipbook, DEFAULT_LABELS, type FlipbookProps, type FlipbookHandle, type FlipbookLabels, type FlipbookPlace } from './Flipbook'
+export { Flipbook, type FlipbookProps, type FlipbookHandle, type FlipbookPlace } from './Flipbook'
 export {
   PageView,
   CoverView,
@@ -15,5 +15,5 @@ export {
 } from './PageView'
 export { PrintedPhoto, type PrintedPhotoProps } from './PrintedPhoto'
 export { BookLookProvider, useBookLook, type BookLook } from './BookLook'
-export { playPageTurn } from './sound'
-export { enterLandscape, useOrientation, useElementSize } from './viewport'
+export { playPageTurn, enterLandscape } from '@toneflix/flipbook'
+export { useOrientation, useElementSize } from './viewport'

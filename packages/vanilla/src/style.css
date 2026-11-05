@@ -1,5 +1,5 @@
 /*
- * Toneflix Flipbook for React. Everything is scoped under `fb-` classes.
+ * Toneflix Flipbook styles, shared by the vanilla, React and Vue packages. Everything is scoped under `fb-` classes.
  * Override the custom properties on `.fb-root` (or any ancestor) to restyle.
  */
 
@@ -7,6 +7,7 @@
 .fb-page,
 .fb-cover {
   --fb-serif: 'Fraunces', ui-serif, Georgia, 'Times New Roman', serif;
+  --fb-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --fb-accent: #00afff;
   --fb-highlight: #fcd34d;
 }
@@ -21,6 +22,7 @@
   height: 100%;
   min-height: 240px;
   overflow: hidden;
+  font-family: var(--fb-sans);
   color: #fff;
   user-select: none;
   -webkit-user-select: none;

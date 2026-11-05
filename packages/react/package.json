@@ -40,11 +40,12 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsdown && cp src/style.css dist/ && mkdir -p dist/textures && cp ../core/textures/*.webp dist/textures/",
+    "build": "tsdown && cp ../vanilla/src/style.css dist/ && mkdir -p dist/textures && cp ../core/textures/*.webp dist/textures/",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@toneflix/flipbook-core": "workspace:^"
+    "@toneflix/flipbook-core": "workspace:^",
+    "@toneflix/flipbook": "workspace:^"
   },
   "peerDependencies": {
     "react": ">=18",
