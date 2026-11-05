@@ -21,4 +21,4 @@ export function Book({ book }) {
 }
 ```
 
-See the [documentation](https://toneflix.github.io/flipbook/guide/react-native).
+See the [documentation](https://toneflix.github.io/flipbook/frameworks/react-native).
