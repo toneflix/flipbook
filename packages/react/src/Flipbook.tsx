@@ -60,6 +60,8 @@ export interface FlipbookProps {
   /** Play a paper sound on each turn. The sound button remembers the reader's choice. */
   sound?: boolean
   fullscreenButton?: boolean
+  /** Cover the book with a "Tap to open full screen" prompt until the first tap or key press, where pages can go full screen. */
+  fullscreenPrompt?: boolean
   /** Ask phones held upright to turn sideways, offering single pages instead. */
   landscape?: boolean
   /** Arrow, page and Home/End keys: while the book has focus (true) or anywhere on the page ('global'). */
@@ -124,6 +126,7 @@ export const Flipbook = forwardRef<FlipbookHandle, FlipbookProps>(function Flipb
     thumbnails = true,
     soundButton = true,
     fullscreenButton = true,
+    fullscreenPrompt = false,
     landscape = true,
     keyboard = true,
     stiffCovers = true,
@@ -148,6 +151,8 @@ export const Flipbook = forwardRef<FlipbookHandle, FlipbookProps>(function Flipb
 
   const [portraitChoice, setPortraitChoice] = useState<'ask' | 'single'>('ask')
   const [fullscreen, setFullscreen] = useState(false)
+  const [canFullscreen, setCanFullscreen] = useState(false)
+  const [promptAnswered, setPromptAnswered] = useState(false)
   const [chromeVisible, setChromeVisible] = useState(true)
   const [showPages, setShowPages] = useState(false)
   const [sound, setSound] = useState(!!props.sound)
@@ -156,6 +161,7 @@ export const Flipbook = forwardRef<FlipbookHandle, FlipbookProps>(function Flipb
   // Phones held upright are asked to rotate: landscape is the default way to read, single pages the fallback.
   const mobilePortrait = landscape && ready && touch && portrait
   const showRotatePrompt = mobilePortrait && portraitChoice === 'ask' && layoutMode !== 'single'
+  const showFullscreenPrompt = fullscreenPrompt && canFullscreen && !promptAnswered && !fullscreen && !showRotatePrompt
   const narrow = stage.width > 0 && stage.width / stage.height < 0.95
   const spread = layoutMode === 'auto' ? !(mobilePortrait && portraitChoice === 'single') && !narrow : layoutMode === 'spread'
 
@@ -343,8 +349,14 @@ export const Flipbook = forwardRef<FlipbookHandle, FlipbookProps>(function Flipb
   const chromeShown = chromeVisible || showPages
 
   useEffect(() => {
-    const onChange = () => setFullscreen(document.fullscreenElement === rootRef.current)
+    const onChange = () => {
+      const entered = document.fullscreenElement === rootRef.current
 
+      setFullscreen(entered)
+      if (entered) setPromptAnswered(true)
+    }
+
+    setCanFullscreen(document.fullscreenEnabled)
     document.addEventListener('fullscreenchange', onChange)
     return () => document.removeEventListener('fullscreenchange', onChange)
   }, [])
@@ -353,6 +365,26 @@ export const Flipbook = forwardRef<FlipbookHandle, FlipbookProps>(function Flipb
     if (document.fullscreenElement) await document.exitFullscreen().catch(() => {})
     else if (rootRef.current) await enterLandscape(rootRef.current)
   }
+
+  /** Closes the full screen prompt, going full screen unless the reader declined. */
+  const answerPrompt = useCallback((open: boolean) => {
+    setPromptAnswered(true)
+    if (open && rootRef.current) enterLandscape(rootRef.current)
+  }, [])
+
+  useEffect(() => {
+    if (fullscreenPrompt) setPromptAnswered(false)
+  }, [fullscreenPrompt])
+
+  // Browsers only go full screen after a gesture, so any key press answers the prompt too.
+  useEffect(() => {
+    if (!showFullscreenPrompt) return
+
+    const onKeyDown = (e: globalThis.KeyboardEvent) => answerPrompt(e.key !== 'Escape')
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [showFullscreenPrompt, answerPrompt])
 
   const onKey = useCallback(
     (e: { key: string; target: EventTarget | null; preventDefault(): void }) => {
@@ -658,6 +690,15 @@ export const Flipbook = forwardRef<FlipbookHandle, FlipbookProps>(function Flipb
             }}
             onStayPortrait={() => setPortraitChoice('single')}
           />
+        )}
+
+        {showFullscreenPrompt && (
+          <button type="button" className="fb-fullscreen-prompt" onClick={() => answerPrompt(true)}>
+            <span className="fb-fullscreen-prompt-label">
+              <IconExpand />
+              {labels.fullscreenPrompt}
+            </span>
+          </button>
         )}
       </div>
     </BookLookProvider>

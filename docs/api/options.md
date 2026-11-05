@@ -13,6 +13,7 @@ The React, Vue and vanilla viewers share these options. React and Vue take them 
 | `sound`            | `boolean`                        | `false`    | Play a paper sound on each turn.                                         |
 | `soundButton`      | `boolean`                        | `true`     | Let readers switch the sound. Their choice is remembered.                |
 | `fullscreenButton` | `boolean`                        | `true`     |                                                                          |
+| `fullscreenPrompt` | `boolean`                        | `false`    | Ask to [open full screen](/guide/landscape#full-screen-on-open).         |
 | `landscape`        | `boolean`                        | `true`     | Ask phones held upright to [turn sideways](/guide/landscape).            |
 | `keyboard`         | `boolean \| 'global'`            | `true`     | Arrow, Page and Home/End keys while the book has focus, or anywhere.     |
 | `stiffCovers`      | `boolean`                        | `true`     | Covers swing like board instead of curling.                              |
@@ -28,7 +29,7 @@ React also takes `topLeft`, `topRight` (extra top-bar content), `className` and 
 
 ## React Native
 
-The native viewer takes the same options except `sound`, `soundButton`, `fullscreenButton` and `keyboard`, and adds:
+The native viewer takes the same options except `sound`, `soundButton`, `fullscreenButton`, `fullscreenPrompt` and `keyboard`, and adds:
 
 | Prop                  | Type                              |                                             |
 | --------------------- | --------------------------------- | ------------------------------------------- |

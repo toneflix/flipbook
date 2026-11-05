@@ -44,6 +44,8 @@ export interface FlipbookOptions {
   /** Play a paper sound on each turn. The sound button remembers the reader's choice. */
   sound?: boolean
   fullscreenButton?: boolean
+  /** Cover the book with a "Tap to open full screen" prompt until the first tap or key press, where pages can go full screen. */
+  fullscreenPrompt?: boolean
   /** Ask phones held upright to turn sideways, offering single pages instead. */
   landscape?: boolean
   /** Arrow, page and Home/End keys: while the book has focus (true) or anywhere on the page ('global'). */
@@ -73,6 +75,7 @@ const DEFAULTS: Omit<Settings, 'book'> = {
   soundButton: true,
   sound: false,
   fullscreenButton: true,
+  fullscreenPrompt: false,
   landscape: true,
   keyboard: true,
   stiffCovers: true,
@@ -129,6 +132,7 @@ export class Flipbook {
   private size = { width: 0, height: 0 }
   private orientation = { portrait: false, touch: false }
   private portraitChoice: 'ask' | 'single' = 'ask'
+  private promptAnswered = false
   private soundOn: boolean
   private stripOpen = false
   private chromeVisible = true
@@ -159,6 +163,7 @@ export class Flipbook {
     next: HTMLButtonElement
     strip: HTMLDivElement | null
     rotate: HTMLDivElement | null
+    prompt: HTMLButtonElement | null
   }
 
   constructor(
@@ -198,6 +203,7 @@ export class Flipbook {
   update(options: Partial<FlipbookOptions>) {
     const bookChanged = options.book && options.book !== this.settings.book
 
+    if (options.fullscreenPrompt && !this.settings.fullscreenPrompt) this.promptAnswered = false
     this.settings = Flipbook.resolve({ ...this.settings, ...options, labels: { ...this.settings.labels, ...options.labels } })
     if (options.sound !== undefined) this.soundOn = options.sound
     if (options.physics) this.reader.engine.physics = { ...this.reader.engine.physics, ...options.physics }
@@ -326,6 +332,7 @@ export class Flipbook {
       next,
       strip: null,
       rotate: null,
+      prompt: null,
     }
   }
 
@@ -374,8 +381,12 @@ export class Flipbook {
     on(stage, 'pointerleave', () => this.reader.leave())
     on(stage, 'pointercancel', () => this.reader.cancel())
     on(this.root, 'keydown', (e) => this.settings.keyboard === true && this.onKey(e))
+    on(window, 'keydown', (e) => this.els.prompt && this.answerPrompt(e.key !== 'Escape'))
     on(window, 'keydown', (e) => this.settings.keyboard === 'global' && this.onKey(e))
-    on(document, 'fullscreenchange', () => this.render())
+    on(document, 'fullscreenchange', () => {
+      if (document.fullscreenElement === this.root) this.promptAnswered = true
+      this.render()
+    })
   }
 
   private onKey(e: KeyboardEvent) {
@@ -432,6 +443,14 @@ export class Flipbook {
   private async toggleFullscreen() {
     if (document.fullscreenElement) await document.exitFullscreen().catch(() => {})
     else await enterLandscape(this.root)
+  }
+
+  /** Closes the full screen prompt, going full screen unless the reader declined. */
+  private answerPrompt(open: boolean) {
+    this.promptAnswered = true
+    this.render()
+
+    if (open) enterLandscape(this.root)
   }
 
   private clearFaces() {
@@ -512,6 +531,7 @@ export class Flipbook {
     this.renderChrome()
     this.renderStrip()
     this.renderRotatePrompt()
+    this.renderFullscreenPrompt()
 
     const place = `${spread}:${flipped}`
 
@@ -783,6 +803,28 @@ export class Flipbook {
       secondary,
     )
     this.root.append(this.els.rotate)
+  }
+
+  /** Browsers only go full screen after a gesture, so the first tap or key press does it. The rotate prompt offers it already. */
+  private renderFullscreenPrompt() {
+    const { fullscreenPrompt, labels } = this.settings
+    const show = fullscreenPrompt && !this.promptAnswered && document.fullscreenEnabled && !document.fullscreenElement && !this.els.rotate
+
+    if (!show) {
+      this.els.prompt?.remove()
+      this.els.prompt = null
+      return
+    }
+    if (this.els.prompt) return
+
+    const prompt = h('button', { type: 'button', class: 'fb-fullscreen-prompt' })
+    const pill = h('span', { class: 'fb-fullscreen-prompt-label' }, labels.fullscreenPrompt)
+
+    pill.prepend(svg(ICONS.expand))
+    prompt.append(pill)
+    prompt.addEventListener('click', () => this.answerPrompt(true))
+    this.els.prompt = prompt
+    this.root.append(prompt)
   }
 
   private static stageTint(book: FlipbookBook) {

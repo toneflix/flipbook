@@ -6,6 +6,7 @@ export interface FlipbookLabels {
   soundOff: string
   fullscreen: string
   exitFullscreen: string
+  fullscreenPrompt: string
   byline: (author: string) => string
   rotateTitle: string
   rotateBody: string
@@ -20,6 +21,7 @@ export const DEFAULT_LABELS: FlipbookLabels = {
   soundOff: 'Turn page sound off',
   fullscreen: 'Full screen',
   exitFullscreen: 'Exit full screen',
+  fullscreenPrompt: 'Tap to open full screen',
   byline: (author) => `by ${author}`,
   rotateTitle: 'Turn your phone sideways',
   rotateBody: 'Photo books open across two pages, just like the real thing.',
