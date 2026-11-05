@@ -1,0 +1,58 @@
+{
+  "name": "@toneflix/flipbook-vue",
+  "version": "0.1.0",
+  "description": "A photo book for Vue: peel-and-fold page turns, printed photos, frames and paper textures.",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/toneflix/flipbook",
+    "directory": "packages/vue"
+  },
+  "keywords": [
+    "flipbook",
+    "page turn",
+    "photo book",
+    "vue",
+    "page curl"
+  ],
+  "sideEffects": [
+    "*.css"
+  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./style.css": "./dist/style.css",
+    "./textures/*": "./dist/textures/*"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown && cp ../vanilla/src/style.css dist/ && mkdir -p dist/textures && cp ../core/textures/*.webp dist/textures/",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@toneflix/flipbook": "workspace:^",
+    "@toneflix/flipbook-core": "workspace:^"
+  },
+  "peerDependencies": {
+    "vue": ">=3.3"
+  },
+  "devDependencies": {
+    "tsdown": "^0.23.5",
+    "typescript": "~6.0.3",
+    "vue": "^3.5.13"
+  }
+}
