@@ -64,6 +64,7 @@ export const demoBook: FlipbookBook = {
   kicker: 'A photo book',
   cover: photos[0],
   theme: 'classic',
+  coverDesign: 'gilt',
   paper: 'ivory',
   frame: 'mat',
   colophon: 'Preserved for all time.',
