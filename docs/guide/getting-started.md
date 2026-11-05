@@ -4,13 +4,13 @@ Toneflix Flipbook is an expressive flipbook for creating personalised and intera
 
 You describe a book as plain data. The same data looks and turns the same in every package, because they all share one framework-free core.
 
-| Package                     | For                                                      |
-| --------------------------- | -------------------------------------------------------- |
-| `@toneflix/flipbook`        | Any web page, no framework. Also a `<script>` tag build. |
-| `@toneflix/flipbook-react`  | React 18 and up, including server rendering.             |
-| `@toneflix/flipbook-vue`    | Vue 3.                                                   |
-| `@toneflix/flipbook-native` | React Native and Expo.                                   |
-| `@toneflix/flipbook-core`   | The physics and book model, to build your own renderer.  |
+| Package                                                                                | For                                                      |
+| -------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| [`@toneflix/flipbook`](https://www.npmjs.com/package/@toneflix/flipbook)               | Any web page, no framework. Also a `<script>` tag build. |
+| [`@toneflix/flipbook-react`](https://www.npmjs.com/package/@toneflix/flipbook-react)   | React 18 and up, including server rendering.             |
+| [`@toneflix/flipbook-vue`](https://www.npmjs.com/package/@toneflix/flipbook-vue)       | Vue 3.                                                   |
+| [`@toneflix/flipbook-native`](https://www.npmjs.com/package/@toneflix/flipbook-native) | React Native and Expo.                                   |
+| [`@toneflix/flipbook-core`](https://www.npmjs.com/package/@toneflix/flipbook-core)     | The physics and book model, to build your own renderer.  |
 
 Every package re-exports the core, so you only install one.
 

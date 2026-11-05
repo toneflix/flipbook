@@ -12,13 +12,13 @@ So this library makes them once. Pass it a list of photos and you get the fold, 
 
 **[Documentation, live demo and playground](https://toneflix.github.io/flipbook/)**
 
-| Package                                        | For                                                               |
-| ---------------------------------------------- | ----------------------------------------------------------------- |
-| [`@toneflix/flipbook`](packages/vanilla)       | Any web page, no framework. Also a `<script>` tag build.          |
-| [`@toneflix/flipbook-react`](packages/react)   | React 18 and up, including server rendering.                      |
-| [`@toneflix/flipbook-vue`](packages/vue)       | Vue 3.                                                            |
-| [`@toneflix/flipbook-native`](packages/native) | React Native and Expo.                                            |
-| [`@toneflix/flipbook-core`](packages/core)     | Page-turn physics and the book model, to build your own renderer. |
+| Package                                        | For                                                               | npm                                                                                                                           |
+| ---------------------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| [`@toneflix/flipbook`](packages/vanilla)       | Any web page, no framework. Also a `<script>` tag build.          | [![npm](https://img.shields.io/npm/v/@toneflix/flipbook.svg)](https://www.npmjs.com/package/@toneflix/flipbook)               |
+| [`@toneflix/flipbook-react`](packages/react)   | React 18 and up, including server rendering.                      | [![npm](https://img.shields.io/npm/v/@toneflix/flipbook-react.svg)](https://www.npmjs.com/package/@toneflix/flipbook-react)   |
+| [`@toneflix/flipbook-vue`](packages/vue)       | Vue 3.                                                            | [![npm](https://img.shields.io/npm/v/@toneflix/flipbook-vue.svg)](https://www.npmjs.com/package/@toneflix/flipbook-vue)       |
+| [`@toneflix/flipbook-native`](packages/native) | React Native and Expo.                                            | [![npm](https://img.shields.io/npm/v/@toneflix/flipbook-native.svg)](https://www.npmjs.com/package/@toneflix/flipbook-native) |
+| [`@toneflix/flipbook-core`](packages/core)     | Page-turn physics and the book model, to build your own renderer. | [![npm](https://img.shields.io/npm/v/@toneflix/flipbook-core.svg)](https://www.npmjs.com/package/@toneflix/flipbook-core)     |
 
 ```tsx
 import { Flipbook } from '@toneflix/flipbook-react'

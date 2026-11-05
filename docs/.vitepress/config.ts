@@ -22,6 +22,16 @@ export default defineConfig({
       { text: 'Guide', link: '/guide/getting-started' },
       { text: 'Playground', link: '/playground' },
       { text: 'API', link: '/api/options' },
+      {
+        text: 'npm',
+        items: [
+          { text: '@toneflix/flipbook', link: 'https://www.npmjs.com/package/@toneflix/flipbook' },
+          { text: '@toneflix/flipbook-react', link: 'https://www.npmjs.com/package/@toneflix/flipbook-react' },
+          { text: '@toneflix/flipbook-vue', link: 'https://www.npmjs.com/package/@toneflix/flipbook-vue' },
+          { text: '@toneflix/flipbook-native', link: 'https://www.npmjs.com/package/@toneflix/flipbook-native' },
+          { text: '@toneflix/flipbook-core', link: 'https://www.npmjs.com/package/@toneflix/flipbook-core' },
+        ],
+      },
     ],
     sidebar: [
       {
@@ -53,7 +63,10 @@ export default defineConfig({
       },
       { text: 'Playground', link: '/playground' },
     ],
-    socialLinks: [{ icon: 'github', link: 'https://github.com/toneflix/flipbook' }],
+    socialLinks: [
+      { icon: 'github', link: 'https://github.com/toneflix/flipbook' },
+      { icon: 'npm', link: 'https://www.npmjs.com/package/@toneflix/flipbook' },
+    ],
     footer: {
       message: 'Released under the MIT License.',
       copyright: 'Made for Toneflix Photos',
