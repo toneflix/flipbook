@@ -108,7 +108,7 @@ export function renderCover(book: FlipbookBook, showImages = true) {
   return shell(book, 'left', ...design(book, showImages))
 }
 
-/** The back cover: the same board, with the imprint. */
+/** The back cover: the same board, with the brand and imprint. */
 export function renderBackCover(book: FlipbookBook) {
   const gilt = book.coverDesign === 'gilt'
 
@@ -121,6 +121,7 @@ export function renderBackCover(book: FlipbookBook) {
       'div',
       { class: 'fb-imprint' },
       ornament(),
+      book.brand && h('p', { class: 'fb-kicker', style: { marginTop: '2cqw', fontSize: '3cqw' } }, book.brand),
       book.imprint && h('p', { class: 'fb-kicker', style: { marginTop: '2cqw', fontSize: '2.4cqw', opacity: '0.6' } }, book.imprint),
     ),
   )

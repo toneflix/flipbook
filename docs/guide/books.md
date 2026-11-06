@@ -18,6 +18,7 @@
 | `kicker`      | `string`                                      | Small capitals above the title on the cover, like "A photo book".                     |
 | `colophon`    | `string`                                      | A closing line inside the back cover.                                                 |
 | `imprint`     | `string`                                      | The name printed on the back cover.                                                   |
+| `brand`       | `string`                                      | A brand name printed on the back cover, above the imprint.                            |
 
 The viewer adds the cover, a title page, a blank page when a spread needs one, the colophon and the back cover around your pages.
 
