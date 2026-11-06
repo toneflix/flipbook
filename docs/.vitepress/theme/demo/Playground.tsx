@@ -5,8 +5,10 @@ import {
   DEFAULT_GRIP,
   DEFAULT_PHYSICS,
   FRAME_STYLES,
+  BookLookProvider,
   Flipbook,
   PAGE_LAYOUTS,
+  PageView,
   PAPER_COLORS,
   coverHasText,
   type CoverDesign,
@@ -19,6 +21,7 @@ import {
   type GripOptions,
   type PageLayout,
   type PaperColor,
+  type PhotoPosition,
   type TurnPhysics,
 } from '@toneflix/flipbook-react'
 import { demoBook, demoPages, photos } from './book'
@@ -81,6 +84,7 @@ export function Playground() {
   const [place, setPlace] = useState('Cover')
   const [tab, setTab] = useState<'book' | 'pages' | 'viewer' | 'physics' | 'code'>('book')
   const [copied, setCopied] = useState(false)
+  const [positioning, setPositioning] = useState<{ page: number; slot: number } | null>(null)
 
   const setBookField = <K extends keyof FlipbookBook>(key: K, value: FlipbookBook[K]) => setBook((b) => ({ ...b, [key]: value }))
   const setViewerField = <K extends keyof ViewerOptions>(key: K, value: ViewerOptions[K]) => setViewer((v) => ({ ...v, [key]: value }))
@@ -89,6 +93,9 @@ export function Playground() {
 
   const setPhotoFrame = (index: number, slot: number, frame: FrameStyle | null) =>
     setPage(index, { photos: book.pages[index].photos.map((photo, s) => (s === slot && photo ? { ...photo, frame } : photo)) })
+
+  const setPhotoPosition = (index: number, slot: number, position: PhotoPosition) =>
+    setPage(index, { photos: book.pages[index].photos.map((photo, s) => (s === slot && photo ? { ...photo, position } : photo)) })
 
   const setPageCount = (count: number) =>
     setBook((b) => ({
@@ -269,6 +276,34 @@ export function Playground() {
                         {options(FRAME_STYLES)}
                       </select>
                     ))}
+                  </div>
+                )}
+                {page.photos.some(Boolean) && (
+                  <button
+                    type="button"
+                    className="pg-position-toggle"
+                    aria-expanded={positioning?.page === i}
+                    onClick={() => setPositioning(positioning?.page === i ? null : { page: i, slot: 0 })}
+                  >
+                    {positioning?.page === i ? 'Done positioning' : 'Position photos'}
+                  </button>
+                )}
+                {positioning?.page === i && (
+                  <div className="pg-position">
+                    <BookLookProvider paper={book.paper} frame={book.frame}>
+                      <div className="pg-position-page">
+                        <PageView
+                          page={page}
+                          activeSlot={positioning.slot}
+                          onSlotClick={(slot) => setPositioning({ page: i, slot })}
+                          onPhotoPosition={(slot, position) => setPhotoPosition(i, slot, position)}
+                        />
+                      </div>
+                    </BookLookProvider>
+                    <p className="pg-position-hint">
+                      Click a photo, then drag it to choose what shows. Scroll or pinch to zoom, or use the arrow keys, + and −. Press 0 to
+                      centre it again.
+                    </p>
                   </div>
                 )}
               </div>

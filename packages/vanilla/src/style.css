@@ -409,6 +409,29 @@
 .fb-slot.is-active {
   box-shadow: 0 0 0 0.8cqw var(--fb-accent);
 }
+/* The active slot of an editor that positions photos: drag to move, a thirds grid while moving. */
+.fb-positioning {
+  cursor: grab;
+  touch-action: none;
+  outline: none;
+}
+.fb-positioning.is-moving {
+  cursor: grabbing;
+}
+.fb-positioning:focus-visible {
+  box-shadow: 0 0 0 1cqw var(--fb-accent);
+}
+.fb-positioning.is-moving .fb-print-frame-photo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(to right, transparent calc(100% / 3 - 0.5px), rgb(255 255 255 / 0.7) 0 calc(100% / 3 + 0.5px), transparent 0),
+    linear-gradient(to right, transparent calc(200% / 3 - 0.5px), rgb(255 255 255 / 0.7) 0 calc(200% / 3 + 0.5px), transparent 0),
+    linear-gradient(to bottom, transparent calc(100% / 3 - 0.5px), rgb(255 255 255 / 0.7) 0 calc(100% / 3 + 0.5px), transparent 0),
+    linear-gradient(to bottom, transparent calc(200% / 3 - 0.5px), rgb(255 255 255 / 0.7) 0 calc(200% / 3 + 0.5px), transparent 0);
+}
 .fb-slot[data-over='true'] {
   box-shadow: 0 0 0 1cqw var(--fb-highlight);
 }
@@ -566,7 +589,7 @@
   inset: var(--frame-pad);
   width: calc(100% - 2 * var(--frame-pad));
   height: calc(100% - 2 * var(--frame-pad));
-  object-fit: cover;
+  overflow: hidden;
 }
 
 .fb-frame-hairline {
@@ -1104,6 +1127,7 @@
 .fb-cover-art {
   position: absolute;
   inset: 0;
+  overflow: hidden;
 }
 .fb-cover-tint {
   position: absolute;

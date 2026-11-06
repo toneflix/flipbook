@@ -1,3 +1,5 @@
+import type { PhotoPosition } from './position'
+
 /**
  * How photos are set on a page.
  * - single: one photo printed to the edges, caption over it.
@@ -178,6 +180,8 @@ export interface FlipbookPhoto {
   /** Natural size, used to keep the photo's shape on framed pages. */
   width?: number | null
   height?: number | null
+  /** Which part of the photo shows where its box crops it. Centred when left out. */
+  position?: Partial<PhotoPosition> | null
 }
 
 export interface FlipbookPage {

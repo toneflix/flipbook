@@ -1,5 +1,5 @@
 import { useId, useState } from 'react'
-import { Image, StyleSheet, View, type LayoutChangeEvent, type ViewStyle } from 'react-native'
+import { StyleSheet, View, type LayoutChangeEvent, type ViewStyle } from 'react-native'
 import Svg, {
   ClipPath,
   Defs,
@@ -14,9 +14,10 @@ import Svg, {
   Circle,
   Stop,
 } from 'react-native-svg'
-import { BANDED_FRAMES, type FlipbookPhoto, type FrameStyle } from '@toneflix/flipbook-core'
+import { BANDED_FRAMES, type FlipbookPhoto, type FrameStyle, type PhotoCrop, type PhotoPosition, type Size } from '@toneflix/flipbook-core'
 import { Gradient } from './Gradient'
 import { ink, usePaper, type PaperLook } from './look'
+import { CroppedImage, useNaturalSize, usePhotoGestures } from './position'
 
 type Box = { left: number; top: number; width: number; height: number }
 
@@ -62,9 +63,11 @@ export interface PrintedPhotoProps {
   fit?: 'cover' | 'contain'
   /** False draws a placeholder instead of loading the image. */
   show?: boolean
+  /** Editor: lets people drag and pinch to choose which part of the photo shows. */
+  onPosition?: (position: PhotoPosition) => void
 }
 
-export function PrintedPhoto({ photo, frame, unit, fit = 'cover', show = true }: PrintedPhotoProps) {
+export function PrintedPhoto({ photo, frame, unit, fit = 'cover', show = true, onPosition }: PrintedPhotoProps) {
   const look = usePaper()
   const [box, setBox] = useState<{ width: number; height: number } | null>(null)
   const { pad, line } = measure(frame, unit)
@@ -80,18 +83,20 @@ export function PrintedPhoto({ photo, frame, unit, fit = 'cover', show = true }:
   }
 
   const inner: Box = { left: edge, top: edge, width: Math.max(0, width - 2 * edge), height: Math.max(0, height - 2 * edge) }
+  const natural = useNaturalSize(show ? photo : null)
+  const { crop, handlers } = usePhotoGestures(photo?.position, inner, natural, photo && show ? onPosition : undefined)
 
   return (
     <View style={styles.box} onLayout={(event: LayoutChangeEvent) => setBox(event.nativeEvent.layout)}>
       {box && (
-        <View style={{ width, height }}>
+        <View style={{ width, height }} {...handlers}>
           <Backing frame={frame} look={look} unit={unit} width={width} height={height} line={line} />
           {frame === 'oval' ? (
-            <OvalPhoto photo={show ? photo : null} look={look} rect={inner} width={width} height={height} line={line} />
+            <OvalPhoto photo={show ? photo : null} crop={crop} natural={natural} look={look} rect={inner} width={width} height={height} />
           ) : (
             <View style={[styles.abs, inner]}>
               {photo && show ? (
-                <Image source={{ uri: photo.src }} style={StyleSheet.absoluteFill} resizeMode="cover" aria-label={photo.alt ?? undefined} />
+                <CroppedImage photo={photo} crop={crop} box={inner} image={natural} />
               ) : (
                 <View style={[StyleSheet.absoluteFill, { backgroundColor: ink(look, 0.15) }]} />
               )}
@@ -369,19 +374,23 @@ function Band({
 /** The photo cut to an oval. */
 function OvalPhoto({
   photo,
+  crop,
+  natural,
   look,
   rect,
   width,
   height,
 }: {
   photo: FlipbookPhoto | null
+  crop: PhotoCrop
+  natural: Size | null
   look: PaperLook
   rect: Box
   width: number
   height: number
-  line: number
 }) {
   const id = `oval${useId().replace(/[^a-zA-Z0-9]/g, '')}`
+  const drawn = crop.rect(rect, natural)
 
   return (
     <Svg width={width} height={height} style={styles.abs}>
@@ -393,10 +402,10 @@ function OvalPhoto({
       {photo ? (
         <SvgImage
           href={{ uri: photo.src }}
-          x={rect.left}
-          y={rect.top}
-          width={rect.width}
-          height={rect.height}
+          x={rect.left + drawn.left}
+          y={rect.top + drawn.top}
+          width={drawn.width}
+          height={drawn.height}
           preserveAspectRatio="xMidYMid slice"
           clipPath={`url(#${id})`}
         />

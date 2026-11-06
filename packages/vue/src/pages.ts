@@ -6,13 +6,19 @@ import {
   type FlipbookPage,
   type FrameStyle,
   type PaperColor,
+  type PhotoPosition,
   type Side,
 } from '@toneflix/flipbook'
 
 /** Keeps an element's content in step with its props by rebuilding it. */
 const useRendered = (render: () => Node, sources: () => unknown) => {
   const el = ref<HTMLElement>()
-  const paint = () => el.value?.replaceChildren(render())
+  const paint = () => {
+    const focused = el.value?.contains(document.activeElement)
+
+    el.value?.replaceChildren(render())
+    if (focused) el.value?.querySelector<HTMLElement>('.fb-positioning')?.focus()
+  }
 
   onMounted(paint)
   watch(sources, paint, { deep: true })
@@ -36,8 +42,10 @@ export const PageView = defineComponent({
     /** Editor: the highlighted slot. Listening to `slotClick` makes slots clickable. */
     activeSlot: Number,
     editable: Boolean,
+    /** Editor: lets people move and zoom the photo in the active slot, emitting `photoPosition`. */
+    positioning: Boolean,
   },
-  emits: { slotClick: (_slot: number) => true },
+  emits: { slotClick: (_slot: number) => true, photoPosition: (_slot: number, _position: PhotoPosition) => true },
   setup(props, { emit }) {
     const el = useRendered(
       () =>
@@ -50,6 +58,7 @@ export const PageView = defineComponent({
             showImages: props.showImages,
             activeSlot: props.activeSlot,
             onSlotClick: props.editable ? (slot) => emit('slotClick', slot) : undefined,
+            onPhotoPosition: props.positioning ? (slot, position) => emit('photoPosition', slot, position) : undefined,
           },
         ),
       () => ({ ...props }),

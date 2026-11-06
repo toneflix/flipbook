@@ -4,15 +4,16 @@
 
 ## Book model
 
-| Export                                                 |                                                      |
-| ------------------------------------------------------ | ---------------------------------------------------- |
-| `FlipbookBook`, `FlipbookPage`, `FlipbookPhoto`        | The data types. See [Books and pages](/guide/books). |
-| `PageLayout`, `CoverTheme`, `PaperColor`, `FrameStyle` | Option unions.                                       |
-| `PAGE_LAYOUTS`                                         | `{ label, slots }` per layout.                       |
-| `COVER_THEMES`                                         | `{ label, cloth, ink, stage }` per theme.            |
-| `PAPER_COLORS`                                         | `{ label, swatch }` per paper.                       |
-| `FRAME_STYLES`                                         | `{ label, description }` per frame.                  |
-| `frameOf(page, book.frame)`                            | The frame a page is printed with.                    |
+| Export                                                 |                                                                                          |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| `FlipbookBook`, `FlipbookPage`, `FlipbookPhoto`        | The data types. See [Books and pages](/guide/books).                                     |
+| `PageLayout`, `CoverTheme`, `PaperColor`, `FrameStyle` | Option unions.                                                                           |
+| `PAGE_LAYOUTS`                                         | `{ label, slots }` per layout.                                                           |
+| `COVER_THEMES`                                         | `{ label, cloth, ink, stage }` per theme.                                                |
+| `PAPER_COLORS`                                         | `{ label, swatch }` per paper.                                                           |
+| `FRAME_STYLES`                                         | `{ label, description }` per frame.                                                      |
+| `frameOf(page, book.frame)`                            | The frame a page is printed with.                                                        |
+| `PhotoPosition`, `PhotoCrop`, `PHOTO_ZOOM`             | Which part of a photo shows. See [Positioning photos](/guide/editor#positioning-photos). |
 
 ## BookLayout
 

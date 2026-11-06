@@ -1,10 +1,21 @@
-import { useId, type ReactNode } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import { Image, StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'react-native'
 import Svg, { ClipPath, Defs, Ellipse, Image as SvgImage, Path, RadialGradient, Rect, Stop } from 'react-native-svg'
-import { COVER_THEMES, DECO, FLEURON, coverHasText, type CoverArt, type FlipbookBook, type FlipbookPhoto } from '@toneflix/flipbook-core'
+import {
+  COVER_THEMES,
+  DECO,
+  FLEURON,
+  PhotoCrop,
+  coverHasText,
+  type CoverArt,
+  type FlipbookBook,
+  type FlipbookPhoto,
+  type Size,
+} from '@toneflix/flipbook-core'
 import { Gradient } from './Gradient'
 import { PAPERS, useSerif } from './look'
 import { Ornament, PAGE_RATIO } from './pages'
+import { CroppedImage, useNaturalSize } from './position'
 
 type Side = 'left' | 'right'
 type Corner = 'tl' | 'tr' | 'bl' | 'br'
@@ -79,6 +90,8 @@ function ShapedPhoto({
   show: boolean
 }) {
   const id = `c${useId().replace(/[^a-zA-Z0-9]/g, '')}`
+  const natural = useNaturalSize(show ? photo : null)
+  const drawn = PhotoCrop.of(photo.position).rect({ width, height }, natural)
   const r = width / 2
   const arch = `M0 ${height}V${r}A${r} ${r} 0 0 1 ${width} ${r}V${height}Z`
   const outline = shape === 'oval' ? <Ellipse cx={r} cy={height / 2} rx={r - 0.3 * unit} ry={height / 2 - 0.3 * unit} /> : <Path d={arch} />
@@ -89,7 +102,15 @@ function ShapedPhoto({
         <ClipPath id={id}>{outline}</ClipPath>
       </Defs>
       {show ? (
-        <SvgImage href={{ uri: photo.src }} width={width} height={height} preserveAspectRatio="xMidYMid slice" clipPath={`url(#${id})`} />
+        <SvgImage
+          href={{ uri: photo.src }}
+          x={drawn.left}
+          y={drawn.top}
+          width={drawn.width}
+          height={drawn.height}
+          preserveAspectRatio="xMidYMid slice"
+          clipPath={`url(#${id})`}
+        />
       ) : (
         <Rect width={width} height={height} fill={color} fillOpacity={0.15} clipPath={`url(#${id})`} />
       )}
@@ -110,8 +131,19 @@ function ShapedPhoto({
   )
 }
 
-const Photo = ({ photo, show }: { photo: FlipbookPhoto; show: boolean }) =>
-  show ? <Image source={{ uri: photo.src }} style={StyleSheet.absoluteFill} resizeMode="cover" aria-label={photo.alt ?? undefined} /> : null
+/** A photo covering its parent, cropped by its position. */
+function Photo({ photo, show }: { photo: FlipbookPhoto; show: boolean }) {
+  const [box, setBox] = useState<Size | null>(null)
+  const natural = useNaturalSize(show ? photo : null)
+
+  if (!show) return null
+
+  return (
+    <View style={StyleSheet.absoluteFill} onLayout={(e) => setBox(e.nativeEvent.layout)}>
+      {box && <CroppedImage photo={photo} crop={PhotoCrop.of(photo.position)} box={box} image={natural} />}
+    </View>
+  )
+}
 
 /** Cover board: cloth, light, the hinge shadow along the spine and a grain finish. */
 function Board({ book, width, hinge, children }: { book: Pick<FlipbookBook, 'theme'>; width: number; hinge: Side; children?: ReactNode }) {

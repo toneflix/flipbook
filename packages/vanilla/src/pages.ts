@@ -1,6 +1,7 @@
 import {
   BANDED_FRAMES,
   PLACED_LAYOUTS,
+  PhotoCrop,
   photoFrame,
   type Face,
   type FlipbookBook,
@@ -9,9 +10,11 @@ import {
   type FrameStyle,
   type PageBox,
   type PaperColor,
+  type PhotoPosition,
 } from '@toneflix/flipbook-core'
 import { h, svg } from './dom'
 import { renderBackCover, renderCover } from './cover'
+import { PhotoPositioner } from './positioner'
 
 export type Side = 'left' | 'right'
 
@@ -29,6 +32,8 @@ export interface PageOptions {
   /** Editor: makes each photo slot clickable. */
   onSlotClick?: (slot: number) => void
   activeSlot?: number | null
+  /** Editor: lets people move and zoom the photo in the active slot. */
+  onPhotoPosition?: (slot: number, position: PhotoPosition) => void
 }
 
 const LEAVES = [14, 24, 34, 44, 54, 64, 74].map((x, i) => ({ x, angle: i % 2 ? 38 : -38, length: 26 - i * 2 }))
@@ -58,6 +63,7 @@ export const image = (photo: FlipbookPhoto, className: string) =>
     width: photo.width ?? undefined,
     height: photo.height ?? undefined,
     class: className,
+    style: PhotoCrop.of(photo.position).css,
   })
 
 const boxStyle = ({ x, y, width, height, rotate }: PageBox): Record<string, string> => ({
@@ -90,7 +96,9 @@ export function printedPhoto(photo: FlipbookPhoto | null, frame: FrameStyle, fit
   if (fit === 'contain') print.style.setProperty('--ratio', String(ratio))
   if (BANDED_FRAMES[frame]) print.append(h('span', { class: 'fb-print-frame-band', 'aria-hidden': 'true' }))
   print.append(
-    photo && show ? image(photo, 'fb-print-photo fb-print-frame-photo') : h('div', { class: 'fb-print-frame-photo fb-placeholder' }),
+    photo && show
+      ? h('div', { class: 'fb-print-photo fb-print-frame-photo' }, image(photo, 'fb-photo'))
+      : h('div', { class: 'fb-print-frame-photo fb-placeholder' }),
   )
   if (frame === 'corners')
     for (const c of ['tl', 'tr', 'bl', 'br']) print.append(h('span', { class: `fb-print-frame-corner is-${c}`, 'aria-hidden': 'true' }))
@@ -103,7 +111,7 @@ export function printedPhoto(photo: FlipbookPhoto | null, frame: FrameStyle, fit
 /** The inside of one book page. The parent must have `container-type: size`. */
 export function renderPage(page: FlipbookPage, look: PageLook, options: PageOptions = {}) {
   const { layout, caption, photos } = page
-  const { number, side, showImages = true, onSlotClick, activeSlot } = options
+  const { number, side, showImages = true, onSlotClick, activeSlot, onPhotoPosition } = options
   const placed = PLACED_LAYOUTS[layout]
   const root = h('div', { class: `fb-paper fb-paper-${look.paper} fb-page` })
 
@@ -125,6 +133,8 @@ export function renderPage(page: FlipbookPage, look: PageLook, options: PageOpti
         ? printedPhoto(photo, frame, framed ? 'contain' : 'cover', showImages)
         : h('div', { class: 'fb-slot-empty' }, onSlotClick ? 'Add a photo' : ''),
     )
+    if (photo && showImages && onPhotoPosition && activeSlot === index)
+      new PhotoPositioner(el, { position: photo.position, onChange: (position) => onPhotoPosition(index, position) })
 
     return el
   }
