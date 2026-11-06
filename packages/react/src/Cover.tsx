@@ -145,8 +145,8 @@ export function CoverView({ book, showImages = true }: CoverViewProps) {
   )
 }
 
-/** The back cover: the same board, with the imprint. */
-export function BackCoverView({ book }: { book: Pick<FlipbookBook, 'theme' | 'imprint' | 'coverDesign'> }) {
+/** The back cover: the same board, with the brand and imprint. */
+export function BackCoverView({ book }: { book: Pick<FlipbookBook, 'theme' | 'imprint' | 'brand' | 'coverDesign'> }) {
   const gilt = book.coverDesign === 'gilt'
 
   return (
@@ -155,6 +155,11 @@ export function BackCoverView({ book }: { book: Pick<FlipbookBook, 'theme' | 'im
       {gilt && <Fleurons />}
       <div className="fb-imprint">
         <Ornament />
+        {book.brand && (
+          <p className="fb-kicker" style={{ marginTop: '2cqw', fontSize: '3cqw' }}>
+            {book.brand}
+          </p>
+        )}
         {book.imprint && (
           <p className="fb-kicker" style={{ marginTop: '2cqw', fontSize: '2.4cqw', opacity: 0.6 }}>
             {book.imprint}

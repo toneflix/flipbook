@@ -230,6 +230,9 @@ export function Playground() {
             <Field label="Imprint">
               <input value={book.imprint ?? ''} onChange={(e) => setBookField('imprint', e.target.value || null)} />
             </Field>
+            <Field label="Brand">
+              <input value={book.brand ?? ''} onChange={(e) => setBookField('brand', e.target.value || null)} />
+            </Field>
             <Field label={`Pages: ${book.pages.length}`}>
               <input type="range" min={1} max={40} value={book.pages.length} onChange={(e) => setPageCount(Number(e.target.value))} />
             </Field>

@@ -404,8 +404,8 @@ export function CoverView({ book, width, showImages = true }: CoverViewProps) {
   )
 }
 
-/** The back cover: the same board, with the imprint. */
-export function BackCoverView({ book, width }: { book: Pick<FlipbookBook, 'theme' | 'imprint' | 'coverDesign'>; width: number }) {
+/** The back cover: the same board, with the brand and imprint. */
+export function BackCoverView({ book, width }: { book: Pick<FlipbookBook, 'theme' | 'imprint' | 'brand' | 'coverDesign'>; width: number }) {
   const color = COVER_THEMES[book.theme ?? 'classic'].ink
   const unit = width / 100
 
@@ -414,6 +414,11 @@ export function BackCoverView({ book, width }: { book: Pick<FlipbookBook, 'theme
       {book.coverDesign === 'gilt' && <GiltFrame unit={unit} color={color} />}
       <View style={[styles.imprint, { bottom: 10 * unit }]}>
         <Ornament size={9 * unit} color={color} />
+        {book.brand ? (
+          <Text style={[styles.kicker, { marginTop: 2 * unit, fontSize: 3 * unit, letterSpacing: 0.9 * unit, color }]}>
+            {book.brand.toUpperCase()}
+          </Text>
+        ) : null}
         {book.imprint ? (
           <Text style={[styles.kicker, { marginTop: 2 * unit, fontSize: 2.4 * unit, letterSpacing: 0.72 * unit, color, opacity: 0.6 }]}>
             {book.imprint.toUpperCase()}

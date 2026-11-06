@@ -217,6 +217,8 @@ export interface FlipbookBook {
   colophon?: string | null
   /** The name printed on the back cover. */
   imprint?: string | null
+  /** A brand name printed on the back cover above the imprint. */
+  brand?: string | null
 }
 
 /** Whether the cover carries its title: on by default, off for full-image covers unless asked for. */
