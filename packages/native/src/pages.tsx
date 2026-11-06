@@ -23,6 +23,8 @@ export interface PageViewProps {
   activeSlot?: number | null
   /** Editor: lets people drag and pinch the photo in the active slot to choose which part shows. */
   onPhotoPosition?: (slot: number, position: PhotoPosition) => void
+  /** Editor: true while a finger is moving a photo, e.g. to pause the scroll view the page sits in. */
+  onPositionGesture?: (active: boolean) => void
   /** Editor: colour of the highlighted slot. */
   accent?: string
 }
@@ -40,6 +42,7 @@ export function PageView({
   onSlotPress,
   activeSlot,
   onPhotoPosition,
+  onPositionGesture,
   accent = '#00afff',
 }: PageViewProps) {
   const look = usePaper()
@@ -71,6 +74,7 @@ export function PageView({
             fit={fit}
             show={showImages}
             onPosition={onPhotoPosition && activeSlot === index ? (position) => onPhotoPosition(index, position) : undefined}
+            onPositionGesture={onPositionGesture}
           />
         ) : (
           <View

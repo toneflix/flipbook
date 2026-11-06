@@ -65,9 +65,11 @@ export interface PrintedPhotoProps {
   show?: boolean
   /** Editor: lets people drag and pinch to choose which part of the photo shows. */
   onPosition?: (position: PhotoPosition) => void
+  /** Editor: called with true when a positioning gesture starts and false when it ends. */
+  onPositionGesture?: (active: boolean) => void
 }
 
-export function PrintedPhoto({ photo, frame, unit, fit = 'cover', show = true, onPosition }: PrintedPhotoProps) {
+export function PrintedPhoto({ photo, frame, unit, fit = 'cover', show = true, onPosition, onPositionGesture }: PrintedPhotoProps) {
   const look = usePaper()
   const [box, setBox] = useState<{ width: number; height: number } | null>(null)
   const { pad, line } = measure(frame, unit)
@@ -84,7 +86,7 @@ export function PrintedPhoto({ photo, frame, unit, fit = 'cover', show = true, o
 
   const inner: Box = { left: edge, top: edge, width: Math.max(0, width - 2 * edge), height: Math.max(0, height - 2 * edge) }
   const natural = useNaturalSize(show ? photo : null)
-  const { crop, handlers } = usePhotoGestures(photo?.position, inner, natural, photo && show ? onPosition : undefined)
+  const { crop, handlers } = usePhotoGestures(photo?.position, inner, natural, photo && show ? onPosition : undefined, onPositionGesture)
 
   return (
     <View style={styles.box} onLayout={(event: LayoutChangeEvent) => setBox(event.nativeEvent.layout)}>

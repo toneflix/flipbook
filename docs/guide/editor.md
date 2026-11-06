@@ -89,7 +89,18 @@ const positioner = new PhotoPositioner(element, { position: photo.position, onCh
 ```
 
 ```tsx [React Native]
-<PageView page={page} width={320} activeSlot={slot} onSlotPress={setSlot} onPhotoPosition={(index, position) => save(index, position)} />
+const [moving, setMoving] = useState(false)
+
+<ScrollView scrollEnabled={!moving}>
+  <PageView
+    page={page}
+    width={320}
+    activeSlot={slot}
+    onSlotPress={setSlot}
+    onPhotoPosition={(index, position) => save(index, position)}
+    onPositionGesture={setMoving}
+  />
+</ScrollView>
 ```
 
 :::

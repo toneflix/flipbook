@@ -35,18 +35,19 @@ const spread = (e: GestureResponderEvent) => {
 /**
  * Drag to move a photo in its box and pinch to zoom it. Returns the position to draw, which follows the
  * fingers, and the handlers for the box. `onChange` gets the new position when the fingers lift; without it
- * the photo stays put.
+ * the photo stays put. `onGesture` hears when fingers go down and lift, e.g. to pause a scroll view.
  */
 export function usePhotoGestures(
   position: Partial<PhotoPosition> | null | undefined,
   box: Size,
   image: Size | null,
   onChange?: (position: PhotoPosition) => void,
+  onGesture?: (active: boolean) => void,
 ) {
   const [moving, setMoving] = useState<PhotoCrop | null>(null)
-  const latest = useRef({ position, box, image, onChange })
+  const latest = useRef({ position, box, image, onChange, onGesture })
 
-  latest.current = { position, box, image, onChange }
+  latest.current = { position, box, image, onChange, onGesture }
 
   useEffect(() => setMoving(null), [position?.x, position?.y, position?.zoom])
 
@@ -56,8 +57,9 @@ export function usePhotoGestures(
     let pinch = { spread: 0, zoom: 1 }
 
     const finish = () => {
-      const { position, onChange } = latest.current
+      const { position, onChange, onGesture } = latest.current
 
+      onGesture?.(false)
       if (crop.equals(position)) setMoving(null)
       else onChange?.(crop.toJSON())
     }
@@ -67,6 +69,7 @@ export function usePhotoGestures(
       onMoveShouldSetPanResponder: () => !!latest.current.onChange,
       onPanResponderTerminationRequest: () => false,
       onPanResponderGrant: (e) => {
+        latest.current.onGesture?.(true)
         crop = PhotoCrop.of(latest.current.position)
         last = { dx: 0, dy: 0 }
         pinch = { spread: spread(e), zoom: crop.zoom }
