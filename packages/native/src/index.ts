@@ -7,3 +7,4 @@ export { BookLookProvider, useBookLook, usePaper, useSerif, ink, PAPERS, type Bo
 export { Gradient, type GradientStop } from './Gradient'
 export { FoldLayout } from './geometry'
 export { lockLandscape } from './orientation'
+export { CroppedImage, useNaturalSize, usePhotoGestures, type CroppedImageProps } from './position'

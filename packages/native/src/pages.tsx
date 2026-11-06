@@ -1,7 +1,7 @@
 import { useId, type ReactNode } from 'react'
 import { Image, Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native'
 import Svg, { Circle, Defs, Path, RadialGradient, Rect, Stop } from 'react-native-svg'
-import { PLACED_LAYOUTS, photoFrame, type FlipbookBook, type FlipbookPage, type PageBox } from '@toneflix/flipbook-core'
+import { PLACED_LAYOUTS, photoFrame, type FlipbookBook, type FlipbookPage, type PageBox, type PhotoPosition } from '@toneflix/flipbook-core'
 import { Gradient } from './Gradient'
 import { ink, useBookLook, usePaper, useSerif, type PaperLook } from './look'
 import { PrintedPhoto } from './PrintedPhoto'
@@ -21,6 +21,10 @@ export interface PageViewProps {
   /** Editor: makes each photo slot pressable. */
   onSlotPress?: (slot: number) => void
   activeSlot?: number | null
+  /** Editor: lets people drag and pinch the photo in the active slot to choose which part shows. */
+  onPhotoPosition?: (slot: number, position: PhotoPosition) => void
+  /** Editor: true while a finger is moving a photo, e.g. to pause the scroll view the page sits in. */
+  onPositionGesture?: (active: boolean) => void
   /** Editor: colour of the highlighted slot. */
   accent?: string
 }
@@ -29,7 +33,18 @@ export interface PageViewProps {
  * The inside of one book page, `width` wide. Sizes are in units of 1% of the width, so the same
  * page looks right as a thumbnail and full screen.
  */
-export function PageView({ page, width, number, side, showImages = true, onSlotPress, activeSlot, accent = '#00afff' }: PageViewProps) {
+export function PageView({
+  page,
+  width,
+  number,
+  side,
+  showImages = true,
+  onSlotPress,
+  activeSlot,
+  onPhotoPosition,
+  onPositionGesture,
+  accent = '#00afff',
+}: PageViewProps) {
   const look = usePaper()
   const serif = useSerif()
   const unit = width / 100
@@ -52,7 +67,15 @@ export function PageView({ page, width, number, side, showImages = true, onSlotP
         style={[style, fit === 'cover' && styles.clip]}
       >
         {photo ? (
-          <PrintedPhoto photo={photo} frame={frame} unit={unit} fit={fit} show={showImages} />
+          <PrintedPhoto
+            photo={photo}
+            frame={frame}
+            unit={unit}
+            fit={fit}
+            show={showImages}
+            onPosition={onPhotoPosition && activeSlot === index ? (position) => onPhotoPosition(index, position) : undefined}
+            onPositionGesture={onPositionGesture}
+          />
         ) : (
           <View
             style={[

@@ -58,6 +58,66 @@ function PageEditor({ book, page, onChange, library }) {
 
 When the edits are saved, hand the updated book to the viewer. It keeps the reader on the same spread.
 
+## Positioning photos
+
+Pass a position handler and the photo in the active slot can be moved where it sits: drag it to choose which part shows, and pinch or scroll to zoom. On the web the arrow keys move it too, + and − zoom, and 0 centres it again. The handler gets the new `position` when a gesture ends; store it on the photo and pass the page back.
+
+::: code-group
+
+```tsx [React]
+<PageView
+  page={page}
+  activeSlot={slot}
+  onSlotClick={setSlot}
+  onPhotoPosition={(index, position) => {
+    const photos = page.photos.map((photo, i) => (i === index && photo ? { ...photo, position } : photo))
+
+    onChange({ ...page, photos })
+  }}
+/>
+```
+
+```vue [Vue]
+<PageView :page="page" :active-slot="slot" editable positioning @slot-click="(i) => (slot = i)" @photo-position="setPosition" />
+```
+
+```ts [Vanilla]
+renderPage(page, look, { activeSlot: slot, onSlotClick: select, onPhotoPosition: (index, position) => save(index, position) })
+
+// Or on any element that holds a photo's <img>, such as a cover:
+const positioner = new PhotoPositioner(element, { position: photo.position, onChange: save })
+```
+
+```tsx [React Native]
+const [moving, setMoving] = useState(false)
+
+<ScrollView scrollEnabled={!moving}>
+  <PageView
+    page={page}
+    width={320}
+    activeSlot={slot}
+    onSlotPress={setSlot}
+    onPhotoPosition={(index, position) => save(index, position)}
+    onPositionGesture={setMoving}
+  />
+</ScrollView>
+```
+
+:::
+
+For a control of your own, such as a zoom slider, `PhotoCrop` from the core does the sums every renderer uses:
+
+```ts
+import { PhotoCrop } from '@toneflix/flipbook-react'
+
+const crop = PhotoCrop.of(photo.position)
+
+crop.zoomTo(2).toJSON() // { x: 50, y: 50, zoom: 2 }
+crop.pan(dx, dy, box, { width: photo.width, height: photo.height }) // after a drag of dx, dy pixels in a box
+crop.rect(box, image) // where the photo is drawn so it covers the box
+crop.css // { objectPosition, transform, transformOrigin } for an <img> with object-fit: cover
+```
+
 ## Choosing looks
 
 The core exports every option with a label for pickers:

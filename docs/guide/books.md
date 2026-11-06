@@ -30,10 +30,13 @@ interface FlipbookPhoto {
   alt?: string
   width?: number
   height?: number
+  position?: { x?: number; y?: number; zoom?: number }
 }
 ```
 
 Give `width` and `height` when you know them: framed pages use them to keep the photo's shape. A photo's `frame` sets its own frame, so one page can mix an oval cameo with plain prints.
+
+A photo's `position` chooses which part of it shows when its slot crops it. `x` and `y` run from 0 to 100 and work like CSS `object-position`: `{ x: 0 }` keeps the left edge in view, `{ y: 100 }` the bottom. `zoom` enlarges the photo past filling its slot, from 1 to 4, around that same point. Left out, a photo is centred at no zoom. The same position is used on pages, on covers and by every renderer. See [Positioning photos](/guide/editor#positioning-photos) to let people choose it.
 
 ## Pages
 

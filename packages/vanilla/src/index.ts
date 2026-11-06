@@ -11,6 +11,7 @@ export {
   type PageOptions,
   type Side,
 } from './pages'
+export { PhotoPositioner, type PhotoPositionerOptions } from './positioner'
 export { renderCover, renderBackCover, coverArtMarkup } from './cover'
 export { playPageTurn } from './sound'
 export { enterLandscape, watchOrientation } from './landscape'

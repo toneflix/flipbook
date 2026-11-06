@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import { BANDED_FRAMES, type FlipbookPhoto, type FrameStyle } from '@toneflix/flipbook-core'
+import { BANDED_FRAMES, PhotoCrop, type FlipbookPhoto, type FrameStyle } from '@toneflix/flipbook-core'
 
 export interface PrintedPhotoProps {
   photo: FlipbookPhoto | null
@@ -22,15 +22,18 @@ export function PrintedPhoto({ photo, frame, fit = 'cover', show = true, scale =
       <div className={`fb-print-frame fb-frame-${frame} ${fit === 'contain' ? 'is-contained' : ''}`} style={style}>
         {BANDED_FRAMES[frame] && <span className="fb-print-frame-band" aria-hidden />}
         {photo && show ? (
-          <img
-            src={photo.src}
-            alt={photo.alt ?? ''}
-            draggable={false}
-            decoding="async"
-            width={photo.width ?? undefined}
-            height={photo.height ?? undefined}
-            className="fb-print-photo fb-print-frame-photo"
-          />
+          <div className="fb-print-photo fb-print-frame-photo">
+            <img
+              src={photo.src}
+              alt={photo.alt ?? ''}
+              draggable={false}
+              decoding="async"
+              width={photo.width ?? undefined}
+              height={photo.height ?? undefined}
+              className="fb-photo"
+              style={PhotoCrop.of(photo.position).css}
+            />
+          </div>
         ) : (
           <div className="fb-print-frame-photo fb-placeholder" />
         )}

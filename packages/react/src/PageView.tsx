@@ -1,7 +1,17 @@
 import type { CSSProperties, DragEvent } from 'react'
-import { PLACED_LAYOUTS, photoFrame, type FlipbookBook, type FlipbookPage, type FlipbookPhoto, type PageBox } from '@toneflix/flipbook-core'
+import {
+  PLACED_LAYOUTS,
+  PhotoCrop,
+  photoFrame,
+  type FlipbookBook,
+  type FlipbookPage,
+  type FlipbookPhoto,
+  type PageBox,
+  type PhotoPosition,
+} from '@toneflix/flipbook-core'
 import { useBookLook } from './BookLook'
 import { PrintedPhoto } from './PrintedPhoto'
+import { usePhotoPositioner } from './positioner'
 
 /** Drag-and-drop data type carrying a photo id onto a page slot in an editor. */
 export const PHOTO_DRAG_TYPE = 'application/x-flipbook-photo'
@@ -31,18 +41,25 @@ export interface PageViewProps {
   /** Editor: a photo id (as `PHOTO_DRAG_TYPE` data) was dropped on a slot. */
   onSlotDrop?: (slot: number, photoId: string) => void
   activeSlot?: number | null
+  /** Editor: lets people move and zoom the photo in the active slot. */
+  onPhotoPosition?: (slot: number, position: PhotoPosition) => void
 }
 
 /**
  * The inside of one book page. Sizes use container units (cqw), so the same page looks right as
  * a thumbnail and as a full-screen spread. The parent must have `container-type: size`.
  */
-export function PageView({ page, number, side, showImages = true, onSlotClick, onSlotDrop, activeSlot }: PageViewProps) {
+export function PageView({ page, number, side, showImages = true, onSlotClick, onSlotDrop, activeSlot, onPhotoPosition }: PageViewProps) {
   const { layout, caption, photos } = page
   const paper = usePaper()
   const bookFrame = useBookLook().frame
   const placed = PLACED_LAYOUTS[layout]
   const editable = !!onSlotClick
+  const positioning = activeSlot != null && showImages && onPhotoPosition && photos[activeSlot] ? activeSlot : null
+  const positioner = usePhotoPositioner(
+    positioning === null ? null : photos[positioning]?.position,
+    positioning === null ? undefined : (position) => onPhotoPosition?.(positioning, position),
+  )
 
   const dropHandlers = (index: number) =>
     onSlotDrop && {
@@ -83,6 +100,7 @@ export function PageView({ page, number, side, showImages = true, onSlotClick, o
         role={editable ? 'button' : undefined}
         aria-label={editable ? `Photo slot ${index + 1}` : undefined}
         style={style}
+        ref={index === positioning ? positioner : undefined}
         {...dropHandlers(index)}
       >
         {photo ? (
@@ -200,6 +218,7 @@ export function PhotoImage({ photo, show = true }: PhotoImageProps) {
       width={photo.width ?? undefined}
       height={photo.height ?? undefined}
       className="fb-photo"
+      style={PhotoCrop.of(photo.position).css}
     />
   )
 }
