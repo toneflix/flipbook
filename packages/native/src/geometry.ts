@@ -100,7 +100,8 @@ export class FoldLayout {
     const placement: FacePlacement = {
       clip: { ...styleOf(window, windowSize.w, windowSize.h), overflow: clipped ? 'hidden' : 'visible' },
       frame: styleOf(toFrame, 2 * width, height),
-      face: { ...styleOf(Affine.translate(width, 0).after(face), width, height), overflow: 'hidden' },
+      // Set on every face, so a cover that stops swinging switches it back instead of unsetting it.
+      face: { ...styleOf(Affine.translate(width, 0).after(face), width, height), overflow: 'hidden', backfaceVisibility: 'visible' },
       bands: [],
     }
 
