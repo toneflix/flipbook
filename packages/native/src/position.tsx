@@ -103,13 +103,19 @@ export interface CroppedImageProps {
   image: Size | null
 }
 
-/** A photo covering its box, moved and zoomed by `crop`. */
+/** A photo covering its box, moved and zoomed by `crop`. Android decodes it at the size it is drawn, not the photo's full size. */
 export function CroppedImage({ photo, crop, box, image }: CroppedImageProps) {
   const rect = crop.rect(box, image)
 
   return (
     <View style={[StyleSheet.absoluteFill, styles.clip]}>
-      <Image source={{ uri: photo.src }} style={[styles.abs, rect]} resizeMode="cover" aria-label={photo.alt ?? undefined} />
+      <Image
+        source={{ uri: photo.src }}
+        style={[styles.abs, rect]}
+        resizeMode="cover"
+        resizeMethod="resize"
+        aria-label={photo.alt ?? undefined}
+      />
     </View>
   )
 }
