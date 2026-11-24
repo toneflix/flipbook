@@ -5,6 +5,7 @@ import {
   type FlipbookBook,
   type FlipbookPage,
   type FrameStyle,
+  type PageShape,
   type PaperColor,
   type PhotoPosition,
   type Side,
@@ -36,6 +37,7 @@ export const PageView = defineComponent({
     page: { type: Object as PropType<FlipbookPage>, required: true },
     paper: { type: String as PropType<PaperColor>, default: 'ivory' },
     frame: { type: String as PropType<FrameStyle>, default: 'none' },
+    shape: { type: String as PropType<PageShape>, default: 'portrait' },
     number: Number,
     side: String as PropType<Side>,
     showImages: { type: Boolean, default: true },
@@ -51,7 +53,7 @@ export const PageView = defineComponent({
       () =>
         renderPage(
           props.page,
-          { paper: props.paper, frame: props.frame },
+          { paper: props.paper, frame: props.frame, shape: props.shape },
           {
             number: props.number,
             side: props.side,

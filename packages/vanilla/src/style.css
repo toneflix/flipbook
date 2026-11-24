@@ -407,7 +407,7 @@
   cursor: pointer;
 }
 .fb-slot.is-active {
-  box-shadow: 0 0 0 0.8cqw var(--fb-accent);
+  box-shadow: 0 0 0 0.8cqmin var(--fb-accent);
 }
 /* The active slot of an editor that positions photos: drag to move, a thirds grid while moving. */
 .fb-positioning {
@@ -419,7 +419,7 @@
   cursor: grabbing;
 }
 .fb-positioning:focus-visible {
-  box-shadow: 0 0 0 1cqw var(--fb-accent);
+  box-shadow: 0 0 0 1cqmin var(--fb-accent);
 }
 .fb-positioning.is-moving .fb-print-frame-photo::after {
   content: '';
@@ -433,7 +433,7 @@
     linear-gradient(to bottom, transparent calc(200% / 3 - 0.5px), rgb(255 255 255 / 0.7) 0 calc(200% / 3 + 0.5px), transparent 0);
 }
 .fb-slot[data-over='true'] {
-  box-shadow: 0 0 0 1cqw var(--fb-highlight);
+  box-shadow: 0 0 0 1cqmin var(--fb-highlight);
 }
 .fb-slot-empty {
   display: flex;
@@ -443,10 +443,10 @@
   justify-content: center;
   background: color-mix(in srgb, currentColor 10%, transparent);
   opacity: 0.8;
-  font-size: 3.2cqw;
+  font-size: 3.2cqmin;
 }
 .fb-slot.is-editable .fb-slot-empty {
-  border: 0.4cqw dashed color-mix(in srgb, currentColor 30%, transparent);
+  border: 0.4cqmin dashed color-mix(in srgb, currentColor 30%, transparent);
 }
 .fb-grid {
   display: grid;
@@ -458,10 +458,10 @@
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 14cqw 7cqw 7cqw;
+  padding: 14cqmin 7cqmin 7cqmin;
   background: linear-gradient(to top, rgb(0 0 0 / 0.7), rgb(0 0 0 / 0.3), transparent);
   font-family: var(--fb-serif);
-  font-size: 4.2cqw;
+  font-size: 4.2cqmin;
   font-style: italic;
   line-height: 1.35;
   color: #fff;
@@ -469,9 +469,9 @@
 .fb-page-number {
   position: absolute;
   bottom: 0;
-  padding: 0 5cqw 2.6cqw;
+  padding: 0 5cqmin 2.6cqmin;
   font-family: var(--fb-serif);
-  font-size: 2.8cqw;
+  font-size: 2.8cqmin;
   opacity: 0.6;
 }
 .fb-photo {
@@ -493,7 +493,7 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 4cqw;
+  width: 4cqmin;
 }
 .fb-hinge.is-left {
   left: 0;
@@ -505,17 +505,17 @@
 }
 .fb-cover-panel {
   position: absolute;
-  inset: 6cqw;
+  inset: 6cqmin;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8cqw 6cqw;
+  padding: 8cqmin 6cqmin;
   border: 1px solid color-mix(in srgb, currentColor 40%, transparent);
   text-align: center;
 }
 .fb-cover .fb-kicker {
   margin: 0;
-  font-size: 2.6cqw;
+  font-size: 2.6cqmin;
   letter-spacing: 0.3em;
   text-transform: uppercase;
   opacity: 0.7;
@@ -525,22 +525,22 @@
   width: 100%;
   max-height: 62%;
   flex: 1;
-  margin-top: 7cqw;
+  margin-top: 7cqmin;
   overflow: hidden;
-  border: 0.8cqw solid color-mix(in srgb, currentColor 60%, transparent);
-  box-shadow: inset 0 0 2cqw rgb(0 0 0 / 0.4);
+  border: 0.8cqmin solid color-mix(in srgb, currentColor 60%, transparent);
+  box-shadow: inset 0 0 2cqmin rgb(0 0 0 / 0.4);
 }
 .fb-imprint {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 10cqw;
+  bottom: 10cqmin;
   text-align: center;
 }
 .fb-ornament {
   display: block;
-  width: 9cqw;
-  height: 9cqw;
+  width: 9cqmin;
+  height: 9cqmin;
   margin: 0 auto;
 }
 
@@ -970,18 +970,18 @@
 
 /* Cover designs. Ink is the cover's text colour; foil and stamping come from layered text shadows. */
 .fb-cover .fb-cover-title {
-  margin-top: 5cqw;
-  font-size: 9cqw;
+  margin-top: 5cqmin;
+  font-size: 9cqmin;
   font-weight: 500;
   line-height: 1.05;
   text-wrap: balance;
   text-shadow:
-    0 0.15cqw 0 rgb(0 0 0 / 0.35),
-    0 -0.1cqw 0 rgb(255 255 255 / 0.12);
+    0 0.15cqmin 0 rgb(0 0 0 / 0.35),
+    0 -0.1cqmin 0 rgb(255 255 255 / 0.12);
 }
 .fb-cover .fb-cover-subtitle {
-  margin-top: 5cqw;
-  font-size: 4cqw;
+  margin-top: 5cqmin;
+  font-size: 4cqmin;
   opacity: 0.85;
 }
 .fb-cover-finish {
@@ -991,16 +991,16 @@
   background:
     linear-gradient(115deg, rgb(255 255 255 / 0.1), transparent 35%, transparent 70%, rgb(255 255 255 / 0.05)),
     radial-gradient(ellipse at 50% 50%, transparent 60%, rgb(0 0 0 / 0.22)), url('./textures/grain-fine.webp');
-  background-size: auto, auto, 40cqw;
+  background-size: auto, auto, 40cqmin;
   box-shadow:
-    inset 0 0 0 0.3cqw rgb(0 0 0 / 0.12),
-    inset 0 0 2cqw rgb(0 0 0 / 0.18);
+    inset 0 0 0 0.3cqmin rgb(0 0 0 / 0.12),
+    inset 0 0 2cqmin rgb(0 0 0 / 0.18);
   mix-blend-mode: soft-light;
 }
 
 .fb-cover-stack {
   position: absolute;
-  inset: 14cqw 12cqw;
+  inset: 14cqmin 12cqmin;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1009,79 +1009,79 @@
 }
 .fb-cover-frame {
   position: absolute;
-  inset: 5cqw;
-  border: 0.35cqw solid currentColor;
-  outline: 0.15cqw solid currentColor;
-  outline-offset: -1.6cqw;
+  inset: 5cqmin;
+  border: 0.35cqmin solid currentColor;
+  outline: 0.15cqmin solid currentColor;
+  outline-offset: -1.6cqmin;
   opacity: 0.85;
 }
 .fb-fleuron {
   position: absolute;
-  width: 18cqw;
-  height: 18cqw;
+  width: 18cqmin;
+  height: 18cqmin;
 }
 .fb-fleuron.is-tl {
-  top: 3.6cqw;
-  left: 3.6cqw;
+  top: 3.6cqmin;
+  left: 3.6cqmin;
 }
 .fb-fleuron.is-tr {
-  top: 3.6cqw;
-  right: 3.6cqw;
+  top: 3.6cqmin;
+  right: 3.6cqmin;
   transform: scaleX(-1);
 }
 .fb-fleuron.is-bl {
-  bottom: 3.6cqw;
-  left: 3.6cqw;
+  bottom: 3.6cqmin;
+  left: 3.6cqmin;
   transform: scaleY(-1);
 }
 .fb-fleuron.is-br {
-  right: 3.6cqw;
-  bottom: 3.6cqw;
+  right: 3.6cqmin;
+  bottom: 3.6cqmin;
   transform: scale(-1);
 }
 .fb-design-gilt .fb-cover-frame,
 .fb-design-gilt .fb-fleuron {
-  filter: drop-shadow(0 0.15cqw 0 rgb(0 0 0 / 0.3));
+  filter: drop-shadow(0 0.15cqmin 0 rgb(0 0 0 / 0.3));
 }
 .fb-cover-photo.is-oval {
-  width: 52cqw;
-  height: 64cqw;
+  width: 52cqmin;
+  height: 64cqmin;
   max-height: none;
   flex: none;
-  margin: 6cqw 0 0;
+  margin: 6cqmin 0 0;
   border-radius: 50%;
-  border: 0.6cqw solid currentColor;
+  border: 0.6cqmin solid currentColor;
   box-shadow:
-    0 0 0 1.2cqw color-mix(in srgb, currentColor 0%, transparent),
-    0 0 0 1.5cqw color-mix(in srgb, currentColor 55%, transparent),
-    inset 0 0 3cqw rgb(0 0 0 / 0.45);
+    0 0 0 1.2cqmin color-mix(in srgb, currentColor 0%, transparent),
+    0 0 0 1.5cqmin color-mix(in srgb, currentColor 55%, transparent),
+    inset 0 0 3cqmin rgb(0 0 0 / 0.45);
 }
 .fb-design-gilt .fb-cover-title {
-  font-size: 8cqw;
+  font-size: 8cqmin;
 }
 
 .fb-cover-window {
   position: absolute;
-  top: 10cqw;
-  left: 12cqw;
-  right: 12cqw;
-  height: 76cqw;
+  top: 10cqmin;
+  left: 12cqmin;
+  right: 12cqmin;
+  height: 76cqmin;
   overflow: hidden;
-  border-radius: 0.6cqw;
+  border-radius: 0.6cqmin;
   box-shadow:
-    inset 0 0.8cqw 1.6cqw rgb(0 0 0 / 0.55),
-    inset 0 -0.3cqw 0.6cqw rgb(255 255 255 / 0.12),
-    0 0.3cqw 0 rgb(255 255 255 / 0.1),
-    0 -0.3cqw 0 rgb(0 0 0 / 0.25);
+    inset 0 0.8cqmin 1.6cqmin rgb(0 0 0 / 0.55),
+    inset 0 -0.3cqmin 0.6cqmin rgb(255 255 255 / 0.12),
+    0 0.3cqmin 0 rgb(255 255 255 / 0.1),
+    0 -0.3cqmin 0 rgb(0 0 0 / 0.25);
 }
 .fb-cover-window::after {
   content: '';
   position: absolute;
   inset: 0;
   box-shadow:
-    inset 0 1.2cqw 2cqw rgb(0 0 0 / 0.5),
-    inset 0.6cqw 0 1.2cqw rgb(0 0 0 / 0.25),
-    inset -0.6cqw 0 1.2cqw rgb(0 0 0 / 0.2);
+    inset 0 1.2cqmin 2cqmin rgb(0 0 0 / 0.5),
+    inset 0.6cqmin 0 1.2cqmin rgb(0 0 0 / 0.25),
+    inset -0.6cqmin 0 1.2cqmin rgb(0 0 0 / 0.2);
   pointer-events: none;
 }
 .fb-cover-window.is-empty {
@@ -1091,16 +1091,16 @@
   background: rgb(0 0 0 / 0.12);
 }
 .fb-cover-window.is-empty .fb-ornament {
-  width: 16cqw;
-  height: 16cqw;
+  width: 16cqmin;
+  height: 16cqmin;
   opacity: 0.6;
 }
 .fb-cover-stamp {
   position: absolute;
-  left: 10cqw;
-  right: 10cqw;
-  top: 92cqw;
-  bottom: 8cqw;
+  left: 10cqmin;
+  right: 10cqmin;
+  top: 92cqmin;
+  bottom: 8cqmin;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1108,31 +1108,31 @@
   text-align: center;
 }
 .fb-cover-stamp .fb-cover-title {
-  margin-top: 1.5cqw;
-  font-size: 7.5cqw;
+  margin-top: 1.5cqmin;
+  font-size: 7.5cqmin;
   text-shadow:
-    0 -0.15cqw 0 rgb(0 0 0 / 0.45),
-    0 0.15cqw 0 rgb(255 255 255 / 0.18);
+    0 -0.15cqmin 0 rgb(0 0 0 / 0.45),
+    0 0.15cqmin 0 rgb(255 255 255 / 0.18);
 }
 .fb-cover-stamp .fb-cover-subtitle {
-  margin-top: 2cqw;
-  font-size: 3.4cqw;
+  margin-top: 2cqmin;
+  font-size: 3.4cqmin;
 }
 
 .fb-cover-print {
   position: absolute;
-  top: 11cqw;
-  left: 16cqw;
-  right: 16cqw;
-  height: 62cqw;
-  padding: 2.4cqw;
+  top: 11cqmin;
+  left: 16cqmin;
+  right: 16cqmin;
+  height: 62cqmin;
+  padding: 2.4cqmin;
   background: #f7f2e7;
   box-shadow:
-    0 0.6cqw 1.2cqw rgb(0 0 0 / 0.35),
-    0 2cqw 4cqw -1.6cqw rgb(0 0 0 / 0.45);
+    0 0.6cqmin 1.2cqmin rgb(0 0 0 / 0.35),
+    0 2cqmin 4cqmin -1.6cqmin rgb(0 0 0 / 0.45);
   transform: rotate(-2.5deg);
   color: #2b2520;
-  font-size: 1.1cqw;
+  font-size: 1.1cqmin;
 }
 .fb-cover-print-photo {
   position: relative;
@@ -1146,33 +1146,33 @@
 }
 .fb-cover-label {
   position: absolute;
-  left: 18cqw;
-  right: 18cqw;
-  top: 84cqw;
-  padding: 4cqw 4cqw 4.5cqw;
+  left: 18cqmin;
+  right: 18cqmin;
+  top: 84cqmin;
+  padding: 4cqmin 4cqmin 4.5cqmin;
   background: #f4eddc url('./textures/paper-fine.webp');
-  background-size: 50cqw;
+  background-size: 50cqmin;
   box-shadow:
-    0 0.3cqw 0.8cqw rgb(0 0 0 / 0.3),
-    inset 0 0 0 1.2cqw #f4eddc,
-    inset 0 0 0 1.4cqw rgb(60 45 30 / 0.5);
+    0 0.3cqmin 0.8cqmin rgb(0 0 0 / 0.3),
+    inset 0 0 0 1.2cqmin #f4eddc,
+    inset 0 0 0 1.4cqmin rgb(60 45 30 / 0.5);
   color: #3a2f25;
   text-align: center;
 }
 .fb-cover-label.is-alone {
-  top: 44cqw;
+  top: 44cqmin;
 }
 .fb-cover-label .fb-cover-title {
-  margin-top: 1cqw;
-  font-size: 6.4cqw;
+  margin-top: 1cqmin;
+  font-size: 6.4cqmin;
   text-shadow: none;
 }
 .fb-cover-label .fb-kicker {
-  font-size: 2.2cqw;
+  font-size: 2.2cqmin;
 }
 .fb-cover-label .fb-cover-subtitle {
-  margin-top: 1.5cqw;
-  font-size: 3cqw;
+  margin-top: 1.5cqmin;
+  font-size: 3cqmin;
 }
 
 .fb-cover-rays {
@@ -1183,32 +1183,32 @@
   opacity: 0.9;
 }
 .fb-cover-stack.is-deco {
-  inset: 17cqw 14cqw 10cqw;
+  inset: 17cqmin 14cqmin 15cqmin;
   justify-content: flex-start;
 }
 .fb-cover-photo.is-arch {
-  width: 56cqw;
-  height: 62cqw;
+  width: 56cqmin;
+  height: 62cqmin;
   max-height: none;
   flex: none;
-  margin: 4cqw 0 0;
-  border: 0.5cqw solid currentColor;
-  border-radius: 28cqw 28cqw 0 0;
+  margin: 4cqmin 0 0;
+  border: 0.5cqmin solid currentColor;
+  border-radius: 28cqmin 28cqmin 0 0;
   box-shadow:
-    0 0 0 1.4cqw transparent,
-    0 0 0 1.7cqw color-mix(in srgb, currentColor 60%, transparent),
-    inset 0 0 3cqw rgb(0 0 0 / 0.45);
+    0 0 0 1.4cqmin transparent,
+    0 0 0 1.7cqmin color-mix(in srgb, currentColor 60%, transparent),
+    inset 0 0 3cqmin rgb(0 0 0 / 0.45);
 }
 .fb-design-deco .fb-cover-title {
-  margin-top: 7cqw;
-  font-size: 6.6cqw;
+  margin-top: 7cqmin;
+  font-size: 6.6cqmin;
   font-weight: 400;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 .fb-design-deco .fb-cover-subtitle {
-  margin-top: 2.5cqw;
-  font-size: 3.4cqw;
+  margin-top: 2.5cqmin;
+  font-size: 3.4cqmin;
 }
 
 .fb-cover-art {
@@ -1232,7 +1232,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 26cqw 10cqw 10cqw;
+  padding: 26cqmin 10cqmin 10cqmin;
   background: linear-gradient(to top, rgb(0 0 0 / 0.65), rgb(0 0 0 / 0.25) 55%, transparent);
   color: #fff;
   text-align: center;
@@ -1246,8 +1246,8 @@
   color: inherit;
 }
 .fb-cover-caption .fb-cover-title {
-  margin-top: 2cqw;
-  text-shadow: 0 0.3cqw 1.2cqw rgb(0 0 0 / 0.5);
+  margin-top: 2cqmin;
+  text-shadow: 0 0.3cqmin 1.2cqmin rgb(0 0 0 / 0.5);
 }
 
 .fb-cover-classic {
@@ -1291,8 +1291,8 @@
 .fb-slot.fb-placed.is-loose {
   overflow: visible;
   box-shadow:
-    0 0.4cqw 0.8cqw rgb(0 0 0 / 0.18),
-    0 1.6cqw 3.2cqw -1cqw rgb(0 0 0 / 0.25);
+    0 0.4cqmin 0.8cqmin rgb(0 0 0 / 0.18),
+    0 1.6cqmin 3.2cqmin -1cqmin rgb(0 0 0 / 0.25);
 }
 .fb-page .fb-placed-caption {
   position: absolute;
@@ -1301,13 +1301,13 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  font-size: 3.8cqw;
+  font-size: 3.8cqmin;
   line-height: 1.35;
   text-align: center;
 }
 .fb-page .fb-placed-caption.is-prose {
   display: block;
-  font-size: 4.4cqw;
+  font-size: 4.4cqmin;
   line-height: 1.55;
   text-align: left;
   text-wrap: pretty;
@@ -1328,7 +1328,7 @@
 .fb-print-sheet {
   position: relative;
   width: var(--fb-print-width);
-  aspect-ratio: 3 / 4;
+  height: var(--fb-print-height);
   overflow: hidden;
   container-type: size;
   break-inside: avoid;
@@ -1349,4 +1349,110 @@
   .fb-print-sheet:last-child {
     break-after: auto;
   }
+}
+
+/*
+ * Page shapes. Sizes are in cqmin, 1% of the short side, so they match on every shape; these rules
+ * rearrange what stacks on a portrait page for pages and covers of other shapes.
+ */
+.fb-cover-words {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+.fb-cover-panel.is-beside {
+  flex-direction: row;
+  align-items: stretch;
+}
+.fb-cover-panel.is-beside .fb-cover-words {
+  width: 42%;
+  flex: none;
+}
+.fb-cover-panel.is-beside .fb-cover-photo {
+  max-height: none;
+  margin: 0 0 0 7cqmin;
+}
+.fb-cover-stack {
+  inset-inline: calc(50cqw - 38cqmin);
+}
+.fb-cover-stack.is-beside {
+  inset-inline: 12cqmin;
+  flex-direction: row;
+  align-items: stretch;
+}
+.fb-cover-stack.is-beside .fb-cover-side {
+  display: flex;
+  width: 50%;
+  align-items: center;
+  justify-content: center;
+}
+.fb-cover-stack.is-beside .fb-cover-photo.is-oval {
+  margin: 0;
+}
+.fb-cover-stack.is-beside .fb-cover-words {
+  width: calc(50% - 4cqmin);
+  margin-left: 4cqmin;
+}
+.fb-cover-photo.is-oval,
+.fb-cover-photo.is-arch {
+  min-height: 0;
+  flex: 0 1 auto;
+  width: auto;
+}
+.fb-cover-photo.is-oval {
+  aspect-ratio: 52 / 64;
+}
+.fb-cover-photo.is-arch {
+  aspect-ratio: 56 / 62;
+}
+.fb-cover:not(.fb-shape-portrait) .fb-cover-window {
+  height: 51cqmin;
+}
+.fb-cover:not(.fb-shape-portrait) .fb-cover-stamp {
+  top: 67cqmin;
+}
+.fb-cover-stamp {
+  left: calc(50cqw - 40cqmin);
+  right: calc(50cqw - 40cqmin);
+}
+.fb-cover-caption {
+  padding-inline: calc(50cqw - 40cqmin);
+}
+.fb-cover-stack.is-deco {
+  inset-inline: calc(50cqw - 36cqmin);
+}
+.fb-cover:not(.fb-shape-portrait) .fb-cover-label.is-alone,
+.fb-cover-label.is-beside {
+  top: 50%;
+  transform: translateY(-50%);
+}
+.fb-cover:not(.fb-shape-portrait) .fb-cover-label.is-alone {
+  left: calc(50% - 32cqmin);
+  right: auto;
+  width: 64cqmin;
+}
+.fb-cover-label.is-beside {
+  right: auto;
+}
+.fb-cover-mount {
+  position: absolute;
+  inset: 11cqmin 0 6cqmin;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 11cqmin;
+}
+.fb-cover-mount .fb-cover-print {
+  position: relative;
+  inset: auto;
+  min-height: 0;
+  flex: 0 1 62cqmin;
+  aspect-ratio: 68 / 62;
+}
+.fb-cover-mount .fb-cover-label {
+  position: relative;
+  inset: auto;
+  width: 64cqmin;
+  flex: none;
 }

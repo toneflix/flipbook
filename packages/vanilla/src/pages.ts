@@ -1,14 +1,16 @@
 import {
   BANDED_FRAMES,
-  PLACED_LAYOUTS,
   PhotoCrop,
+  pageSize,
   photoFrame,
+  placedLayout,
   type Face,
   type FlipbookBook,
   type FlipbookPage,
   type FlipbookPhoto,
   type FrameStyle,
   type PageBox,
+  type PageShape,
   type PaperColor,
   type PhotoPosition,
 } from '@toneflix/flipbook-core'
@@ -21,7 +23,19 @@ export type Side = 'left' | 'right'
 export interface PageLook {
   paper: PaperColor
   frame: FrameStyle
+  /** Defaults to `portrait`. */
+  shape?: PageShape
 }
+
+/** The classes a page or cover of this shape carries: its shape, and `is-across` when it is wider than tall. */
+export function shapeClass(shape: PageShape = 'portrait') {
+  const { width, height } = pageSize(shape)
+
+  return `fb-shape-${shape}${width > height ? ' is-across' : ''}`
+}
+
+/** Side padding that keeps centred writing to a portrait page's measure, with `inset` units at each side. */
+export const measurePadding = (inset: number) => `calc(50cqw - ${50 - inset}cqmin)`
 
 export interface PageOptions {
   /** Printed in the outer bottom corner. */
@@ -66,11 +80,11 @@ export const image = (photo: FlipbookPhoto, className: string) =>
     style: PhotoCrop.of(photo.position).css,
   })
 
-const boxStyle = ({ x, y, width, height, rotate }: PageBox): Record<string, string> => ({
-  left: `${x}cqw`,
-  top: `${y}cqw`,
-  width: `${width}cqw`,
-  height: `${height}cqw`,
+export const boxStyle = ({ x, y, width, height, rotate }: PageBox): Record<string, string> => ({
+  left: `${x}cqmin`,
+  top: `${y}cqmin`,
+  width: `${width}cqmin`,
+  height: `${height}cqmin`,
   ...(rotate ? { transform: `rotate(${rotate}deg)` } : {}),
 })
 
@@ -90,7 +104,7 @@ const serif = (text: string, style: Record<string, string>, italic = true, cente
 /** A photo printed on a page inside its frame. */
 export function printedPhoto(photo: FlipbookPhoto | null, frame: FrameStyle, fit: 'cover' | 'contain' = 'cover', show = true, scale = 1) {
   const ratio = photo?.width && photo.height ? photo.width / photo.height : 4 / 3
-  const box = h('div', { class: 'fb-print-frame-box', style: { fontSize: `${scale}cqw` } })
+  const box = h('div', { class: 'fb-print-frame-box', style: { fontSize: `${scale}cqmin` } })
   const print = h('div', { class: `fb-print-frame fb-frame-${frame} ${fit === 'contain' ? 'is-contained' : ''}` })
 
   if (fit === 'contain') print.style.setProperty('--ratio', String(ratio))
@@ -115,8 +129,10 @@ export function printedPhoto(photo: FlipbookPhoto | null, frame: FrameStyle, fit
 export function renderPage(page: FlipbookPage, look: PageLook, options: PageOptions = {}) {
   const { layout, caption, photos } = page
   const { number, side, showImages = true, onSlotClick, activeSlot, onPhotoPosition } = options
-  const placed = PLACED_LAYOUTS[layout]
-  const root = h('div', { class: `fb-paper fb-paper-${look.paper} fb-page` })
+  const size = pageSize(look.shape)
+  const across = size.width > size.height
+  const placed = placedLayout(layout, size)
+  const root = h('div', { class: `fb-paper fb-paper-${look.paper} fb-page ${shapeClass(look.shape)}` })
 
   const slot = (index: number, className = '', framed = false, style?: Record<string, string>) => {
     const photo = photos[index] ?? null
@@ -144,7 +160,7 @@ export function renderPage(page: FlipbookPage, look: PageLook, options: PageOpti
 
   const column = (style: Record<string, string>, ...children: (Node | null | false | '' | undefined)[]) =>
     h('div', { class: 'fb-column', style }, ...children)
-  const small = caption ? serif(caption, { fontSize: '3.8cqw' }) : null
+  const small = caption ? serif(caption, { fontSize: '3.8cqmin' }) : null
 
   switch (layout) {
     case 'single':
@@ -154,43 +170,65 @@ export function renderPage(page: FlipbookPage, look: PageLook, options: PageOpti
     case 'framed':
       root.append(
         column(
-          { padding: '10cqw 9cqw 6cqw' },
+          { padding: '10cqmin 9cqmin 6cqmin' },
           h('div', { class: 'fb-grow' }, slot(0, 'fb-fill', true)),
-          serif(caption ?? '', { marginTop: '5cqw', fontSize: '4.2cqw', minHeight: '6cqw', lineHeight: '1.35' }),
+          serif(caption ?? '', { marginTop: '5cqmin', fontSize: '4.2cqmin', minHeight: '6cqmin', lineHeight: '1.35' }),
         ),
       )
       break
     case 'pair':
-      root.append(column({ padding: '7cqw', gap: '4cqw' }, slot(0, 'fb-grow'), slot(1, 'fb-grow'), small))
+      root.append(
+        across
+          ? column(
+              { padding: '7cqmin', gap: '4cqmin' },
+              h('div', { class: 'fb-row fb-grow', style: { gap: '4cqmin' } }, slot(0, 'fb-grow'), slot(1, 'fb-grow')),
+              small,
+            )
+          : column({ padding: '7cqmin', gap: '4cqmin' }, slot(0, 'fb-grow'), slot(1, 'fb-grow'), small),
+      )
       break
     case 'grid':
       root.append(
         column(
-          { padding: '7cqw', gap: '3cqw' },
-          h('div', { class: 'fb-grid fb-grow', style: { gap: '3cqw' } }, ...[0, 1, 2, 3].map((i) => slot(i))),
+          { padding: '7cqmin', gap: '3cqmin' },
+          h('div', { class: 'fb-grid fb-grow', style: { gap: '3cqmin' } }, ...[0, 1, 2, 3].map((i) => slot(i))),
           small,
         ),
       )
       break
     case 'collage':
       root.append(
-        column(
-          { padding: '7cqw', gap: '3cqw' },
-          slot(0, 'fb-grow-large'),
-          h('div', { class: 'fb-row fb-grow', style: { gap: '3cqw' } }, slot(1, 'fb-grow'), slot(2, 'fb-grow')),
-          small,
-        ),
+        across
+          ? column(
+              { padding: '7cqmin', gap: '3cqmin' },
+              h(
+                'div',
+                { class: 'fb-row fb-grow', style: { gap: '3cqmin' } },
+                slot(0, 'fb-grow-large'),
+                h('div', { class: 'fb-column fb-grow', style: { gap: '3cqmin' } }, slot(1, 'fb-grow'), slot(2, 'fb-grow')),
+              ),
+              small,
+            )
+          : column(
+              { padding: '7cqmin', gap: '3cqmin' },
+              slot(0, 'fb-grow-large'),
+              h('div', { class: 'fb-row fb-grow', style: { gap: '3cqmin' } }, slot(1, 'fb-grow'), slot(2, 'fb-grow')),
+              small,
+            ),
       )
       break
     case 'text':
       root.append(
         h(
           'div',
-          { class: 'fb-column fb-center', style: { alignItems: 'center', justifyContent: 'center', padding: '14cqw 12cqw' } },
-          h('span', { class: 'fb-serif', style: { fontSize: '18cqw', lineHeight: '0.6', opacity: '0.3' }, 'aria-hidden': 'true' }, '“'),
+          {
+            class: 'fb-column fb-center',
+            style: { alignItems: 'center', justifyContent: 'center', padding: `14cqmin ${measurePadding(12)}` },
+          },
+          h('span', { class: 'fb-serif', style: { fontSize: '18cqmin', lineHeight: '0.6', opacity: '0.3' }, 'aria-hidden': 'true' }, '“'),
           serif(
             caption || (onSlotClick ? 'Write something in the caption box below.' : ''),
-            { marginTop: '4cqw', fontSize: '6cqw', lineHeight: '1.4', textWrap: 'balance' },
+            { marginTop: '4cqmin', fontSize: '6cqmin', lineHeight: '1.4', textWrap: 'balance' },
             true,
             false,
           ),
@@ -224,18 +262,21 @@ export function renderTitlePage(book: FlipbookBook, look: PageLook, side?: Side)
   return h(
     'div',
     {
-      class: `fb-paper fb-paper-${look.paper} fb-page fb-center`,
-      style: { alignItems: 'center', justifyContent: 'center', padding: '12cqw' },
+      class: `fb-paper fb-paper-${look.paper} fb-page fb-center ${shapeClass(look.shape)}`,
+      style: { alignItems: 'center', justifyContent: 'center', padding: `12cqmin ${measurePadding(12)}` },
     },
     ornament(),
     h(
       'h2',
-      { class: 'fb-serif', style: { marginTop: '6cqw', fontSize: '7.5cqw', fontWeight: '400', lineHeight: '1.1', textWrap: 'balance' } },
+      {
+        class: 'fb-serif',
+        style: { marginTop: '6cqmin', fontSize: '7.5cqmin', fontWeight: '400', lineHeight: '1.1', textWrap: 'balance' },
+      },
       book.title,
     ),
-    book.subtitle && serif(book.subtitle, { marginTop: '4cqw', fontSize: '4cqw', lineHeight: '1.45' }, true, false),
-    h('div', { style: { marginTop: '7cqw', height: '1px', width: '20cqw', background: 'currentColor', opacity: '0.3' } }),
-    credit && h('p', { style: { marginTop: '5cqw', fontSize: '2.6cqw', letterSpacing: '0.2em', textTransform: 'uppercase' } }, credit),
+    book.subtitle && serif(book.subtitle, { marginTop: '4cqmin', fontSize: '4cqmin', lineHeight: '1.45' }, true, false),
+    h('div', { style: { marginTop: '7cqmin', height: '1px', width: '20cqmin', background: 'currentColor', opacity: '0.3' } }),
+    credit && h('p', { style: { marginTop: '5cqmin', fontSize: '2.6cqmin', letterSpacing: '0.2em', textTransform: 'uppercase' } }, credit),
     surface(side),
   )
 }
@@ -244,21 +285,21 @@ export function renderColophon(book: FlipbookBook, look: PageLook, side?: Side) 
   return h(
     'div',
     {
-      class: `fb-paper fb-paper-${look.paper} fb-page fb-center`,
-      style: { alignItems: 'center', justifyContent: 'flex-end', padding: '12cqw', opacity: '0.9' },
+      class: `fb-paper fb-paper-${look.paper} fb-page fb-center ${shapeClass(look.shape)}`,
+      style: { alignItems: 'center', justifyContent: 'flex-end', padding: `12cqmin ${measurePadding(12)}`, opacity: '0.9' },
     },
-    book.colophon && serif(book.colophon, { fontSize: '3.6cqw' }, true, false),
+    book.colophon && serif(book.colophon, { fontSize: '3.6cqmin' }, true, false),
     surface(side),
   )
 }
 
 export function renderBlank(look: PageLook, side?: Side) {
-  return h('div', { class: `fb-paper fb-paper-${look.paper} fb-page` }, surface(side))
+  return h('div', { class: `fb-paper fb-paper-${look.paper} fb-page ${shapeClass(look.shape)}` }, surface(side))
 }
 
 /** Any face of a book. Page numbers and the spine curve need `side`. */
 export function renderFace(face: Face, book: FlipbookBook, side?: Side, numbered = true) {
-  const look: PageLook = { paper: book.paper ?? 'ivory', frame: book.frame ?? 'none' }
+  const look: PageLook = { paper: book.paper ?? 'ivory', frame: book.frame ?? 'none', shape: book.pageShape }
 
   switch (face.kind) {
     case 'cover':

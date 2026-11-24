@@ -1,6 +1,7 @@
 export * from './vector'
 export * from './fold'
 export * from './page-turn'
+export * from './shape'
 export * from './book'
 export * from './layout'
 export * from './reader'

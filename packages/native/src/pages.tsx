@@ -1,19 +1,19 @@
 import { useId, type ReactNode } from 'react'
 import { Image, Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native'
 import Svg, { Circle, Defs, Path, RadialGradient, Rect, Stop } from 'react-native-svg'
-import { PLACED_LAYOUTS, photoFrame, type FlipbookBook, type FlipbookPage, type PageBox, type PhotoPosition } from '@toneflix/flipbook-core'
+import { placedLayout, photoFrame, type FlipbookBook, type FlipbookPage, type PageBox, type PhotoPosition } from '@toneflix/flipbook-core'
 import { Gradient } from './Gradient'
-import { ink, useBookLook, usePaper, useSerif, type PaperLook } from './look'
+import { ink, useBookLook, usePageMetrics, usePaper, useSerif, type PaperLook } from './look'
 import { PrintedPhoto } from './PrintedPhoto'
 
-/** Pages are 3:4, like the web's. */
+/** Width over height of a portrait page. Other shapes follow the book's `pageShape`. */
 export const PAGE_RATIO = 3 / 4
 
 type Side = 'left' | 'right'
 
 export interface PageViewProps {
   page: FlipbookPage
-  /** Page width; the height follows the 3:4 page shape. */
+  /** Page width; the height follows the book's page shape. */
   width: number
   number?: number
   side?: Side
@@ -30,8 +30,8 @@ export interface PageViewProps {
 }
 
 /**
- * The inside of one book page, `width` wide. Sizes are in units of 1% of the width, so the same
- * page looks right as a thumbnail and full screen.
+ * The inside of one book page, `width` wide. Sizes are in units of 1% of the page's short side, so
+ * the same page looks right as a thumbnail and full screen, in every shape.
  */
 export function PageView({
   page,
@@ -47,10 +47,10 @@ export function PageView({
 }: PageViewProps) {
   const look = usePaper()
   const serif = useSerif()
-  const unit = width / 100
+  const { unit, size, across, measure } = usePageMetrics(width)
   const { layout, caption, photos } = page
   const bookFrame = useBookLook().frame
-  const placed = PLACED_LAYOUTS[layout]
+  const placed = placedLayout(layout, size)
   const captionStyle = [serif.italic, styles.caption, { fontSize: 3.8 * unit, lineHeight: 5.2 * unit, color: ink(look) }]
 
   const slot = (index: number, style: ViewStyle, fit: 'cover' | 'contain' = 'cover') => {
@@ -141,8 +141,17 @@ export function PageView({
 
       {layout === 'pair' && (
         <View style={[styles.fill, { padding: 7 * unit, gap: 4 * unit }]}>
-          {slot(0, styles.flex)}
-          {slot(1, styles.flex)}
+          {across ? (
+            <View style={[styles.row, { gap: 4 * unit }]}>
+              {slot(0, styles.flex)}
+              {slot(1, styles.flex)}
+            </View>
+          ) : (
+            <>
+              {slot(0, styles.flex)}
+              {slot(1, styles.flex)}
+            </>
+          )}
           {pageCaption}
         </View>
       )}
@@ -161,11 +170,23 @@ export function PageView({
 
       {layout === 'collage' && (
         <View style={[styles.fill, { padding: 7 * unit, gap: 3 * unit }]}>
-          {slot(0, { flex: 1.4 })}
-          <View style={[styles.row, { gap: 3 * unit }]}>
-            {slot(1, styles.flex)}
-            {slot(2, styles.flex)}
-          </View>
+          {across ? (
+            <View style={[styles.row, { gap: 3 * unit }]}>
+              {slot(0, { flex: 1.4 })}
+              <View style={[styles.flex, { gap: 3 * unit }]}>
+                {slot(1, styles.flex)}
+                {slot(2, styles.flex)}
+              </View>
+            </View>
+          ) : (
+            <>
+              {slot(0, { flex: 1.4 })}
+              <View style={[styles.row, { gap: 3 * unit }]}>
+                {slot(1, styles.flex)}
+                {slot(2, styles.flex)}
+              </View>
+            </>
+          )}
           {pageCaption}
         </View>
       )}
@@ -186,7 +207,7 @@ export function PageView({
       )}
 
       {layout === 'text' && (
-        <View style={[styles.fill, styles.centered, { paddingVertical: 14 * unit, paddingHorizontal: 12 * unit }]}>
+        <View style={[styles.fill, styles.centered, { paddingVertical: 14 * unit, paddingHorizontal: measure(12) }]}>
           <Text
             style={[serif.upright, { fontSize: 18 * unit, lineHeight: 16 * unit, height: 10 * unit, color: ink(look, 0.3) }]}
             accessible={false}
@@ -220,9 +241,10 @@ export function PageView({
 /** A sheet of the book's paper: texture under the content, grain and page light over it. */
 export function Paper({ width, side, children, style }: { width: number; side?: Side; children?: ReactNode; style?: ViewStyle }) {
   const look = usePaper()
+  const { height } = usePageMetrics(width)
 
   return (
-    <View style={[styles.page, { width, height: width / PAGE_RATIO, backgroundColor: look.background }, style]}>
+    <View style={[styles.page, { width, height, backgroundColor: look.background }, style]}>
       <Image source={look.texture} resizeMode="repeat" style={[StyleSheet.absoluteFill, styles.tile, { opacity: look.textureOpacity }]} />
       <PageLight look={look} />
       {children}
@@ -285,12 +307,12 @@ export function TitlePageView({
 }) {
   const look = usePaper()
   const serif = useSerif()
-  const unit = width / 100
+  const { unit, measure } = usePageMetrics(width)
   const credit = [book.author, book.year].filter(Boolean).join(' · ')
 
   return (
     <Paper width={width} side={side}>
-      <View style={[styles.fill, styles.centered, { padding: 12 * unit }]}>
+      <View style={[styles.fill, styles.centered, { paddingVertical: 12 * unit, paddingHorizontal: measure(12) }]}>
         <Ornament size={9 * unit} color={ink(look)} />
         <Text
           style={[serif.upright, styles.center, { marginTop: 6 * unit, fontSize: 7.5 * unit, lineHeight: 8.3 * unit, color: ink(look) }]}
@@ -319,11 +341,16 @@ export function TitlePageView({
 export function ColophonView({ book, width, side }: { book: Pick<FlipbookBook, 'colophon'>; width: number; side?: Side }) {
   const look = usePaper()
   const serif = useSerif()
-  const unit = width / 100
+  const { unit, measure } = usePageMetrics(width)
 
   return (
     <Paper width={width} side={side}>
-      <View style={[styles.fill, { alignItems: 'center', justifyContent: 'flex-end', padding: 12 * unit }]}>
+      <View
+        style={[
+          styles.fill,
+          { alignItems: 'center', justifyContent: 'flex-end', paddingVertical: 12 * unit, paddingHorizontal: measure(12) },
+        ]}
+      >
         {book.colophon ? (
           <Text style={[serif.italic, styles.center, { fontSize: 3.6 * unit, color: ink(look, 0.9) }]}>{book.colophon}</Text>
         ) : null}
