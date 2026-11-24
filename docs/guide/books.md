@@ -64,6 +64,11 @@ interface FlipbookPage {
 | `contact`  | 6      | A contact sheet, two across and three down.                     |
 | `scatter`  | 3      | Loose prints dropped on the page at an angle, casting a shadow. |
 | `story`    | 1      | A photo over a paragraph of writing from the caption.           |
+| `duo`      | 2      | Two tall photos side by side.                                   |
+| `feature`  | 4      | One large photo over a row of three small ones.                 |
+| `squares`  | 9      | Nine square photos, three by three.                             |
+| `aside`    | 1      | A tall photo with the caption as writing beside it.             |
+| `opener`   | 1      | Printed to the top and side edges, writing below. Never framed. |
 
 `PAGE_LAYOUTS` lists them with their labels and slot counts, handy for a layout picker. A `null` photo leaves its slot blank.
 

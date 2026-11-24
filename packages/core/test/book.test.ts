@@ -28,6 +28,7 @@ describe('photoFrame', () => {
 
   it('never frames full-bleed pages', () => {
     expect(photoFrame({ layout: 'single' }, { frame: 'oval' }, 'gilt')).toBe('none')
+    expect(photoFrame({ layout: 'opener' }, { frame: 'oval' }, 'gilt')).toBe('none')
   })
 })
 
