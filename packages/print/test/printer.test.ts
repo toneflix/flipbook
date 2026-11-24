@@ -29,12 +29,12 @@ const book: FlipbookBook = {
 describe('BookPrinter', () => {
   const printer = new BookPrinter(book, { dpi: 72, load: photo })
 
-  it('prints the pages inside the covers in reading order', () => {
-    expect(printer.names).toEqual(['title', 'page-1', 'page-2', 'colophon'])
+  it('prints every face from the front cover to the back', () => {
+    expect(printer.names).toEqual(['cover', 'title', 'page-1', 'page-2', 'colophon', 'back'])
   })
 
   it('draws a page as an image at the print resolution', async () => {
-    const pixels = await printer.pixels(printer.faces[1])
+    const pixels = await printer.pixels(printer.faces[2])
 
     expect(pixels.width).toBe(595)
     expect(pixels.height).toBe(793)
@@ -45,6 +45,6 @@ describe('BookPrinter', () => {
     const pdf = (await printer.pdf()).toString('latin1')
 
     expect(pdf.startsWith('%PDF')).toBe(true)
-    expect(pdf.match(/\/Type \/Page\b/g)).toHaveLength(4)
+    expect(pdf.match(/\/Type \/Page\b/g)).toHaveLength(6)
   })
 })

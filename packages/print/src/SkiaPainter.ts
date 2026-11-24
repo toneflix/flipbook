@@ -4,12 +4,15 @@ import {
   type Blend,
   type Box,
   type FillNode,
+  type GradientStop,
   type GroupNode,
   type Paint,
   type PhotoNode,
   type PhotoTone,
+  type Point,
   type Scene,
   type SceneNode,
+  type Shadow,
   type ShadowNode,
   type Shape,
   type StrokeNode,
@@ -24,8 +27,18 @@ export type PhotoLoader = (src: string) => Promise<string | Buffer>
 
 const require = createRequire(import.meta.url)
 
-/** Pixels per page unit for tiles and layers drawn off the page, sharper than 300 DPI on a 210 mm page. */
-const OFFSCREEN_SCALE = 40
+/** Pixels per page unit for pattern tiles, sharper than 300 DPI on a 210 mm page. */
+const TILE_SCALE = 40
+
+/** The least pixels per page unit for layers drawn off the page: 300 DPI on a 210 mm page. */
+const LAYER_SCALE = 24.8
+
+/** How far past the page a layer may reach, in page units. */
+const BLEED = 10
+
+const grow = (box: Box, by: number): Box => ({ x: box.x - by, y: box.y - by, width: box.width + 2 * by, height: box.height + 2 * by })
+
+const evenOdd = (shape: Shape): CanvasFillRule => (shape.type === 'ring' || shape.type === 'cutout' ? 'evenodd' : 'nonzero')
 
 const COMPOSITE: Record<Blend, GlobalCompositeOperation> = {
   normal: 'source-over',
@@ -116,7 +129,8 @@ export class SkiaPainter {
     }
   }
 
-  private path(shape: Shape, scale: number, path = new Path2D()): Path2D {
+  /** A shape as a Skia path, `scale` units per page unit. */
+  static path(shape: Shape, scale: number, path = new Path2D()): Path2D {
     switch (shape.type) {
       case 'rect':
         path.rect(shape.box.x * scale, shape.box.y * scale, shape.box.width * scale, shape.box.height * scale)
@@ -129,6 +143,18 @@ export class SkiaPainter {
         path.closePath()
         break
       }
+      case 'roundrect': {
+        const { x, y, width, height } = shape.box
+
+        path.roundRect(
+          x * scale,
+          y * scale,
+          width * scale,
+          height * scale,
+          shape.radii.map((r) => r * scale),
+        )
+        break
+      }
       case 'circle':
         path.moveTo((shape.center.x + shape.radius) * scale, shape.center.y * scale)
         path.arc(shape.center.x * scale, shape.center.y * scale, shape.radius * scale, 0, Math.PI * 2)
@@ -139,8 +165,8 @@ export class SkiaPainter {
         path.closePath()
         break
       case 'ring':
-        this.path({ type: 'rect', box: shape.outer }, scale, path)
-        this.path({ type: 'rect', box: shape.inner }, scale, path)
+        SkiaPainter.path({ type: 'rect', box: shape.outer }, scale, path)
+        SkiaPainter.path({ type: 'rect', box: shape.inner }, scale, path)
         break
       case 'path': {
         const [a, b, c, d, e, f] = shape.transform
@@ -148,8 +174,12 @@ export class SkiaPainter {
         path.addPath(new Path2D(shape.d), new DOMMatrix([a * scale, b * scale, c * scale, d * scale, e * scale, f * scale]))
         break
       }
+      case 'cutout':
+        SkiaPainter.path(shape.outer, scale, path)
+        SkiaPainter.path(shape.inner, scale, path)
+        break
       case 'union':
-        shape.shapes.forEach((part) => this.path(part, scale, path))
+        shape.shapes.forEach((part) => SkiaPainter.path(part, scale, path))
         break
     }
 
@@ -157,8 +187,8 @@ export class SkiaPainter {
   }
 
   private fill(ctx: CanvasRenderingContext2D, { shape, paint }: FillNode, scale: number) {
-    const path = this.path(shape, scale)
-    const rule = shape.type === 'ring' ? 'evenodd' : 'nonzero'
+    const path = SkiaPainter.path(shape, scale)
+    const rule = evenOdd(shape)
 
     if (typeof paint === 'string') {
       ctx.fillStyle = paint
@@ -168,19 +198,21 @@ export class SkiaPainter {
 
     switch (paint.type) {
       case 'linear': {
-        const gradient = ctx.createLinearGradient(paint.from.x * scale, paint.from.y * scale, paint.to.x * scale, paint.to.y * scale)
+        const { from, to, stops } = paint.repeat ? SkiaPainter.repeatLinear(paint, SkiaPainter.shapeBounds(shape)) : paint
+        const gradient = ctx.createLinearGradient(from.x * scale, from.y * scale, to.x * scale, to.y * scale)
 
-        paint.stops.forEach(({ offset, color }) => gradient.addColorStop(offset, color))
+        stops.forEach(({ offset, color }) => gradient.addColorStop(offset, color))
         ctx.fillStyle = gradient
 
         return ctx.fill(path, rule)
       }
       case 'radial': {
-        const rx = paint.radius.x * scale
-        const ry = paint.radius.y * scale
+        const { radius, stops } = paint.repeat ? SkiaPainter.repeatRadial(paint, SkiaPainter.shapeBounds(shape)) : paint
+        const rx = radius.x * scale
+        const ry = radius.y * scale
         const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, rx)
 
-        paint.stops.forEach(({ offset, color }) => gradient.addColorStop(offset, color))
+        stops.forEach(({ offset, color }) => gradient.addColorStop(offset, color))
         ctx.clip(path, rule)
         ctx.translate(paint.center.x * scale, paint.center.y * scale)
         ctx.scale(1, ry / rx)
@@ -198,9 +230,9 @@ export class SkiaPainter {
         return ctx.fill(path, rule)
       }
       case 'tile': {
-        const canvas = new Canvas(Math.ceil(paint.width * OFFSCREEN_SCALE), Math.ceil(paint.height * OFFSCREEN_SCALE))
+        const canvas = new Canvas(Math.ceil(paint.width * TILE_SCALE), Math.ceil(paint.height * TILE_SCALE))
 
-        this.nodes(canvas.getContext('2d'), paint.nodes, OFFSCREEN_SCALE)
+        this.nodes(canvas.getContext('2d'), paint.nodes, TILE_SCALE)
 
         const pattern = ctx.createPattern(canvas, 'repeat')!
         const fx = (paint.width * scale) / canvas.width
@@ -224,7 +256,7 @@ export class SkiaPainter {
     ctx.lineWidth = width * scale
     ctx.lineCap = cap
     ctx.lineJoin = join
-    ctx.stroke(this.path(shape, scale))
+    ctx.stroke(SkiaPainter.path(shape, scale))
   }
 
   private photo(ctx: CanvasRenderingContext2D, node: PhotoNode, scale: number) {
@@ -236,13 +268,13 @@ export class SkiaPainter {
     const crop = new PhotoCrop(node.position.x, node.position.y, node.position.zoom)
 
     if (!node.fade) {
-      ctx.clip(this.path({ type: node.clip ?? 'rect', box: node.box } as Shape, scale))
+      ctx.clip(SkiaPainter.path({ type: node.clip ?? 'rect', box: node.box } as Shape, scale))
       if (node.tone) ctx.filter = toneFilter(node.tone)
 
       return this.drawCropped(ctx, image, crop, box)
     }
 
-    const layer = new Canvas(Math.ceil(node.box.width * OFFSCREEN_SCALE), Math.ceil(node.box.height * OFFSCREEN_SCALE))
+    const layer = new Canvas(Math.ceil(node.box.width * TILE_SCALE), Math.ceil(node.box.height * TILE_SCALE))
     const at = layer.getContext('2d')
     const fade = (x1: number, y1: number) => {
       const gradient = at.createLinearGradient(0, 0, x1, y1)
@@ -271,34 +303,60 @@ export class SkiaPainter {
     ctx.drawImage(image, box.x + drawn.left, box.y + drawn.top, drawn.width, drawn.height)
   }
 
-  private text(ctx: CanvasRenderingContext2D, { font, color, lines }: TextNode, scale: number) {
+  private text(ctx: CanvasRenderingContext2D, { font, color, lines, shadows = [] }: TextNode, scale: number) {
     ctx.font = this.fonts.font(font, scale)
     ctx.fontVariationSettings = this.fonts.variations(font)
     ctx.letterSpacing = `${(font.letterSpacing ?? 0) * scale}px`
     ctx.fillStyle = color
     ctx.textBaseline = 'alphabetic'
 
-    for (const line of lines) {
-      ctx.textAlign = line.align
-      ctx.fillText(line.text, line.x * scale, line.y * scale)
+    const draw = () =>
+      lines.forEach((line) => {
+        ctx.textAlign = line.align
+        ctx.fillText(line.text, line.x * scale, line.y * scale)
+      })
+
+    // Each shadow is cast by drawing the text with it, the last first, so the first lands on top.
+    for (const shadow of [...shadows].reverse()) {
+      ctx.save()
+      this.castShadow(ctx, shadow, scale)
+      draw()
+      ctx.restore()
     }
+    draw()
   }
 
-  /** A box shadow outside its box: the box, offset and blurred. A CSS blur radius is twice the blur's standard deviation. */
-  private shadow(ctx: CanvasRenderingContext2D, { box, color, offset, blur, spread = 0 }: ShadowNode, scale: number) {
-    const outside = new Path2D()
+  /** A CSS blur radius is twice the standard deviation, as is a canvas shadow blur. */
+  private castShadow(ctx: CanvasRenderingContext2D, { offset, blur, color }: Shadow, scale: number) {
+    ctx.shadowColor = color
+    ctx.shadowBlur = blur * scale
+    ctx.shadowOffsetX = offset.x * scale
+    ctx.shadowOffsetY = offset.y * scale
+  }
 
-    outside.rect(-1e5, -1e5, 2e5, 2e5)
-    outside.rect(box.x * scale, box.y * scale, box.width * scale, box.height * scale)
-    ctx.clip(outside, 'evenodd')
-    ctx.filter = `blur(${(blur / 2) * scale}px)`
+  /**
+   * A CSS box shadow: outside the shape, cast by the shape moved by its offset, or with `inset` inside
+   * it, cast by everything around the moved shape. A CSS blur radius is twice the standard deviation.
+   */
+  private shadow(ctx: CanvasRenderingContext2D, { shape, inset, color, offset, blur, spread = 0 }: ShadowNode, scale: number) {
+    const cast = spread && shape.type === 'rect' ? ({ type: 'rect', box: grow(shape.box, inset ? -spread : spread) } as Shape) : shape
+    const moved = new Path2D()
+    const everywhere = new Path2D()
+
+    moved.addPath(SkiaPainter.path(cast, scale), new DOMMatrix().translate(offset.x * scale, offset.y * scale))
+    everywhere.rect(-1e5, -1e5, 2e5, 2e5)
+
+    const around = new Path2D(everywhere)
+
+    around.addPath(SkiaPainter.path(shape, scale))
+    ctx.clip(inset ? SkiaPainter.path(shape, scale) : around, inset ? evenOdd(shape) : 'evenodd')
+    if (blur) ctx.filter = `blur(${(blur / 2) * scale}px)`
     ctx.fillStyle = color
-    ctx.fillRect(
-      (box.x - spread + offset.x) * scale,
-      (box.y - spread + offset.y) * scale,
-      (box.width + 2 * spread) * scale,
-      (box.height + 2 * spread) * scale,
-    )
+
+    if (!inset) return ctx.fill(moved, evenOdd(shape))
+
+    everywhere.addPath(moved)
+    ctx.fill(everywhere, 'evenodd')
   }
 
   private group(ctx: CanvasRenderingContext2D, node: GroupNode, scale: number) {
@@ -309,71 +367,100 @@ export class SkiaPainter {
       ctx.rotate((angle * Math.PI) / 180)
       ctx.translate(-origin.x * scale, -origin.y * scale)
     }
-    if (node.clip) ctx.clip(this.path(node.clip, scale), node.clip.type === 'ring' ? 'evenodd' : 'nonzero')
+    if (node.clip) ctx.clip(SkiaPainter.path(node.clip, scale), evenOdd(node.clip))
 
-    const isolated = (node.opacity !== undefined || !!node.blend) && node.children.length > 1
+    const isolated = !!node.shadow || (node.opacity !== undefined && node.children.length > 1)
 
     if (!isolated) return this.nodes(ctx, node.children, scale)
 
-    // Opacity and blending apply to the group as one layer, so the children are drawn together first.
-    const bounds = SkiaPainter.bounds(node.children)
-    const layer = new Canvas(Math.ceil(bounds.width * OFFSCREEN_SCALE), Math.ceil(bounds.height * OFFSCREEN_SCALE))
-    const at = layer.getContext('2d')
+    // Opacity and shadows apply to the group as one layer, so the children are drawn together first.
+    const bounds = this.bounds(node.children)
+    const at = Math.max(scale, LAYER_SCALE)
+    const layer = new Canvas(Math.max(1, Math.ceil(bounds.width * at)), Math.max(1, Math.ceil(bounds.height * at)))
+    const layerCtx = layer.getContext('2d')
 
-    at.translate(-bounds.x * OFFSCREEN_SCALE, -bounds.y * OFFSCREEN_SCALE)
-    this.nodes(at, node.children, OFFSCREEN_SCALE)
-    ctx.drawImage(layer, bounds.x * scale, bounds.y * scale, bounds.width * scale, bounds.height * scale)
+    layerCtx.imageSmoothingQuality = 'high'
+    layerCtx.translate(-bounds.x * at, -bounds.y * at)
+    this.nodes(layerCtx, node.children, at)
+    if (node.shadow) this.castShadow(ctx, node.shadow, scale)
+    ctx.drawImage(layer, bounds.x * scale, bounds.y * scale, layer.width * (scale / at), layer.height * (scale / at))
   }
 
-  /** The box around shapes, for the layer a group is drawn in. */
-  static bounds(nodes: SceneNode[]): Box {
+  /** The box around nodes, for the layer a group is drawn in, kept to the page and a little past it. */
+  private bounds(nodes: SceneNode[]): Box {
     const boxes = nodes.flatMap((node): Box[] => {
-      if (node.kind === 'fill' || node.kind === 'stroke') {
-        const box = SkiaPainter.shapeBounds(node.shape)
-        const grow = node.kind === 'stroke' ? node.width / 2 : 0
-
-        return [{ x: box.x - grow, y: box.y - grow, width: box.width + grow * 2, height: box.height + grow * 2 }]
+      switch (node.kind) {
+        case 'fill':
+          return [SkiaPainter.shapeBounds(node.shape)]
+        case 'stroke':
+          return [grow(SkiaPainter.shapeBounds(node.shape), node.width / 2)]
+        case 'shadow':
+          return [grow(SkiaPainter.shapeBounds(node.shape), node.blur * 2 + Math.abs(node.offset.x) + Math.abs(node.offset.y))]
+        case 'photo':
+          return [node.box]
+        case 'group':
+          return [node.clip ? SkiaPainter.shapeBounds(node.clip) : this.bounds(node.children)]
+        default:
+          return [{ x: -BLEED, y: -BLEED, width: 100 + 2 * BLEED, height: 400 / 3 + 2 * BLEED }]
       }
-      if (node.kind === 'photo' || node.kind === 'shadow') return [node.box]
-      if (node.kind === 'group') return [SkiaPainter.bounds(node.children)]
-
-      return []
     })
-    const x = Math.min(...boxes.map((b) => b.x))
-    const y = Math.min(...boxes.map((b) => b.y))
+    const x = Math.max(-BLEED, Math.min(...boxes.map((b) => b.x)))
+    const y = Math.max(-BLEED, Math.min(...boxes.map((b) => b.y)))
+    const right = Math.min(100 + BLEED, Math.max(...boxes.map((b) => b.x + b.width)))
+    const bottom = Math.min(400 / 3 + BLEED, Math.max(...boxes.map((b) => b.y + b.height)))
 
-    return {
-      x,
-      y,
-      width: Math.max(...boxes.map((b) => b.x + b.width)) - x,
-      height: Math.max(...boxes.map((b) => b.y + b.height)) - y,
-    }
+    return { x, y, width: Math.max(0, right - x), height: Math.max(0, bottom - y) }
   }
 
-  private static shapeBounds(shape: Shape): Box {
+  /** The box around a shape, in page units. */
+  static shapeBounds(shape: Shape): Box {
     switch (shape.type) {
       case 'rect':
       case 'ellipse':
+      case 'roundrect':
         return shape.box
       case 'ring':
         return shape.outer
-      case 'circle':
-        return { x: shape.center.x - shape.radius, y: shape.center.y - shape.radius, width: shape.radius * 2, height: shape.radius * 2 }
-      case 'polygon': {
-        const xs = shape.points.map((p) => p.x)
-        const ys = shape.points.map((p) => p.y)
+      case 'cutout':
+        return SkiaPainter.shapeBounds(shape.outer)
+      default: {
+        const { left, top, right, bottom } = SkiaPainter.path(shape, 1).bounds
 
-        return {
-          x: Math.min(...xs),
-          y: Math.min(...ys),
-          width: Math.max(...xs) - Math.min(...xs),
-          height: Math.max(...ys) - Math.min(...ys),
-        }
+        return { x: left, y: top, width: right - left, height: bottom - top }
       }
-      case 'union':
-        return SkiaPainter.bounds(shape.shapes.map((part) => ({ kind: 'fill', shape: part, paint: '#000' })))
-      case 'path':
-        return { x: -1e3, y: -1e3, width: 2e3, height: 2e3 }
     }
+  }
+
+  /** A repeating linear gradient as one gradient whose stops repeat across `box`. */
+  static repeatLinear({ from, to, stops }: { from: Point; to: Point; stops: GradientStop[] }, box: Box) {
+    const step = { x: to.x - from.x, y: to.y - from.y }
+    const length = step.x * step.x + step.y * step.y
+    const along = [box.x, box.x + box.width].flatMap((x) =>
+      [box.y, box.y + box.height].map((y) => ((x - from.x) * step.x + (y - from.y) * step.y) / length),
+    )
+    const first = Math.floor(Math.min(...along))
+    const count = Math.max(1, Math.ceil(Math.max(...along)) - first)
+
+    return {
+      from: { x: from.x + step.x * first, y: from.y + step.y * first },
+      to: { x: from.x + step.x * (first + count), y: from.y + step.y * (first + count) },
+      stops: SkiaPainter.repeatStops(stops, count),
+    }
+  }
+
+  /** A repeating radial gradient as one gradient whose stops repeat out to the corners of `box`. */
+  static repeatRadial({ center, radius, stops }: { center: Point; radius: Point; stops: GradientStop[] }, box: Box) {
+    const reach = Math.max(
+      ...[box.x, box.x + box.width].flatMap((x) =>
+        [box.y, box.y + box.height].map((y) => Math.hypot(x - center.x, ((y - center.y) * radius.x) / radius.y)),
+      ),
+    )
+    const count = Math.max(1, Math.ceil(reach / radius.x))
+
+    return { radius: { x: radius.x * count, y: radius.y * count }, stops: SkiaPainter.repeatStops(stops, count) }
+  }
+
+  private static repeatStops(stops: GradientStop[], count: number): GradientStop[] {
+    return Array.from({ length: count }, (_, k) => stops.map(({ offset, color }) => ({ offset: (k + offset) / count, color }))).flat()
   }
 }

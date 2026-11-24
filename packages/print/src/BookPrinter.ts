@@ -1,4 +1,4 @@
-import { BookLayout, PageScene, type FlipbookBook, type PageFace, type Scene } from '@toneflix/flipbook-core'
+import { BookLayout, PageScene, type Face, type FlipbookBook, type Scene } from '@toneflix/flipbook-core'
 import { Canvas } from 'skia-canvas'
 import { PrintFonts, type PrintFontOptions } from './fonts'
 import { SkiaPainter, type PhotoLoader } from './SkiaPainter'
@@ -7,6 +7,8 @@ import { SkiaText } from './SkiaText'
 export interface BookPrinterOptions {
   /** Page width in millimetres. The height follows the book's 3:4 page. Defaults to 210. */
   width?: number
+  /** Include the front and back covers. Defaults to true. */
+  covers?: boolean
   /** Resolution of page images. Defaults to 300. */
   dpi?: number
   /** Where each photo's bytes come from. Defaults to reading `src` as a file path or URL. */
@@ -24,41 +26,43 @@ export interface PagePixels {
 const POINTS_PER_MM = 72 / 25.4
 
 /**
- * A book's pages drawn without a browser: one print-ready PDF, or one image per page. Every page comes
- * from the same scenes the reader lays out, in reading order: the title page, the pages and the colophon.
+ * A book drawn without a browser: one print-ready PDF, or one image per page. Every page comes from
+ * the same scenes the reader lays out, in reading order from the front cover to the back.
  */
 export class BookPrinter {
   readonly width: number
   readonly dpi: number
+  readonly covers: boolean
   readonly scenes: PageScene
 
   private readonly painter: SkiaPainter
 
   constructor(
     readonly book: FlipbookBook,
-    { width = 210, dpi = 300, load, fonts }: BookPrinterOptions = {},
+    { width = 210, covers = true, dpi = 300, load, fonts }: BookPrinterOptions = {},
   ) {
     const printFonts = new PrintFonts(fonts)
 
     this.width = width
     this.dpi = dpi
+    this.covers = covers
     this.scenes = new PageScene(book, new SkiaText(printFonts))
     this.painter = new SkiaPainter(printFonts, load)
   }
 
-  /** The faces printed, in reading order. */
-  get faces(): PageFace[] {
-    return new BookLayout(this.book.pages.length, { spread: false }).faces.filter(
-      (face): face is PageFace => face.kind !== 'cover' && face.kind !== 'back',
-    )
+  /** The faces printed, in reading order: the covers when asked for, the title page, the pages and the colophon. */
+  get faces(): Face[] {
+    const faces = new BookLayout(this.book.pages.length, { spread: false }).faces
+
+    return this.covers ? faces : faces.filter((face) => face.kind !== 'cover' && face.kind !== 'back')
   }
 
-  /** What each printed page is called, in order: title, page-1, page-2…, colophon. */
+  /** What each printed page is called, in order: cover, title, page-1, page-2…, colophon, back. */
   get names(): string[] {
     return this.faces.map((face) => (face.kind === 'page' ? `page-${face.index + 1}` : face.kind))
   }
 
-  scene(face: PageFace): Scene {
+  scene(face: Face): Scene {
     return this.scenes.face(face)
   }
 
@@ -68,7 +72,7 @@ export class BookPrinter {
   }
 
   /** One page drawn at the print resolution. */
-  async canvas(face: PageFace): Promise<Canvas> {
+  async canvas(face: Face): Promise<Canvas> {
     const scene = this.scene(face)
     const scale = this.pixelWidth / scene.width
     const canvas = new Canvas(this.pixelWidth, Math.round(scene.height * scale))
@@ -79,11 +83,11 @@ export class BookPrinter {
     return canvas
   }
 
-  async png(face: PageFace): Promise<Buffer> {
+  async png(face: Face): Promise<Buffer> {
     return (await this.canvas(face)).toBuffer('png')
   }
 
-  async pixels(face: PageFace): Promise<PagePixels> {
+  async pixels(face: Face): Promise<PagePixels> {
     const canvas = await this.canvas(face)
 
     return { data: await canvas.toBuffer('raw'), width: canvas.width, height: canvas.height }
