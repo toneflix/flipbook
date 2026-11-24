@@ -97,3 +97,26 @@ await print.print()
 | `covers` | Include the front and back covers. Defaults to `true`.                         |
 
 `ready()` resolves once fonts and photos have loaded, `print()` waits for it and opens the print dialog, and `destroy()` removes the sheets. The print page size is set to match the sheets with no margins. In a headless browser, call `ready()` and then save the page as a PDF with the page's own size.
+
+## Printing on a server
+
+`@toneflix/flipbook-print` draws the same pages in Node.js without a browser, as one PDF or one image per page. It reads the page scenes from core, which lay every page out the way the reader does, and draws them with Skia. Text and rules stay sharp in the PDF and photos are embedded at their own resolution.
+
+```ts
+import { BookPrinter } from '@toneflix/flipbook-print'
+
+const printer = new BookPrinter(book, { width: 210, dpi: 300 })
+
+const pdf = await printer.pdf()
+
+for (const [index, face] of printer.faces.entries()) await save(`${printer.names[index]}.png`, await printer.png(face))
+```
+
+| Option  |                                                                                          |
+| ------- | ---------------------------------------------------------------------------------------- |
+| `width` | Page width in millimetres. The height follows the 3:4 page. Defaults to `210`.           |
+| `dpi`   | Resolution of page images. Defaults to `300`.                                            |
+| `load`  | `(src) => Promise<string \| Buffer>`: a file path, URL or the bytes for a photo's `src`. |
+| `fonts` | `{ sans }`: font files for sans text. Left out, it is set in the serif.                  |
+
+The printer covers the title page, every page and the colophon. `pixels(face)` hands over raw RGBA pixels for an encoder of your own, such as sharp.

@@ -1,0 +1,53 @@
+{
+  "name": "@toneflix/flipbook-print",
+  "version": "0.1.0",
+  "description": "Print-ready pages for Toneflix Flipbook, an expressive flipbook for creating personalised and interactive reading and photo viewing experiences, drawn in Node.js without a browser.",
+  "license": "MIT",
+  "homepage": "https://toneflix.github.io/flipbook/api/print",
+  "bugs": {
+    "url": "https://github.com/toneflix/flipbook/issues"
+  },
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/toneflix/flipbook",
+    "directory": "packages/print"
+  },
+  "keywords": [
+    "flipbook",
+    "photo book",
+    "print",
+    "pdf",
+    "skia"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fontsource-variable/fraunces": "^5.3.0",
+    "@toneflix/flipbook-core": "workspace:^",
+    "skia-canvas": "^4.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "tsdown": "^0.23.5",
+    "typescript": "~6.0.3",
+    "vitest": "^3.2.7"
+  }
+}

@@ -100,3 +100,15 @@ turn.release() // falls open or shut using the release speed
 ```
 
 Pass a `Scheduler` (`now`, `request`, `cancel`) to run it without `requestAnimationFrame`, e.g. in tests.
+
+## Page scenes
+
+`PageScene` lays out the pages inside the covers as plain drawing data, the same way the reader lays them out, for renderers that don't use CSS. See [Print](/api/print#page-scenes).
+
+| Export                      |                                                                          |
+| --------------------------- | ------------------------------------------------------------------------ |
+| `PageScene`                 | `face(face)`, `page(page, options)`, `title()`, `colophon()`, `blank()`. |
+| `Scene`, `SceneNode`        | The scene data: fills, strokes, photos, text, shadows and groups.        |
+| `TextMeasure`, `Typesetter` | Text metrics from a renderer, and line breaking with them.               |
+| `PAPER_LOOKS`               | Ink, tints, textures and photo tone per paper.                           |
+| `FrameScene`                | A photo in any frame style.                                              |
