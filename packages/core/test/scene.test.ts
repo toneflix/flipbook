@@ -1,10 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import {
+  COVER_DESIGNS,
+  COVER_THEMES,
   FRAME_STYLES,
   PAGE_HEIGHT,
   PAGE_LAYOUTS,
   PageScene,
+  farthestCorner,
+  withAlpha,
   Typesetter,
+  type CoverDesign,
+  type CoverTheme,
   type FlipbookBook,
   type FrameStyle,
   type PageLayout,
@@ -91,9 +97,45 @@ describe('PageScene', () => {
   })
 
   it('reaches the farthest corner with the closest-side shape', () => {
-    const radius = PageScene.farthestCorner({ x: 50, y: PAGE_HEIGHT / 2 })
+    const radius = farthestCorner({ x: 50, y: PAGE_HEIGHT / 2 })
 
     expect(radius.x).toBeCloseTo(50 * Math.SQRT2)
     expect(radius.y).toBeCloseTo((PAGE_HEIGHT / 2) * Math.SQRT2)
+  })
+
+  it('adds alpha to hex and rgb colours', () => {
+    expect(withAlpha('#fff', 0.5)).toBe('rgba(255,255,255,0.5)')
+    expect(withAlpha('#1a2b3c', 0.2)).toBe('rgba(26,43,60,0.2)')
+    expect(withAlpha('rgba(1,2,3,0.9)', 0.1)).toBe('rgba(1,2,3,0.1)')
+  })
+})
+
+describe('CoverScene', () => {
+  const covers = (coverDesign: CoverDesign, theme: CoverTheme, withPhoto: boolean) =>
+    new PageScene(
+      { ...book('single'), coverDesign, theme, subtitle: 'A subtitle', brand: 'Studio', cover: withPhoto ? photo : undefined },
+      measure,
+    ).covers
+
+  it('draws every design in every theme, with and without a photo', () => {
+    for (const design of Object.keys(COVER_DESIGNS) as CoverDesign[])
+      for (const theme of Object.keys(COVER_THEMES) as CoverTheme[])
+        for (const withPhoto of [true, false]) {
+          const { front, back } = {
+            front: covers(design, theme, withPhoto).front({ bound: true }),
+            back: covers(design, theme, withPhoto).back(),
+          }
+          const json = JSON.stringify([front, back])
+
+          expect(json).not.toContain('null')
+          expect(json).not.toContain('NaN')
+          expect(flatten(front.nodes).some((node) => node.kind === 'photo')).toBe(withPhoto)
+        }
+  })
+
+  it('sets the title on the front', () => {
+    const lines = flatten(covers('classic', 'classic', false).front().nodes).flatMap((node) => (node.kind === 'text' ? node.lines : []))
+
+    expect(lines.map((line) => line.text)).toContain('A book')
   })
 })

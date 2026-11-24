@@ -1,15 +1,14 @@
 import { PLACED_LAYOUTS, photoFrame, type FlipbookBook, type FlipbookPage, type FrameStyle, type PageBox } from '../book'
 import type { Face } from '../layout'
-import { FrameScene, rect } from './frame'
+import { CoverScene } from './cover'
+import { FrameScene, farthestCorner, rect, withAlpha } from './frame'
+import { ornament } from './marks'
 import { PAPER_LOOKS, inkOf, type PaperLook } from './paper'
 import { Typesetter, type TextBlock } from './text'
 import type { Box, FontSpec, Scene, SceneNode, TextMeasure } from './types'
 
 /** Page height in page units: pages are 3:4. */
 export const PAGE_HEIGHT = 400 / 3
-
-/** The faces a page scene draws: everything inside the covers. */
-export type PageFace = Exclude<Face, { kind: 'cover' } | { kind: 'back' }>
 
 export type Side = 'left' | 'right'
 
@@ -47,13 +46,15 @@ const flex = (space: number, grows: number[]) => {
 }
 
 /**
- * The pages inside a book as scenes: the title page, each designed page, the colophon and blanks,
- * laid out exactly as the web reader lays them out.
+ * Every face of a book as a scene: the covers, the title page, each designed page, the colophon and
+ * blanks, laid out exactly as the web reader lays them out.
  */
 export class PageScene {
   readonly look: PaperLook
   readonly frame: FrameStyle
   readonly text: Typesetter
+
+  readonly covers: CoverScene
 
   private readonly frames: FrameScene
 
@@ -65,13 +66,18 @@ export class PageScene {
     this.frame = book.frame ?? 'none'
     this.text = new Typesetter(measure)
     this.frames = new FrameScene(this.look)
+    this.covers = new CoverScene(book, this.text)
   }
 
-  /** Any face inside the covers. Pages are numbered from 1, the first on the right. */
-  face(face: PageFace, options: Omit<PageSceneOptions, 'number' | 'side'> & { numbered?: boolean } = {}): Scene {
+  /** Any face of the book, covers included. Pages are numbered from 1, the first on the right. */
+  face(face: Face, options: Omit<PageSceneOptions, 'number' | 'side'> & { numbered?: boolean } = {}): Scene {
     const { numbered = true, ...rest } = options
 
     switch (face.kind) {
+      case 'cover':
+        return this.covers.front(rest)
+      case 'back':
+        return this.covers.back(rest)
       case 'title':
         return this.title(rest)
       case 'colophon':
@@ -100,7 +106,7 @@ export class PageScene {
     const creditFont: FontSpec = { family: 'sans', style: 'normal', weight: 400, size: 2.6, letterSpacing: 0.52 }
     const creditText = credit ? this.text.set(credit, creditFont, { width }) : null
     const rows: { height: number; gap: number; draw: (y: number) => SceneNode[] }[] = [
-      { height: 9, gap: 0, draw: (y) => this.ornament({ x: 50 - 4.5, y, width: 9, height: 9 }) },
+      { height: 9, gap: 0, draw: (y) => ornament({ x: 50 - 4.5, y, width: 9, height: 9 }, this.ink()) },
       { height: heading.height, gap: 6, draw: (y) => [this.lines(heading, { x: 12, y, width, height: heading.height }, 'center')] },
       ...(subtitle
         ? [
@@ -320,8 +326,8 @@ export class PageScene {
     const slot = this.slot(page, index, box, { clip: !loose })
     const shadows: SceneNode[] = loose
       ? [
-          { kind: 'shadow', box, color: 'rgba(0,0,0,0.18)', offset: { x: 0, y: 0.4 }, blur: 0.8 },
-          { kind: 'shadow', box, color: 'rgba(0,0,0,0.25)', offset: { x: 0, y: 1.6 }, blur: 3.2, spread: -1 },
+          { kind: 'shadow', shape: rect(box), color: 'rgba(0,0,0,0.18)', offset: { x: 0, y: 0.4 }, blur: 0.8 },
+          { kind: 'shadow', shape: rect(box), color: 'rgba(0,0,0,0.25)', offset: { x: 0, y: 1.6 }, blur: 3.2, spread: -1 },
         ]
       : []
     const children = [...shadows, slot]
@@ -342,25 +348,6 @@ export class PageScene {
       ),
       opacity: 0.6,
     }
-  }
-
-  /** The book's ornament: a ring around a diamond with a dot at its heart. */
-  private ornament(box: Box): SceneNode[] {
-    const scale = box.width / 40
-    const at = (x: number, y: number) => ({ x: box.x + x * scale, y: box.y + y * scale })
-    const ink = this.ink()
-
-    return [
-      { kind: 'stroke', shape: { type: 'circle', center: at(20, 20), radius: 18.5 * scale }, color: ink, width: scale, opacity: 0.6 },
-      {
-        kind: 'stroke',
-        shape: { type: 'polygon', points: [at(20, 9), at(27, 20), at(20, 31), at(13, 20)] },
-        color: ink,
-        width: 1.4 * scale,
-        join: 'round',
-      },
-      { kind: 'fill', shape: { type: 'circle', center: at(20, 20), radius: 2.2 * scale }, paint: ink },
-    ]
   }
 
   /** The paper under `nodes`, with its grain over them. */
@@ -405,9 +392,9 @@ export class PageScene {
           paint: {
             type: 'radial',
             center: centre,
-            radius: PageScene.farthestCorner(centre),
+            radius: farthestCorner(centre),
             stops: [
-              { offset: look.vignetteFrom, color: look.vignette.replace(/[\d.]+\)$/, '0)') },
+              { offset: look.vignetteFrom, color: withAlpha(look.vignette, 0) },
               { offset: 1, color: look.vignette },
             ],
           },
@@ -418,10 +405,10 @@ export class PageScene {
           paint: {
             type: 'radial',
             center: { x: 30, y: PAGE_HEIGHT * 0.2 },
-            radius: PageScene.farthestCorner({ x: 30, y: PAGE_HEIGHT * 0.2 }),
+            radius: farthestCorner({ x: 30, y: PAGE_HEIGHT * 0.2 }),
             stops: [
               { offset: 0, color: look.light },
-              { offset: 0.55, color: look.light.replace(/[\d.]+\)$/, '0)') },
+              { offset: 0.55, color: withAlpha(look.light, 0) },
             ],
           },
         },
@@ -445,20 +432,5 @@ export class PageScene {
       shape: rect(PAGE),
       paint: { type: 'linear', from: { x: from, y: 0 }, to: { x: to, y: 0 }, stops: stops.map(([offset, color]) => ({ offset, color })) },
     }
-  }
-
-  /**
-   * The radii of a CSS `radial-gradient(ellipse at …)` on the page: the ellipse reaches the farthest
-   * corner and keeps the shape it would have touching the closest sides.
-   */
-  static farthestCorner(centre: { x: number; y: number }, box: Box = PAGE) {
-    const rx = Math.min(centre.x - box.x, box.x + box.width - centre.x)
-    const ry = Math.min(centre.y - box.y, box.y + box.height - centre.y)
-    const k = Math.hypot(
-      Math.max(centre.x - box.x, box.x + box.width - centre.x) / rx,
-      Math.max(centre.y - box.y, box.y + box.height - centre.y) / ry,
-    )
-
-    return { x: rx * k, y: ry * k }
   }
 }
