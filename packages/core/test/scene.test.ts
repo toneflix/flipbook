@@ -9,7 +9,6 @@ import {
   PageScene,
   pageSize,
   panoramaView,
-  pageSize,
   farthestCorner,
   sprockets,
   withAlpha,
