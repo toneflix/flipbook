@@ -77,3 +77,23 @@ All classes start with `fb-`. These custom properties can be set on `.fb-root` o
 | `--fb-highlight` | The current thumbnail and drop targets. |
 
 The paper textures ship next to the stylesheet. Bundlers like Vite and webpack pick them up from the CSS on their own.
+
+## Printing a book
+
+`FlipbookPrint` lays a whole book flat, one sheet per page, so it can be printed or saved as a PDF from the browser's print dialog. The sheets are drawn by the same renderers as the viewer: front cover, title page, every page, colophon and back cover, each with its paper, frames and captions. The light and spine curve of a turning page are left off, since the bound book makes its own.
+
+```js
+import { FlipbookPrint } from '@toneflix/flipbook'
+import '@toneflix/flipbook/style.css'
+
+const print = new FlipbookPrint(document.querySelector('#print'), book, { width: 210 })
+
+await print.print()
+```
+
+| Option   |                                                                                |
+| -------- | ------------------------------------------------------------------------------ |
+| `width`  | Page width in millimetres. The height follows the 3:4 page. Defaults to `210`. |
+| `covers` | Include the front and back covers. Defaults to `true`.                         |
+
+`ready()` resolves once fonts and photos have loaded, `print()` waits for it and opens the print dialog, and `destroy()` removes the sheets. The print page size is set to match the sheets with no margins. In a headless browser, call `ready()` and then save the page as a PDF with the page's own size.

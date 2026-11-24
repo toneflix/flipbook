@@ -13,5 +13,6 @@ export {
 } from './pages'
 export { PhotoPositioner, type PhotoPositionerOptions } from './positioner'
 export { renderCover, renderBackCover, coverArtMarkup } from './cover'
+export { FlipbookPrint, type FlipbookPrintOptions } from './print'
 export { playPageTurn } from './sound'
 export { enterLandscape, watchOrientation } from './landscape'

@@ -52,3 +52,5 @@ The script build puts everything on a global `Flipbook` object.
 ## Pages outside the viewer
 
 `renderPage`, `renderCover`, `renderTitlePage`, `renderColophon` and `renderBackCover` return plain elements for thumbnails or an [editor](/guide/editor). `renderFace(face, book)` renders any face from a [`BookLayout`](/api/core#booklayout).
+
+`FlipbookPrint` lays the whole book out flat for [printing](/guide/printing#printing-a-book).

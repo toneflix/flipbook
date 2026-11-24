@@ -1225,3 +1225,41 @@
   text-align: left;
   text-wrap: pretty;
 }
+
+/* ---------------------------------------------------------------- Print */
+
+/* A book laid flat for printing, one sheet per page. */
+.fb-print-book {
+  --fb-print-width: 210mm;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8mm;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+.fb-print-sheet {
+  position: relative;
+  width: var(--fb-print-width);
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  container-type: size;
+  break-inside: avoid;
+}
+/* The crease and the light across a turning page belong to the bound book, not the printed sheet. */
+.fb-print-sheet .fb-hinge,
+.fb-print-sheet .fb-page-surface-gutter,
+.fb-print-sheet .fb-page-surface-sheen {
+  display: none;
+}
+@media print {
+  .fb-print-book {
+    gap: 0;
+  }
+  .fb-print-sheet {
+    break-after: page;
+  }
+  .fb-print-sheet:last-child {
+    break-after: auto;
+  }
+}
