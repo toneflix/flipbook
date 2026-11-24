@@ -59,6 +59,7 @@ export default defineConfig({
         items: [
           { text: 'Viewer options', link: '/api/options' },
           { text: 'Core', link: '/api/core' },
+          { text: 'Print', link: '/api/print' },
         ],
       },
       { text: 'Playground', link: '/playground' },
