@@ -1,5 +1,7 @@
 export * from './types'
 export * from './paper'
 export * from './text'
-export { FrameScene, angledGradient } from './frame'
+export { FrameScene, angledGradient, farthestCorner, withAlpha } from './frame'
+export * from './marks'
+export * from './cover'
 export * from './page'

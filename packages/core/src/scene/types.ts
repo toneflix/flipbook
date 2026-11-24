@@ -28,9 +28,13 @@ export interface GradientStop {
 
 export type Paint =
   | Color
-  | { type: 'linear'; from: Point; to: Point; stops: GradientStop[] }
-  /** An elliptical gradient: `radius` gives the ellipse's half width and half height. */
-  | { type: 'radial'; center: Point; radius: Point; stops: GradientStop[] }
+  /** With `repeat`, the stops repeat every `from`–`to` across the whole shape, like CSS `repeating-linear-gradient`. */
+  | { type: 'linear'; from: Point; to: Point; stops: GradientStop[]; repeat?: boolean }
+  /**
+   * An elliptical gradient: `radius` gives the ellipse's half width and half height. With `repeat`, the
+   * stops repeat every radius out to the shape's edges, like CSS `repeating-radial-gradient`.
+   */
+  | { type: 'radial'; center: Point; radius: Point; stops: GradientStop[]; repeat?: boolean }
   /** One of the library's texture tiles, repeated from the page's top left corner `size` units square. */
   | { type: 'texture'; texture: TextureName; size: number }
   /** A tile of other nodes, `width` × `height` units, repeated from `origin` and turned `rotate` degrees about it. */
@@ -41,12 +45,16 @@ export type TextureName = 'paper-fine' | 'paper-kraft' | 'paper-charcoal' | 'gra
 export type Shape =
   | { type: 'rect'; box: Box }
   | { type: 'ellipse'; box: Box }
+  /** A rectangle with rounded corners: radii top left, top right, bottom right, bottom left. */
+  | { type: 'roundrect'; box: Box; radii: [number, number, number, number] }
   | { type: 'circle'; center: Point; radius: number }
   | { type: 'polygon'; points: Point[] }
   /** A band between two rectangles, filled even-odd. */
   | { type: 'ring'; outer: Box; inner: Box }
   /** SVG path data, mapped onto the page by `transform`. */
   | { type: 'path'; d: string; transform: Matrix }
+  /** The part of `outer` outside `inner`. */
+  | { type: 'cutout'; outer: Shape; inner: Shape }
   /** Several shapes filled as one, so overlaps don't print twice. */
   | { type: 'union'; shapes: Shape[] }
 
@@ -116,29 +124,43 @@ export interface PhotoNode extends Layer {
   fade?: number
 }
 
+/** A shadow cast by a shape or by text: `blur` is a CSS blur radius. */
+export interface Shadow {
+  offset: Point
+  blur: number
+  color: Color
+}
+
 export interface TextNode extends Layer {
   kind: 'text'
   font: FontSpec
   color: Color
   lines: TextLine[]
+  /** Drawn under the text, the first on top, like CSS `text-shadow`. */
+  shadows?: Shadow[]
 }
 
-export interface ShadowNode extends Layer {
+/** A CSS box shadow on its own: outside the shape, or with `inset` inside it. */
+export interface ShadowNode extends Layer, Shadow {
   kind: 'shadow'
-  box: Box
-  color: Color
-  offset: Point
-  blur: number
-  /** Grows (or with a negative value shrinks) the box before it casts. */
+  shape: Shape
+  inset?: boolean
+  /** Grows (or with a negative value shrinks) a rectangle before it casts. */
   spread?: number
 }
 
+/**
+ * Nodes drawn together. A group with an opacity or a shadow is drawn as one layer; a blend mode alone
+ * blends each child into what is under the group.
+ */
 export interface GroupNode extends Layer {
   kind: 'group'
   children: SceneNode[]
   /** Turns the group `angle` degrees about `origin`. */
   rotate?: { angle: number; origin: Point }
   clip?: Shape
+  /** A drop shadow under the group as a whole. */
+  shadow?: Shadow
 }
 
 export type SceneNode = FillNode | StrokeNode | PhotoNode | TextNode | ShadowNode | GroupNode

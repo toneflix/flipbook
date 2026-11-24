@@ -103,11 +103,12 @@ Pass a `Scheduler` (`now`, `request`, `cancel`) to run it without `requestAnimat
 
 ## Page scenes
 
-`PageScene` lays out the pages inside the covers as plain drawing data, the same way the reader lays them out, for renderers that don't use CSS. See [Print](/api/print#page-scenes).
+`PageScene` lays out every face of a book, covers included, as plain drawing data, the same way the reader lays them out, for renderers that don't use CSS. See [Print](/api/print#page-scenes).
 
 | Export                      |                                                                          |
 | --------------------------- | ------------------------------------------------------------------------ |
 | `PageScene`                 | `face(face)`, `page(page, options)`, `title()`, `colophon()`, `blank()`. |
+| `CoverScene`                | `front({ bound })` and `back({ bound })`, as `PageScene.covers`.         |
 | `Scene`, `SceneNode`        | The scene data: fills, strokes, photos, text, shadows and groups.        |
 | `TextMeasure`, `Typesetter` | Text metrics from a renderer, and line breaking with them.               |
 | `PAPER_LOOKS`               | Ink, tints, textures and photo tone per paper.                           |

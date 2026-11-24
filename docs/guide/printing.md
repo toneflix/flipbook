@@ -112,11 +112,12 @@ const pdf = await printer.pdf()
 for (const [index, face] of printer.faces.entries()) await save(`${printer.names[index]}.png`, await printer.png(face))
 ```
 
-| Option  |                                                                                          |
-| ------- | ---------------------------------------------------------------------------------------- |
-| `width` | Page width in millimetres. The height follows the 3:4 page. Defaults to `210`.           |
-| `dpi`   | Resolution of page images. Defaults to `300`.                                            |
-| `load`  | `(src) => Promise<string \| Buffer>`: a file path, URL or the bytes for a photo's `src`. |
-| `fonts` | `{ sans }`: font files for sans text. Left out, it is set in the serif.                  |
+| Option   |                                                                                          |
+| -------- | ---------------------------------------------------------------------------------------- |
+| `width`  | Page width in millimetres. The height follows the 3:4 page. Defaults to `210`.           |
+| `covers` | Print the front and back covers too. Defaults to `true`.                                 |
+| `dpi`    | Resolution of page images. Defaults to `300`.                                            |
+| `load`   | `(src) => Promise<string \| Buffer>`: a file path, URL or the bytes for a photo's `src`. |
+| `fonts`  | `{ sans }`: font files for sans text. Left out, it is set in the serif.                  |
 
-The printer covers the title page, every page and the colophon. `pixels(face)` hands over raw RGBA pixels for an encoder of your own, such as sharp.
+The printer covers the front cover, the title page, every page, the colophon and the back cover, in every cover design and theme. `pixels(face)` hands over raw RGBA pixels for an encoder of your own, such as sharp.

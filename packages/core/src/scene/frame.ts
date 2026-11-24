@@ -1,7 +1,7 @@
 import { BANDED_FRAMES, type FlipbookPhoto, type FrameStyle } from '../book'
 import { PhotoCrop } from '../position'
 import { inkOf, type PaperLook } from './paper'
-import type { Box, GradientStop, Paint, Point, SceneNode, Shape } from './types'
+import type { Box, Color, GradientStop, Paint, Point, SceneNode, Shape } from './types'
 
 export const inset = (box: Box, by: number): Box => ({
   x: box.x + by,
@@ -11,6 +11,30 @@ export const inset = (box: Box, by: number): Box => ({
 })
 
 export const rect = (box: Box): Shape => ({ type: 'rect', box })
+
+/** A colour with its alpha replaced, from hex or `rgba()`. */
+export function withAlpha(color: Color, alpha: number): Color {
+  if (color.startsWith('#')) {
+    const hex = color.length === 4 ? [...color.slice(1)].map((c) => c + c).join('') : color.slice(1, 7)
+    const [r, g, b] = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16))
+
+    return `rgba(${r},${g},${b},${alpha})`
+  }
+
+  return color.replace(/,\s*[\d.]+\)$/, `,${alpha})`).replace(/^rgb\(/, 'rgba(')
+}
+
+/** The radii of a CSS `radial-gradient(ellipse at …)`: reaching the farthest corner with the closest-side shape. */
+export function farthestCorner(centre: { x: number; y: number }, box: Box = { x: 0, y: 0, width: 100, height: 400 / 3 }) {
+  const rx = Math.min(centre.x - box.x, box.x + box.width - centre.x)
+  const ry = Math.min(centre.y - box.y, box.y + box.height - centre.y)
+  const k = Math.hypot(
+    Math.max(centre.x - box.x, box.x + box.width - centre.x) / rx,
+    Math.max(centre.y - box.y, box.y + box.height - centre.y) / ry,
+  )
+
+  return { x: rx * k, y: ry * k }
+}
 
 /** A CSS `linear-gradient(<angle>deg, ...)` across a box, as two points. */
 export function angledGradient(box: Box, angle: number, stops: GradientStop[]): Paint {
