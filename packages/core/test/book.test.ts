@@ -1,21 +1,59 @@
 import { describe, expect, it } from 'vitest'
-import { PAGE_LAYOUTS, PLACED_LAYOUTS, coverHasText, photoFrame, type PageLayout } from '../src'
+import {
+  PAGE_LAYOUTS,
+  PAGE_SHAPES,
+  PLACED_LAYOUTS,
+  coverHasText,
+  pageMillimetres,
+  pageSize,
+  photoFrame,
+  placedLayout,
+  type PageLayout,
+  type PageShape,
+} from '../src'
 
 describe('placed layouts', () => {
-  const placed = Object.entries(PLACED_LAYOUTS) as [PageLayout, NonNullable<(typeof PLACED_LAYOUTS)[PageLayout]>][]
+  const layouts = Object.keys(PLACED_LAYOUTS) as PageLayout[]
+  const shapes = Object.keys(PAGE_SHAPES) as PageShape[]
 
   it('has a box for every slot', () => {
-    for (const [layout, { slots }] of placed) expect(slots.length, layout).toBe(PAGE_LAYOUTS[layout].slots)
+    for (const shape of shapes)
+      for (const layout of layouts) expect(placedLayout(layout, pageSize(shape))!.slots.length, layout).toBe(PAGE_LAYOUTS[layout].slots)
   })
 
-  it('keeps every box on the page', () => {
-    for (const [layout, { slots, caption }] of placed)
-      for (const box of [...slots, caption]) {
-        expect(box.x, layout).toBeGreaterThanOrEqual(0)
-        expect(box.y, layout).toBeGreaterThanOrEqual(0)
-        expect(box.x + box.width, layout).toBeLessThanOrEqual(100)
-        expect(box.y + box.height, layout).toBeLessThanOrEqual(400 / 3)
+  it('keeps every box on the page in every shape', () => {
+    for (const shape of shapes) {
+      const size = pageSize(shape)
+
+      for (const layout of layouts) {
+        const { slots, caption } = placedLayout(layout, size)!
+
+        for (const box of [...slots, caption]) {
+          expect(box.x, `${layout} ${shape}`).toBeGreaterThanOrEqual(0)
+          expect(box.y, `${layout} ${shape}`).toBeGreaterThanOrEqual(0)
+          expect(box.x + box.width, `${layout} ${shape}`).toBeLessThanOrEqual(size.width + 1e-9)
+          expect(box.y + box.height, `${layout} ${shape}`).toBeLessThanOrEqual(size.height + 1e-9)
+        }
       }
+    }
+  })
+
+  it('keeps the portrait boxes', () => {
+    expect(placedLayout('triptych')!.slots.map((box) => box.x.toFixed(2))).toEqual(['7.00', '36.67', '66.33'])
+    expect(placedLayout('story')).toMatchObject({ slots: [{ x: 7, y: 7, width: 86 }], caption: { x: 9, width: 82 } })
+    expect(placedLayout('story')!.slots[0].height).toBeCloseTo(66)
+    expect(placedLayout('mosaic')!.caption).toMatchObject({ x: 7, width: 86, height: 10 })
+    expect(placedLayout('mosaic')!.caption.y).toBeCloseTo(118)
+  })
+})
+
+describe('pageSize', () => {
+  it('measures pages on their short side', () => {
+    expect(pageSize()).toEqual({ width: 100, height: 400 / 3 })
+    expect(pageSize('wide')).toEqual({ width: 150, height: 100 })
+    expect(pageSize('square')).toEqual({ width: 100, height: 100 })
+    expect(pageMillimetres('landscape')).toEqual({ width: 280, height: 210 })
+    expect(pageMillimetres('wide')).toEqual({ width: 315, height: 210 })
   })
 })
 

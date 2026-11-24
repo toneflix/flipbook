@@ -5,7 +5,9 @@ import {
   FRAME_STYLES,
   PAGE_HEIGHT,
   PAGE_LAYOUTS,
+  PAGE_SHAPES,
   PageScene,
+  pageSize,
   farthestCorner,
   sprockets,
   withAlpha,
@@ -15,6 +17,7 @@ import {
   type FlipbookBook,
   type FrameStyle,
   type PageLayout,
+  type PageShape,
   type SceneNode,
   type TextMeasure,
 } from '../src'
@@ -100,14 +103,27 @@ describe('PageScene', () => {
     expect(holes.at(-1)! + 1.6).toBeCloseTo(30 - 0.6 - 0.7)
   })
 
-  it('draws every layout in every frame', () => {
-    for (const layout of Object.keys(PAGE_LAYOUTS) as PageLayout[])
-      for (const frame of Object.keys(FRAME_STYLES) as FrameStyle[]) {
-        const scene = new PageScene(book(layout, frame), measure).page(book(layout, frame).pages[0], { number: 1 })
+  it('draws every layout in every frame in every shape', () => {
+    for (const pageShape of Object.keys(PAGE_SHAPES) as PageShape[])
+      for (const layout of Object.keys(PAGE_LAYOUTS) as PageLayout[])
+        for (const frame of Object.keys(FRAME_STYLES) as FrameStyle[]) {
+          const shaped = { ...book(layout, frame), pageShape }
+          const scene = new PageScene(shaped, measure).page(shaped.pages[0], { number: 1 })
+          const json = JSON.stringify(scene)
 
-        expect(JSON.stringify(scene)).not.toContain('null')
-        expect(flatten(scene.nodes).filter((node) => node.kind === 'photo')).toHaveLength(PAGE_LAYOUTS[layout].slots)
-      }
+          expect(json).not.toContain('null')
+          expect(json).not.toContain('NaN')
+          expect(flatten(scene.nodes).filter((node) => node.kind === 'photo')).toHaveLength(PAGE_LAYOUTS[layout].slots)
+        }
+  })
+
+  it('sizes the page by its shape', () => {
+    const scene = new PageScene({ ...book('pair'), pageShape: 'wide' }, measure).page(book('pair').pages[0])
+    const slots = scene.nodes.flatMap((node) => (node.kind === 'group' && node.clip?.type === 'rect' ? [node.clip.box] : []))
+
+    expect([scene.width, scene.height]).toEqual([150, 100])
+    expect(slots[0].y).toBeCloseTo(slots[1].y)
+    expect(slots[1].x).toBeGreaterThan(slots[0].x + slots[0].width)
   })
 
   it('numbers pages on their outer corner', () => {
@@ -136,26 +152,27 @@ describe('PageScene', () => {
 })
 
 describe('CoverScene', () => {
-  const covers = (coverDesign: CoverDesign, theme: CoverTheme, withPhoto: boolean) =>
+  const covers = (coverDesign: CoverDesign, theme: CoverTheme, withPhoto: boolean, pageShape: PageShape = 'portrait') =>
     new PageScene(
-      { ...book('single'), coverDesign, theme, subtitle: 'A subtitle', brand: 'Studio', cover: withPhoto ? photo : undefined },
+      { ...book('single'), coverDesign, theme, pageShape, subtitle: 'A subtitle', brand: 'Studio', cover: withPhoto ? photo : undefined },
       measure,
     ).covers
 
-  it('draws every design in every theme, with and without a photo', () => {
-    for (const design of Object.keys(COVER_DESIGNS) as CoverDesign[])
-      for (const theme of Object.keys(COVER_THEMES) as CoverTheme[])
-        for (const withPhoto of [true, false]) {
-          const { front, back } = {
-            front: covers(design, theme, withPhoto).front({ bound: true }),
-            back: covers(design, theme, withPhoto).back(),
-          }
-          const json = JSON.stringify([front, back])
+  it('draws every design in every theme and shape, with and without a photo', () => {
+    for (const pageShape of Object.keys(PAGE_SHAPES) as PageShape[])
+      for (const design of Object.keys(COVER_DESIGNS) as CoverDesign[])
+        for (const theme of Object.keys(COVER_THEMES) as CoverTheme[])
+          for (const withPhoto of [true, false]) {
+            const scenes = covers(design, theme, withPhoto, pageShape)
+            const front = scenes.front({ bound: true })
+            const back = scenes.back()
+            const json = JSON.stringify([front, back])
 
-          expect(json).not.toContain('null')
-          expect(json).not.toContain('NaN')
-          expect(flatten(front.nodes).some((node) => node.kind === 'photo')).toBe(withPhoto)
-        }
+            expect(json).not.toContain('null')
+            expect(json).not.toContain('NaN')
+            expect([front.width, front.height]).toEqual([pageSize(pageShape).width, pageSize(pageShape).height])
+            expect(flatten(front.nodes).some((node) => node.kind === 'photo')).toBe(withPhoto)
+          }
   })
 
   it('sets the title on the front', () => {

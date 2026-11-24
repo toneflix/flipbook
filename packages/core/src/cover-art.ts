@@ -1,3 +1,5 @@
+import { pageSize, type PageSize } from './shape'
+
 /** Line art for the cover designs, as SVG path data, shared by every renderer. */
 export interface CoverArt {
   viewBox: string
@@ -24,23 +26,51 @@ export const FLEURON: CoverArt = {
 
 const RAY_COUNT = 17
 
-/** Rays aim at the foot of the cover but stop at the arch, so they never cross the title. */
-const RAY_FOOT = { x: 50, y: 124 }
-const RAY_END = 88
+/** The height of the band under the deco arch that holds the title, in page units. */
+export function decoTitleBand(size: PageSize): number {
+  return Math.min(45 + 1 / 3, size.height * 0.34)
+}
 
-/** Art deco rays fanning up behind the photo, aimed at the foot of a 100 × 133⅓ cover, inside a notched double frame. */
-export const DECO: CoverArt = {
-  viewBox: '0 0 100 133.33',
-  strokes: [
-    ...Array.from({ length: RAY_COUNT }, (_, i) => {
-      const x = 12 + (i / (RAY_COUNT - 1)) * 76
-      const t = (RAY_FOOT.y - RAY_END) / (RAY_FOOT.y - 16)
-      const endX = RAY_FOOT.x + (x - RAY_FOOT.x) * t
+/**
+ * Art deco rays fanning up behind the photo, aimed at the foot of the cover, inside a notched double
+ * frame. Rays stop above the title band so they never cross the title.
+ */
+export function decoArt(size: PageSize = pageSize()): CoverArt {
+  const { width: w, height: h } = size
+  const foot = { x: w / 2, y: h - 9 - 1 / 3 }
+  const end = h - decoTitleBand(size)
+  const t = (foot.y - end) / (foot.y - 16)
+  const n = (v: number) => Number(v.toFixed(2))
 
-      return { d: `M${endX.toFixed(2)} ${RAY_END}L${x.toFixed(2)} 16`, width: 0.25, opacity: 0.3 }
-    }),
-    { d: 'M5 5H95V128.33H5Z', width: 0.5 },
-    { d: 'M11 8H89L92 11V122.33L89 125.33H11L8 122.33V11Z', width: 0.35 },
-  ],
-  fills: ['M50 8.5L52 11L50 13.5L48 11Z', 'M50 119.83L52 122.33L50 124.83L48 122.33Z'],
+  return {
+    viewBox: `0 0 ${n(w)} ${n(h)}`,
+    strokes: [
+      ...Array.from({ length: RAY_COUNT }, (_, i) => {
+        const x = 12 + (i / (RAY_COUNT - 1)) * (w - 24)
+        const endX = foot.x + (x - foot.x) * t
+
+        return { d: `M${endX.toFixed(2)} ${n(end)}L${x.toFixed(2)} 16`, width: 0.25, opacity: 0.3 }
+      }),
+      { d: `M5 5H${n(w - 5)}V${n(h - 5)}H5Z`, width: 0.5 },
+      { d: `M11 8H${n(w - 11)}L${n(w - 8)} 11V${n(h - 11)}L${n(w - 11)} ${n(h - 8)}H11L8 ${n(h - 11)}V11Z`, width: 0.35 },
+    ],
+    fills: [
+      `M${n(w / 2)} 8.5L${n(w / 2 + 2)} 11L${n(w / 2)} 13.5L${n(w / 2 - 2)} 11Z`,
+      `M${n(w / 2)} ${n(h - 13.5)}L${n(w / 2 + 2)} ${n(h - 11)}L${n(w / 2)} ${n(h - 8.5)}L${n(w / 2 - 2)} ${n(h - 11)}Z`,
+    ],
+  }
+}
+
+/** The deco art on a portrait cover. */
+export const DECO: CoverArt = decoArt()
+
+/** Where the tipped-in print sits on a cover wider than tall, and where the title label beside it goes. */
+export function printBeside(size: PageSize, withLabel: boolean) {
+  const width = Math.min(68, (size.width - 24) / 2)
+  const height = (width * 62) / 68
+
+  return {
+    print: { x: withLabel ? 10 : (size.width - width) / 2, y: (size.height - height) / 2, width, height },
+    label: { x: 16 + width, width: Math.min(64, size.width - 26 - width) },
+  }
 }

@@ -1,9 +1,8 @@
 import { Fold } from './fold'
+import type { PageSize } from './shape'
 import { length, sub, type Vec } from './vector'
 
 export type TurnFrame = { origin: Vec; point: Vec; stiff: boolean }
-
-export type PageSize = { width: number; height: number }
 
 export interface PageTurnListener {
   frame: (frame: TurnFrame) => void
