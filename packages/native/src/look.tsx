@@ -1,6 +1,7 @@
 import { createContext, useContext, type ReactNode } from 'react'
 import { Platform, type ImageSourcePropType } from 'react-native'
-import type { FrameStyle, PaperColor } from '@toneflix/flipbook-core'
+import { pageSize } from '@toneflix/flipbook-core'
+import type { FrameStyle, PageShape, PaperColor } from '@toneflix/flipbook-core'
 
 /** How one paper colour prints: its ink, the tints frames mix with it, and its texture tiles. Mirrors the web's .fb-paper-* styles. */
 export interface PaperLook {
@@ -85,18 +86,47 @@ export interface BookLook {
   paper: PaperColor
   frame: FrameStyle
   fonts: BookFonts
+  shape: PageShape
 }
 
-const BookLookContext = createContext<BookLook>({ paper: 'ivory', frame: 'none', fonts: {} })
+const BookLookContext = createContext<BookLook>({ paper: 'ivory', frame: 'none', fonts: {}, shape: 'portrait' })
 
-/** The paper, default frame and fonts for every page rendered inside. The viewer sets it from the book. */
-export function BookLookProvider({ paper = 'ivory', frame = 'none', fonts = {}, children }: Partial<BookLook> & { children: ReactNode }) {
-  return <BookLookContext.Provider value={{ paper, frame, fonts }}>{children}</BookLookContext.Provider>
+/** The paper, default frame, fonts and page shape for every page rendered inside. The viewer sets it from the book. */
+export function BookLookProvider({
+  paper = 'ivory',
+  frame = 'none',
+  fonts = {},
+  shape = 'portrait',
+  children,
+}: Partial<BookLook> & { children: ReactNode }) {
+  return <BookLookContext.Provider value={{ paper, frame, fonts, shape }}>{children}</BookLookContext.Provider>
 }
 
 export const useBookLook = () => useContext(BookLookContext)
 
 export const usePaper = () => PAPERS[useBookLook().paper] ?? ivory
+
+/**
+ * A page or cover `width` pixels wide in the book's shape: its height, the pixels in one page unit
+ * (1% of the short side), its size in page units and whether it is wider than tall.
+ */
+export function usePageMetrics(width: number) {
+  return pageMetrics(width, useBookLook().shape)
+}
+
+/** `usePageMetrics` for a page of a given shape. */
+export function pageMetrics(width: number, shape?: PageShape | null) {
+  const size = pageSize(shape)
+
+  return {
+    size,
+    height: (width * size.height) / size.width,
+    unit: width / size.width,
+    across: size.width > size.height,
+    /** Side padding that keeps centred writing to a portrait page's measure, `inset` units in from it. */
+    measure: (inset: number) => ((size.width - Math.min(size.width, 100)) / 2 + inset) * (width / size.width),
+  }
+}
 
 /** Text styles for the book's serif face, upright or italic. */
 export function useSerif() {
