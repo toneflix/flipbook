@@ -55,4 +55,13 @@ describe('BookPrinter', () => {
     expect(pdf.startsWith('%PDF')).toBe(true)
     expect(pdf.match(/\/Type \/Page\b/g)).toHaveLength(6)
   })
+
+  it('prints a panorama in halves, after a blank when it would open on the right', () => {
+    const wide = new BookPrinter(
+      { ...book, pages: [...book.pages, { layout: 'panorama', caption: 'Across', photos: [{ src: 'a' }] }] },
+      { covers: false },
+    )
+
+    expect(wide.names).toEqual(['title', 'page-1', 'page-2', 'blank-1', 'page-3-left', 'page-3-right', 'colophon'])
+  })
 })

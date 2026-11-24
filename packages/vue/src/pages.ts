@@ -5,6 +5,7 @@ import {
   type FlipbookBook,
   type FlipbookPage,
   type FrameStyle,
+  type PageHalf,
   type PageShape,
   type PaperColor,
   type PhotoPosition,
@@ -40,6 +41,8 @@ export const PageView = defineComponent({
     shape: { type: String as PropType<PageShape>, default: 'portrait' },
     number: Number,
     side: String as PropType<Side>,
+    /** The half of a panorama on this page. Left out, the whole panorama is set on the page. */
+    half: String as PropType<PageHalf>,
     showImages: { type: Boolean, default: true },
     /** Editor: the highlighted slot. Listening to `slotClick` makes slots clickable. */
     activeSlot: Number,
@@ -57,6 +60,7 @@ export const PageView = defineComponent({
           {
             number: props.number,
             side: props.side,
+            half: props.half,
             showImages: props.showImages,
             activeSlot: props.activeSlot,
             onSlotClick: props.editable ? (slot) => emit('slotClick', slot) : undefined,

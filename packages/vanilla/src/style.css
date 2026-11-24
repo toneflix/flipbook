@@ -1288,6 +1288,16 @@
 .fb-slot.fb-placed {
   position: absolute;
 }
+/* A panorama's photo runs across both pages of a spread; each page shows its own half. */
+.fb-panorama {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+/* The left half carries the caption's shade, sized by the same words, which only the right half shows. */
+.fb-caption-over.is-shade {
+  color: transparent;
+}
 .fb-slot.fb-placed.is-loose {
   overflow: visible;
   box-shadow:

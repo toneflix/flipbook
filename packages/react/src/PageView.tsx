@@ -3,12 +3,14 @@ import { measurePadding, shapeClass } from '@toneflix/flipbook'
 import {
   PhotoCrop,
   pageSize,
+  panoramaView,
   photoFrame,
   placedLayout,
   type FlipbookBook,
   type FlipbookPage,
   type FlipbookPhoto,
   type PageBox,
+  type PageHalf,
   type PhotoPosition,
 } from '@toneflix/flipbook-core'
 import { useBookLook } from './BookLook'
@@ -41,6 +43,8 @@ export interface PageViewProps {
   number?: number
   /** Which side of a spread the page sits on, for the curve into the spine. */
   side?: Side
+  /** The half of a panorama on this page. Left out, the whole panorama is set on the page. */
+  half?: PageHalf
   /** False draws placeholders instead of loading images. */
   showImages?: boolean
   /** Editor: makes each photo slot clickable. */
@@ -56,13 +60,24 @@ export interface PageViewProps {
  * The inside of one book page. Sizes use container units (cqmin), so the same page looks right as
  * a thumbnail and as a full-screen spread. The parent must have `container-type: size`.
  */
-export function PageView({ page, number, side, showImages = true, onSlotClick, onSlotDrop, activeSlot, onPhotoPosition }: PageViewProps) {
+export function PageView({
+  page,
+  number,
+  side,
+  half,
+  showImages = true,
+  onSlotClick,
+  onSlotDrop,
+  activeSlot,
+  onPhotoPosition,
+}: PageViewProps) {
   const { layout, caption, photos } = page
   const paper = usePaper()
   const { frame: bookFrame, shape } = useBookLook()
   const size = pageSize(shape)
   const across = size.width > size.height
   const placed = placedLayout(layout, size)
+  const panorama = layout === 'panorama' ? panoramaView(half, size) : null
   const editable = !!onSlotClick
   const positioning = activeSlot != null && showImages && onPhotoPosition && photos[activeSlot] ? activeSlot : null
   const positioner = usePhotoPositioner(
@@ -133,6 +148,22 @@ export function PageView({ page, number, side, showImages = true, onSlotClick, o
         <>
           {slot(0, 'fb-bleed')}
           {caption && <div className="fb-caption-over">{caption}</div>}
+        </>
+      )}
+
+      {panorama && (
+        <>
+          <div className="fb-panorama">{slot(0, 'fb-placed', false, boxStyle(panorama.photo))}</div>
+          {caption && typeof panorama.caption !== 'string' && (
+            <p className="fb-placed-caption fb-serif fb-italic" style={boxStyle(panorama.caption)}>
+              {caption}
+            </p>
+          )}
+          {caption && typeof panorama.caption === 'string' && (
+            <div className={`fb-caption-over ${panorama.caption === 'shade' ? 'is-shade' : ''}`} aria-hidden={panorama.caption === 'shade'}>
+              {caption}
+            </div>
+          )}
         </>
       )}
 
@@ -222,7 +253,7 @@ export function PageView({ page, number, side, showImages = true, onSlotClick, o
         </div>
       )}
 
-      {number !== undefined && layout !== 'single' && (
+      {number !== undefined && layout !== 'single' && !panorama && (
         <span className="fb-page-number" style={side === 'left' ? { left: 0 } : { right: 0 }}>
           {number}
         </span>

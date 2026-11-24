@@ -8,6 +8,7 @@ import {
   PAGE_SHAPES,
   PageScene,
   pageSize,
+  panoramaView,
   farthestCorner,
   sprockets,
   withAlpha,
@@ -93,6 +94,27 @@ describe('PageScene', () => {
 
     expect(clip?.radii[0]).toBeCloseTo(clip!.box.width / 2)
     expect(clip?.radii[2]).toBe(0)
+  })
+
+  it('draws each half of a panorama from one photo across the spread', () => {
+    const scenes = new PageScene({ ...book('panorama'), pages: [{ layout: 'panorama', caption: 'Across', photos: [photo] }] }, measure)
+    const drawn = (half?: 'left' | 'right') =>
+      flatten(scenes.face({ kind: 'page', index: 0, half }).nodes).find((node) => node.kind === 'photo')
+    const caption = (half?: 'left' | 'right') =>
+      flatten(scenes.face({ kind: 'page', index: 0, half }).nodes).some((node) => node.kind === 'text' && node.lines[0]?.text === 'Across')
+    const left = drawn('left')
+    const right = drawn('right')
+
+    expect(left?.kind === 'photo' && [left.box.x, left.box.width]).toEqual([0, 200])
+    expect(right?.kind === 'photo' && [right.box.x, right.box.width]).toEqual([-100, 200])
+    expect([caption('left'), caption('right'), caption()]).toEqual([false, true, true])
+  })
+
+  it('spans a panorama across two pages of any shape', () => {
+    const wide = pageSize('wide')
+
+    expect(panoramaView('right', wide).photo).toEqual({ x: -150, y: 0, width: 300, height: 100 })
+    expect(panoramaView(null, wide).photo.height).toBeCloseTo(50)
   })
 
   it('spaces sprocket holes evenly along the band', () => {

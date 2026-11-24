@@ -2,6 +2,7 @@ import {
   BANDED_FRAMES,
   PhotoCrop,
   pageSize,
+  panoramaView,
   photoFrame,
   placedLayout,
   type Face,
@@ -10,6 +11,7 @@ import {
   type FlipbookPhoto,
   type FrameStyle,
   type PageBox,
+  type PageHalf,
   type PageShape,
   type PaperColor,
   type PhotoPosition,
@@ -41,6 +43,8 @@ export interface PageOptions {
   /** Printed in the outer bottom corner. */
   number?: number
   side?: Side
+  /** The half of a panorama on this page. Left out, the whole panorama is set on the page. */
+  half?: PageHalf
   /** False draws placeholders instead of loading images. */
   showImages?: boolean
   /** Editor: makes each photo slot clickable. */
@@ -128,7 +132,7 @@ export function printedPhoto(photo: FlipbookPhoto | null, frame: FrameStyle, fit
 /** The inside of one book page. The parent must have `container-type: size`. */
 export function renderPage(page: FlipbookPage, look: PageLook, options: PageOptions = {}) {
   const { layout, caption, photos } = page
-  const { number, side, showImages = true, onSlotClick, activeSlot, onPhotoPosition } = options
+  const { number, side, half, showImages = true, onSlotClick, activeSlot, onPhotoPosition } = options
   const size = pageSize(look.shape)
   const across = size.width > size.height
   const placed = placedLayout(layout, size)
@@ -167,6 +171,17 @@ export function renderPage(page: FlipbookPage, look: PageLook, options: PageOpti
       root.append(slot(0, 'fb-bleed'))
       if (caption) root.append(h('div', { class: 'fb-caption-over' }, caption))
       break
+    case 'panorama': {
+      const view = panoramaView(half, size)
+      const shade = view.caption === 'shade'
+
+      root.append(h('div', { class: 'fb-panorama' }, slot(0, 'fb-placed', false, boxStyle(view.photo))))
+      if (caption && typeof view.caption !== 'string')
+        root.append(h('p', { class: 'fb-placed-caption fb-serif fb-italic', style: boxStyle(view.caption) }, caption))
+      else if (caption)
+        root.append(h('div', { class: `fb-caption-over ${shade ? 'is-shade' : ''}`, 'aria-hidden': shade ? 'true' : undefined }, caption))
+      break
+    }
     case 'framed':
       root.append(
         column(
@@ -249,7 +264,7 @@ export function renderPage(page: FlipbookPage, look: PageLook, options: PageOpti
       )
   }
 
-  if (number !== undefined && layout !== 'single')
+  if (number !== undefined && layout !== 'single' && layout !== 'panorama')
     root.append(h('span', { class: 'fb-page-number', style: side === 'left' ? { left: '0' } : { right: '0' } }, String(number)))
   root.append(surface(side))
 
@@ -313,6 +328,6 @@ export function renderFace(face: Face, book: FlipbookBook, side?: Side, numbered
     case 'blank':
       return renderBlank(look, side)
     case 'page':
-      return renderPage(book.pages[face.index], look, { number: numbered ? face.index + 1 : undefined, side })
+      return renderPage(book.pages[face.index], look, { number: numbered ? face.index + 1 : undefined, side, half: face.half })
   }
 }

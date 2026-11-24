@@ -81,10 +81,15 @@ interface FlipbookPage {
 | `squares`  | 9      | Nine square photos, three by three.                             |
 | `aside`    | 1      | A tall photo with the caption as writing beside it.             |
 | `opener`   | 1      | Printed to the top and side edges, writing below. Never framed. |
+| `panorama` | 1      | One photo across both pages of a spread. Never framed.          |
 
 `PAGE_LAYOUTS` lists them with their labels and slot counts, handy for a layout picker. A `null` photo leaves its slot blank.
 
 The newer layouts are drawn from boxes in `PLACED_LAYOUTS`, worked out from the page's size in page units: 1 unit is 1% of the page's short side, so a portrait page is 100 × 133⅓ and a wide one 150 × 100. `placedLayout(layout, pageSize(shape))` gives the boxes for a shape. Every renderer places them the same way, and a custom renderer can read them too.
+
+## Panoramas
+
+A `panorama` page prints one photo across both pages of a spread, with its caption over the foot of the right-hand page. It always opens on a left-hand page: when it would fall on the right, the page before it is followed by a blank. One page at a time, as on a phone held upright, the whole photo is set across the page with the caption below. Keep faces away from the middle of the photo, where the book folds.
 
 ## Opening at a page
 

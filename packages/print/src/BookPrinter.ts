@@ -38,6 +38,7 @@ export class BookPrinter {
   readonly scenes: PageScene
 
   private readonly painter: SkiaPainter
+  private printed?: { face: Face; side: 'left' | 'right' }[]
 
   constructor(
     readonly book: FlipbookBook,
@@ -54,20 +55,35 @@ export class BookPrinter {
     this.painter = new SkiaPainter(printFonts, load)
   }
 
-  /** The faces printed, in reading order: the covers when asked for, the title page, the pages and the colophon. */
+  /**
+   * The faces printed, in reading order: the covers when asked for, the title page, the pages and the
+   * colophon. A panorama prints as its two halves, after a blank when it would open on a right-hand page.
+   */
   get faces(): Face[] {
-    const faces = new BookLayout(this.book.pages.length, { spread: false }).faces
-
-    return this.covers ? faces : faces.filter((face) => face.kind !== 'cover' && face.kind !== 'back')
+    return this.sheets.map(({ face }) => face)
   }
 
-  /** What each printed page is called, in order: cover, title, page-1, page-2…, colophon, back. */
+  /** What each printed page is called, in order: cover, title, page-1, page-2-left, page-2-right, blank-1…, colophon, back. */
   get names(): string[] {
-    return this.faces.map((face) => (face.kind === 'page' ? `page-${face.index + 1}` : face.kind))
+    let blanks = 0
+
+    return this.faces.map((face) => {
+      if (face.kind === 'blank') return `blank-${++blanks}`
+      if (face.kind !== 'page') return face.kind
+
+      return face.half ? `page-${face.index + 1}-${face.half}` : `page-${face.index + 1}`
+    })
   }
 
+  /** A face drawn as it binds: its page number on the outer corner. */
   scene(face: Face): Scene {
-    return this.scenes.face(face)
+    const sheet = this.sheets.find((sheet) => sheet.face === face)
+
+    return this.scenes.face(face, { side: sheet?.side })
+  }
+
+  private get sheets() {
+    return (this.printed ??= BookLayout.sheets(this.book.pages, this.covers))
   }
 
   /** Page images are this many pixels across. */

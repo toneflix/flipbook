@@ -1,7 +1,16 @@
 import { useId, type ReactNode } from 'react'
 import { Image, Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native'
 import Svg, { Circle, Defs, Path, RadialGradient, Rect, Stop } from 'react-native-svg'
-import { placedLayout, photoFrame, type FlipbookBook, type FlipbookPage, type PageBox, type PhotoPosition } from '@toneflix/flipbook-core'
+import {
+  panoramaView,
+  placedLayout,
+  photoFrame,
+  type FlipbookBook,
+  type FlipbookPage,
+  type PageBox,
+  type PageHalf,
+  type PhotoPosition,
+} from '@toneflix/flipbook-core'
 import { Gradient } from './Gradient'
 import { ink, useBookLook, usePageMetrics, usePaper, useSerif, type PaperLook } from './look'
 import { PrintedPhoto } from './PrintedPhoto'
@@ -17,6 +26,8 @@ export interface PageViewProps {
   width: number
   number?: number
   side?: Side
+  /** The half of a panorama on this page. Left out, the whole panorama is set on the page. */
+  half?: PageHalf
   showImages?: boolean
   /** Editor: makes each photo slot pressable. */
   onSlotPress?: (slot: number) => void
@@ -38,6 +49,7 @@ export function PageView({
   width,
   number,
   side,
+  half,
   showImages = true,
   onSlotPress,
   activeSlot,
@@ -51,6 +63,7 @@ export function PageView({
   const { layout, caption, photos } = page
   const bookFrame = useBookLook().frame
   const placed = placedLayout(layout, size)
+  const panorama = layout === 'panorama' ? panoramaView(half, size) : null
   const captionStyle = [serif.italic, styles.caption, { fontSize: 3.8 * unit, lineHeight: 5.2 * unit, color: ink(look) }]
 
   const slot = (index: number, style: ViewStyle, fit: 'cover' | 'contain' = 'cover') => {
@@ -105,26 +118,44 @@ export function PageView({
   })
 
   const pageCaption = caption ? <Text style={captionStyle}>{caption}</Text> : null
+  // The caption in white over a shade at the foot of a photo that fills the page, or the shade alone, sized by the same words.
+  const captionOver = (words = true) =>
+    caption ? (
+      <View pointerEvents="none" style={[styles.overlay, { paddingTop: 14 * unit, paddingHorizontal: 7 * unit, paddingBottom: 7 * unit }]}>
+        <Gradient
+          to="top"
+          stops={[
+            { offset: 0, color: '#000', opacity: 0.7 },
+            { offset: 0.5, color: '#000', opacity: 0.3 },
+            { offset: 1, color: '#000', opacity: 0 },
+          ]}
+        />
+        <Text
+          style={[serif.italic, { fontSize: 4.2 * unit, lineHeight: 5.7 * unit, color: words ? '#fff' : 'transparent' }]}
+          accessible={words}
+        >
+          {caption}
+        </Text>
+      </View>
+    ) : null
 
   return (
     <Paper width={width} side={side}>
       {layout === 'single' && (
         <>
           {slot(0, StyleSheet.absoluteFill)}
-          {caption ? (
-            <View
-              pointerEvents="none"
-              style={[styles.overlay, { paddingTop: 14 * unit, paddingHorizontal: 7 * unit, paddingBottom: 7 * unit }]}
-            >
-              <Gradient
-                to="top"
-                stops={[
-                  { offset: 0, color: '#000', opacity: 0.7 },
-                  { offset: 0.5, color: '#000', opacity: 0.3 },
-                  { offset: 1, color: '#000', opacity: 0 },
-                ]}
-              />
-              <Text style={[serif.italic, { fontSize: 4.2 * unit, lineHeight: 5.7 * unit, color: '#fff' }]}>{caption}</Text>
+          {captionOver()}
+        </>
+      )}
+
+      {panorama && (
+        <>
+          {slot(0, boxStyle(panorama.photo))}
+          {typeof panorama.caption === 'string' ? (
+            captionOver(panorama.caption === 'over')
+          ) : caption ? (
+            <View pointerEvents="none" style={[boxStyle(panorama.caption), styles.centered]}>
+              <Text style={captionStyle}>{caption}</Text>
             </View>
           ) : null}
         </>
@@ -222,7 +253,7 @@ export function PageView({
         </View>
       )}
 
-      {number !== undefined && layout !== 'single' && (
+      {number !== undefined && layout !== 'single' && !panorama && (
         <Text
           style={[
             serif.upright,

@@ -8,15 +8,15 @@
 const printer = new BookPrinter(book, { shortSide: 210, dpi: 300, load: (src) => readFile(src) })
 ```
 
-| Member         |                                                                               |
-| -------------- | ----------------------------------------------------------------------------- |
-| `faces`        | The faces printed, in reading order.                                          |
-| `names`        | A file name for each face: `cover`, `title`, `page-1`, …, `colophon`, `back`. |
-| `scene(face)`  | The face's scene from core.                                                   |
-| `png(face)`    | One page as a PNG at `dpi`.                                                   |
-| `pixels(face)` | One page as `{ data, width, height }`, RGBA.                                  |
-| `canvas(face)` | One page on a Skia canvas.                                                    |
-| `pdf()`        | The whole book as one PDF, each page `width` × `height` millimetres.          |
+| Member         |                                                                                                                                                                        |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `faces`        | The faces printed, in reading order.                                                                                                                                   |
+| `names`        | A file name for each face: `cover`, `title`, `page-1`, …, `colophon`, `back`. Panoramas are `page-2-left` and `page-2-right`, blanks before them `blank-1`, `blank-2`. |
+| `scene(face)`  | The face's scene from core.                                                                                                                                            |
+| `png(face)`    | One page as a PNG at `dpi`.                                                                                                                                            |
+| `pixels(face)` | One page as `{ data, width, height }`, RGBA.                                                                                                                           |
+| `canvas(face)` | One page on a Skia canvas.                                                                                                                                             |
+| `pdf()`        | The whole book as one PDF, each page `width` × `height` millimetres.                                                                                                   |
 
 ## SkiaPainter
 

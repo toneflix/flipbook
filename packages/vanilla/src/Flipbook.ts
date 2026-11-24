@@ -257,7 +257,7 @@ export class Flipbook {
   }
 
   private buildLayout() {
-    return new BookLayout(this.settings.book.pages.length, { spread: this.spread, stiffCovers: this.settings.stiffCovers })
+    return new BookLayout(this.settings.book.pages, { spread: this.spread, stiffCovers: this.settings.stiffCovers })
   }
 
   // ------------------------------------------------- Building
@@ -480,7 +480,14 @@ export class Flipbook {
     const stage = els.stage.getBoundingClientRect()
     const spread = this.spread
 
-    if (spread !== this.layout.spread || book.pages.length !== this.layout.pageCount || settings.stiffCovers !== this.layout.stiffCovers) {
+    const panoramas = BookLayout.panoramas(book.pages).join()
+
+    if (
+      spread !== this.layout.spread ||
+      book.pages.length !== this.layout.pageCount ||
+      panoramas !== this.layout.panoramas.join() ||
+      settings.stiffCovers !== this.layout.stiffCovers
+    ) {
       this.layout = this.buildLayout()
       this.clearFaces()
     }
