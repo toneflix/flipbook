@@ -14,7 +14,22 @@ import Svg, {
   Circle,
   Stop,
 } from 'react-native-svg'
-import { BANDED_FRAMES, type FlipbookPhoto, type FrameStyle, type PhotoCrop, type PhotoPosition, type Size } from '@toneflix/flipbook-core'
+import {
+  BANDED_FRAMES,
+  FrameScene,
+  PRINT_WHITE,
+  ROUNDED_RADIUS,
+  SPROCKET,
+  TAPE,
+  archRadius,
+  sprockets,
+  withAlpha,
+  type FlipbookPhoto,
+  type FrameStyle,
+  type PhotoCrop,
+  type PhotoPosition,
+  type Size,
+} from '@toneflix/flipbook-core'
 import { Gradient } from './Gradient'
 import { ink, usePaper, type PaperLook } from './look'
 import { CroppedImage, useNaturalSize, usePhotoGestures } from './position'
@@ -23,32 +38,13 @@ type Box = { left: number; top: number; width: number; height: number }
 
 const BANDS = BANDED_FRAMES
 
-/** The space inside the frame line (pad) and the frame line itself, in page units. Mirrors the web's .frame-* styles. */
+const GOLD = '#b48a32'
+
+/** The frame's pad, line and foot in points: core's page-unit sizes times `unit`. Lines are at least a point wide. */
 function measure(frame: FrameStyle, unit: number) {
-  const band = BANDS[frame]
+  const { pad, line, foot } = FrameScene.measure(frame)
 
-  if (band) return { pad: (band + 2.6) * unit, line: 0 }
-
-  switch (frame) {
-    case 'hairline':
-      return { pad: 1.6 * unit, line: Math.max(1, 0.22 * unit) }
-    case 'double':
-      return { pad: 1.4 * unit, line: Math.max(3, 0.7 * unit) }
-    case 'mat':
-      return { pad: 4.5 * unit, line: Math.max(1, 0.7 * unit) }
-    case 'corners':
-      return { pad: 0.7 * unit, line: 0 }
-    case 'deckle':
-      return { pad: 2.6 * unit, line: 0 }
-    case 'plate':
-      return { pad: 3.2 * unit, line: 0 }
-    case 'oval':
-      return { pad: 1.5 * unit, line: Math.max(1, 0.22 * unit) }
-    case 'botanical':
-      return { pad: 5 * unit, line: 0 }
-    default:
-      return { pad: 0, line: 0 }
-  }
+  return { pad: pad * unit, line: line ? Math.max(frame === 'double' ? 3 : 1, line * unit) : 0, foot: foot * unit }
 }
 
 /**
@@ -72,7 +68,7 @@ export interface PrintedPhotoProps {
 export function PrintedPhoto({ photo, frame, unit, fit = 'cover', show = true, onPosition, onPositionGesture }: PrintedPhotoProps) {
   const look = usePaper()
   const [box, setBox] = useState<{ width: number; height: number } | null>(null)
-  const { pad, line } = measure(frame, unit)
+  const { pad, line, foot } = measure(frame, unit)
   const edge = pad + line
   const ratio = photo?.width && photo.height ? photo.width / photo.height : 4 / 3
 
@@ -80,11 +76,12 @@ export function PrintedPhoto({ photo, frame, unit, fit = 'cover', show = true, o
   let height = box?.height ?? 0
 
   if (box && fit === 'contain') {
-    width = Math.min(box.width, (box.height - 2 * edge) * ratio + 2 * edge)
-    height = (width - 2 * edge) / ratio + 2 * edge
+    width = Math.min(box.width, (box.height - 2 * edge - foot) * ratio + 2 * edge)
+    height = (width - 2 * edge) / ratio + 2 * edge + foot
   }
 
-  const inner: Box = { left: edge, top: edge, width: Math.max(0, width - 2 * edge), height: Math.max(0, height - 2 * edge) }
+  const inner: Box = { left: edge, top: edge, width: Math.max(0, width - 2 * edge), height: Math.max(0, height - 2 * edge - foot) }
+  const corner = photoCorners(frame, inner, unit)
   const natural = useNaturalSize(show ? photo : null)
   const { crop, handlers } = usePhotoGestures(photo?.position, inner, natural, photo && show ? onPosition : undefined, onPositionGesture)
 
@@ -92,11 +89,11 @@ export function PrintedPhoto({ photo, frame, unit, fit = 'cover', show = true, o
     <View style={styles.box} onLayout={(event: LayoutChangeEvent) => setBox(event.nativeEvent.layout)}>
       {box && (
         <View style={{ width, height }} {...handlers}>
-          <Backing frame={frame} look={look} unit={unit} width={width} height={height} line={line} />
+          <Backing frame={frame} look={look} unit={unit} width={width} height={height} line={line} rect={inner} />
           {frame === 'oval' ? (
             <OvalPhoto photo={show ? photo : null} crop={crop} natural={natural} look={look} rect={inner} width={width} height={height} />
           ) : (
-            <View style={[styles.abs, inner]}>
+            <View style={[styles.abs, inner, corner, corner && styles.clip]}>
               {photo && show ? (
                 <CroppedImage photo={photo} crop={crop} box={inner} image={natural} />
               ) : (
@@ -120,6 +117,7 @@ function Backing({
   width,
   height,
   line,
+  rect,
 }: {
   frame: FrameStyle
   look: PaperLook
@@ -127,6 +125,7 @@ function Backing({
   width: number
   height: number
   line: number
+  rect: Box
 }) {
   const band = BANDS[frame]
 
@@ -193,9 +192,134 @@ function Backing({
           />
         </Svg>
       )
+    case 'arch': {
+      const r = archRadius(rect) + rect.left
+
+      return (
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            { borderWidth: line, borderColor: ink(look, 0.7), borderTopLeftRadius: r, borderTopRightRadius: r },
+          ]}
+        />
+      )
+    }
+    case 'instant':
+      return (
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: PRINT_WHITE, borderWidth: Math.max(1, 0.15 * unit), borderColor: ink(look, 0.16) },
+          ]}
+        />
+      )
+    case 'film':
+      return <Film unit={unit} width={width} height={height} band={rect.top} />
+    case 'deco':
+      return <Deco unit={unit} width={width} height={height} />
     default:
       return null
   }
+}
+
+/** Corner radii that cut the photo to an arch or round its corners. */
+function photoCorners(frame: FrameStyle, rect: Box, unit: number): ViewStyle | undefined {
+  if (frame === 'arch') {
+    const r = archRadius(rect)
+
+    return { borderTopLeftRadius: r, borderTopRightRadius: r }
+  }
+
+  if (frame === 'rounded') return { borderRadius: Math.min(ROUNDED_RADIUS * unit, rect.width / 2, rect.height / 2) }
+
+  return undefined
+}
+
+/** A dark film frame with sprocket holes along the top and bottom, cut through to the paper. */
+function Film({ unit, width, height, band }: { unit: number; width: number; height: number; band: number }) {
+  const w = SPROCKET.width * unit
+  const h = SPROCKET.height * unit
+  const holes = sprockets(width / unit).flatMap((x) =>
+    [(band - h) / 2, height - (band + h) / 2].map((y) => `M${x * unit} ${y}h${w}v${h}h${-w}Z`),
+  )
+
+  return (
+    <Svg width={width} height={height} style={styles.abs}>
+      <Path d={`M0 0H${width}V${height}H0Z ${holes.join(' ')}`} fillRule="evenodd" fill="#1d1b19" />
+    </Svg>
+  )
+}
+
+/** Gold outer and inner rules with a fan in each corner. */
+function Deco({ unit, width, height }: { unit: number; width: number; height: number }) {
+  const outer = 0.45 * unit
+  const inner = 0.25 * unit
+  const fan = 2.2 * unit
+  const arc = 2.9 * unit
+  const corners: [number, number, number, number][] = [
+    [0, 0, 1, 1],
+    [width, 0, -1, 1],
+    [0, height, 1, -1],
+    [width, height, -1, -1],
+  ]
+
+  return (
+    <Svg width={width} height={height} style={styles.abs}>
+      <Rect x={outer / 2} y={outer / 2} width={width - outer} height={height - outer} stroke={GOLD} strokeWidth={outer} fill="none" />
+      <Rect
+        x={1.4 * unit}
+        y={1.4 * unit}
+        width={width - 2.8 * unit}
+        height={height - 2.8 * unit}
+        stroke={GOLD}
+        strokeWidth={inner}
+        fill="none"
+      />
+      {corners.map(([cx, cy, sx, sy]) => {
+        const sweep = sx * sy > 0 ? 1 : 0
+
+        return (
+          <G key={`${sx}${sy}`}>
+            <Path d={`M${cx} ${cy}h${fan * sx}A${fan} ${fan} 0 0 ${sweep} ${cx} ${cy + fan * sy}Z`} fill={GOLD} />
+            <Path
+              d={`M${cx + arc * sx} ${cy}A${arc} ${arc} 0 0 ${sweep} ${cx} ${cy + arc * sy}`}
+              stroke={GOLD}
+              strokeWidth={inner}
+              fill="none"
+            />
+          </G>
+        )
+      })}
+    </Svg>
+  )
+}
+
+/** Two strips of see-through tape across the photo's top corners. */
+function Tape({ unit, width, height, rect }: { unit: number; width: number; height: number; rect: Box }) {
+  const id = useId().replace(/[^a-zA-Z0-9]/g, '')
+  const length = TAPE.length * unit
+  const across = TAPE.width * unit
+  const by = TAPE.inset * unit
+  const strips: [number, number, number, string][] = [
+    [rect.left + by, rect.top + by, -45, TAPE.colors[0]],
+    [rect.left + rect.width - by, rect.top + by, 45, TAPE.colors[1]],
+  ]
+
+  return (
+    <Svg width={width} height={height} style={styles.abs}>
+      <Defs>
+        <Pattern id={`stripes${id}`} patternUnits="userSpaceOnUse" width={length} height={unit} y={-across / 2}>
+          <Rect width={length} height={unit / 2} fill="rgba(255,255,255,0.35)" />
+        </Pattern>
+      </Defs>
+      {strips.map(([cx, cy, angle, color]) => (
+        <G key={angle} transform={`translate(${cx} ${cy}) rotate(${angle})`}>
+          <Rect x={-length / 2} y={-across / 2} width={length} height={across} fill={withAlpha(color, 0.6)} />
+          <Rect x={-length / 2} y={-across / 2} width={length} height={across} fill={`url(#stripes${id})`} />
+        </G>
+      ))}
+    </Svg>
+  )
 }
 
 /** What is printed over or around the photo's edge: keylines, corners and sprigs. */
@@ -219,6 +343,8 @@ function Trim({
   switch (frame) {
     case 'mat':
       return <Keyline rect={rect} weight={Math.max(1, 0.25 * unit)} color={ink(look, 0.18)} />
+    case 'tape':
+      return <Tape unit={unit} width={width} height={height} rect={rect} />
     case 'botanical':
       return (
         <>
@@ -464,4 +590,5 @@ function Sprig({ color, unit, style }: { color: string; unit: number; style: Vie
 const styles = StyleSheet.create({
   box: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center' },
   abs: { position: 'absolute' },
+  clip: { overflow: 'hidden' },
 })

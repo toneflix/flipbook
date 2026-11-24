@@ -14,9 +14,30 @@ import type { PhotoPosition } from './position'
  * - contact: six photos in a contact sheet.
  * - scatter: three loose prints dropped on the page at an angle.
  * - story: one photo over a paragraph of writing.
+ * - duo: two tall photos side by side.
+ * - feature: one large photo over a row of three small ones.
+ * - squares: nine square photos in a 3×3 grid.
+ * - aside: one tall photo with writing beside it.
+ * - opener: one photo printed to the top and side edges over writing.
  */
 export type PageLayout =
-  'single' | 'framed' | 'pair' | 'grid' | 'collage' | 'text' | 'triptych' | 'mosaic' | 'strip' | 'contact' | 'scatter' | 'story'
+  | 'single'
+  | 'framed'
+  | 'pair'
+  | 'grid'
+  | 'collage'
+  | 'text'
+  | 'triptych'
+  | 'mosaic'
+  | 'strip'
+  | 'contact'
+  | 'scatter'
+  | 'story'
+  | 'duo'
+  | 'feature'
+  | 'squares'
+  | 'aside'
+  | 'opener'
 
 export const PAGE_LAYOUTS: Record<PageLayout, { label: string; slots: number }> = {
   single: { label: 'Full bleed', slots: 1 },
@@ -31,6 +52,11 @@ export const PAGE_LAYOUTS: Record<PageLayout, { label: string; slots: number }> 
   contact: { label: 'Contact sheet', slots: 6 },
   scatter: { label: 'Loose prints', slots: 3 },
   story: { label: 'Story', slots: 1 },
+  duo: { label: 'Side by side', slots: 2 },
+  feature: { label: 'Feature', slots: 4 },
+  squares: { label: 'Squares', slots: 9 },
+  aside: { label: 'Side story', slots: 1 },
+  opener: { label: 'Opener', slots: 1 },
 }
 
 /**
@@ -52,6 +78,8 @@ export interface PlacedLayout {
   prose?: boolean
   /** Photos are loose prints that cast a shadow on the page. */
   loose?: boolean
+  /** Photos run off the page edge and are never framed. */
+  bleed?: boolean
 }
 
 const column = (x: number, width: number, count: number, top = 7, height = 108, gap = 3) => {
@@ -61,6 +89,13 @@ const column = (x: number, width: number, count: number, top = 7, height = 108, 
 }
 
 const BELOW: PageBox = { x: 7, y: 118, width: 86, height: 10 }
+
+/** `count` boxes side by side across the page margins, `gap` apart. */
+const row = (y: number, height: number, count: number, gap = 3) => {
+  const each = (86 - gap * (count - 1)) / count
+
+  return Array.from({ length: count }, (_, i) => ({ x: 7 + i * (each + gap), y, width: each, height }))
+}
 
 /** Layouts drawn from fixed boxes, which every renderer places the same way. */
 export const PLACED_LAYOUTS: Partial<Record<PageLayout, PlacedLayout>> = {
@@ -90,6 +125,26 @@ export const PLACED_LAYOUTS: Partial<Record<PageLayout, PlacedLayout>> = {
     slots: [{ x: 7, y: 7, width: 86, height: 66 }],
     caption: { x: 9, y: 80, width: 82, height: 45 },
     prose: true,
+  },
+  duo: { slots: row(16, 88, 2), caption: { ...BELOW, y: 108 } },
+  feature: {
+    slots: [{ x: 7, y: 7, width: 86, height: 72 }, ...row(82, 30, 3)],
+    caption: { ...BELOW, y: 115 },
+  },
+  squares: {
+    slots: [14, 43.67, 73.33].flatMap((y) => row(y, 26.67, 3)),
+    caption: { ...BELOW, y: 106 },
+  },
+  aside: {
+    slots: [{ x: 7, y: 7, width: 52, height: 119.33 }],
+    caption: { x: 63, y: 7, width: 30, height: 119.33 },
+    prose: true,
+  },
+  opener: {
+    slots: [{ x: 0, y: 0, width: 100, height: 84 }],
+    caption: { x: 9, y: 92, width: 82, height: 34 },
+    prose: true,
+    bleed: true,
   },
 }
 
@@ -151,6 +206,12 @@ export type FrameStyle =
   | 'arcs'
   | 'gilt'
   | 'woodgrain'
+  | 'instant'
+  | 'arch'
+  | 'rounded'
+  | 'tape'
+  | 'film'
+  | 'deco'
 
 export const FRAME_STYLES: Record<FrameStyle, { label: string; description: string }> = {
   none: { label: 'Plain', description: 'The photo printed straight onto the page' },
@@ -167,6 +228,12 @@ export const FRAME_STYLES: Record<FrameStyle, { label: string; description: stri
   arcs: { label: 'Rainbow arcs', description: 'A printed border of little rainbow arcs around a mat' },
   gilt: { label: 'Gilt', description: 'An engraved border printed in gold ink' },
   woodgrain: { label: 'Woodgrain', description: 'A printed woodgrain border around a mat' },
+  instant: { label: 'Instant print', description: 'A white print border, deeper along the bottom' },
+  arch: { label: 'Arch', description: 'An arched window inside a fine printed rule' },
+  rounded: { label: 'Rounded', description: 'The photo with softly rounded corners' },
+  tape: { label: 'Washi tape', description: 'Strips of coloured tape across the top corners' },
+  film: { label: 'Film', description: 'A dark film frame with sprocket holes' },
+  deco: { label: 'Art deco', description: 'Gold rules with fan corners' },
 }
 
 /** Frames printed as a patterned band around a mat, with the band's width in page units. */
@@ -232,10 +299,15 @@ export function photoFrame(
   photo: Pick<FlipbookPhoto, 'frame'> | null | undefined,
   bookFrame: FrameStyle = 'none',
 ): FrameStyle {
-  return page.layout === 'single' ? 'none' : (photo?.frame ?? frameOf(page, bookFrame))
+  return bleeds(page.layout) ? 'none' : (photo?.frame ?? frameOf(page, bookFrame))
 }
 
 /** The frame a page is printed with: its own, else the book's. Full-bleed pages have none. */
 export function frameOf(page: Pick<FlipbookPage, 'layout' | 'frame'>, bookFrame: FrameStyle = 'none'): FrameStyle {
-  return page.layout === 'single' ? 'none' : (page.frame ?? bookFrame)
+  return bleeds(page.layout) ? 'none' : (page.frame ?? bookFrame)
+}
+
+/** Layouts whose photos run off the page edge, which are never framed. */
+export function bleeds(layout: PageLayout): boolean {
+  return layout === 'single' || !!PLACED_LAYOUTS[layout]?.bleed
 }

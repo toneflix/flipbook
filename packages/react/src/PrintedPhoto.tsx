@@ -21,6 +21,7 @@ export function PrintedPhoto({ photo, frame, fit = 'cover', show = true, scale =
     <div className="fb-print-frame-box" style={{ fontSize: `${scale}cqw` }}>
       <div className={`fb-print-frame fb-frame-${frame} ${fit === 'contain' ? 'is-contained' : ''}`} style={style}>
         {BANDED_FRAMES[frame] && <span className="fb-print-frame-band" aria-hidden />}
+        {(frame === 'film' || frame === 'deco') && <span className={`fb-print-frame-${frame}`} aria-hidden />}
         {photo && show ? (
           <div className="fb-print-photo fb-print-frame-photo">
             <img
@@ -40,6 +41,7 @@ export function PrintedPhoto({ photo, frame, fit = 'cover', show = true, scale =
         {frame === 'corners' &&
           ['tl', 'tr', 'bl', 'br'].map((corner) => <span key={corner} className={`fb-print-frame-corner is-${corner}`} aria-hidden />)}
         {frame === 'botanical' && ['tl', 'br'].map((corner) => <Sprig key={corner} corner={corner} />)}
+        {frame === 'tape' && ['tl', 'tr'].map((corner) => <span key={corner} className={`fb-print-frame-tape is-${corner}`} aria-hidden />)}
       </div>
     </div>
   )

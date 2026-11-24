@@ -95,6 +95,7 @@ export function printedPhoto(photo: FlipbookPhoto | null, frame: FrameStyle, fit
 
   if (fit === 'contain') print.style.setProperty('--ratio', String(ratio))
   if (BANDED_FRAMES[frame]) print.append(h('span', { class: 'fb-print-frame-band', 'aria-hidden': 'true' }))
+  if (frame === 'film' || frame === 'deco') print.append(h('span', { class: `fb-print-frame-${frame}`, 'aria-hidden': 'true' }))
   print.append(
     photo && show
       ? h('div', { class: 'fb-print-photo fb-print-frame-photo' }, image(photo, 'fb-photo'))
@@ -103,6 +104,8 @@ export function printedPhoto(photo: FlipbookPhoto | null, frame: FrameStyle, fit
   if (frame === 'corners')
     for (const c of ['tl', 'tr', 'bl', 'br']) print.append(h('span', { class: `fb-print-frame-corner is-${c}`, 'aria-hidden': 'true' }))
   if (frame === 'botanical') print.append(sprig('tl'), sprig('br'))
+  if (frame === 'tape')
+    for (const c of ['tl', 'tr']) print.append(h('span', { class: `fb-print-frame-tape is-${c}`, 'aria-hidden': 'true' }))
   box.append(print)
 
   return box

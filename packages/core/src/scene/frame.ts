@@ -56,6 +56,33 @@ const LEAVES = [14, 24, 34, 44, 54, 64, 74].map((x, i) => ({ x, angle: i % 2 ? 3
 
 const LEAF = 'M0 0 C 5 -5, 14 -5, 20 0 C 14 5, 5 5, 0 0 Z'
 
+const GOLD = '#b48a32'
+
+/** The white border of an instant print. */
+export const PRINT_WHITE = 'rgba(255,255,255,0.92)'
+
+/** Film sprocket holes: width, height, and the pitch they repeat at. */
+export const SPROCKET = { width: 1.6, height: 1.9, pitch: 3, margin: 0.6 }
+
+/** Washi tape strips: length, width, how far their centre sits inside the photo corner, and colours. */
+export const TAPE = { length: 14, width: 4, inset: 2.2, colors: ['#e9967a', '#7ea7d8'] }
+
+/** Where `count` sprocket holes start along a band `length` long, spaced out to fill it evenly. */
+export function sprockets(length: number): number[] {
+  const { pitch, margin } = SPROCKET
+  const room = length - 2 * margin
+  const count = Math.max(1, Math.floor(room / pitch))
+  const step = count > 1 ? (room - pitch) / (count - 1) : 0
+
+  return Array.from({ length: count }, (_, i) => margin + i * step + (pitch - SPROCKET.width) / 2)
+}
+
+/** The radius of an arch's top: a half circle, or as high as the photo when it is too short for one. */
+export const archRadius = (box: { width: number; height: number }) => Math.max(0, Math.min(box.width / 2, box.height))
+
+/** The radius of the rounded frame's corners. */
+export const ROUNDED_RADIUS = 2.2
+
 /**
  * A photo printed on a page inside its frame: rules, mats, tints and bands under it, keylines, corners
  * and sprigs over it. Sizes are in page units, the same at any page size.
@@ -63,12 +90,17 @@ const LEAF = 'M0 0 C 5 -5, 14 -5, 20 0 C 14 5, 5 5, 0 0 Z'
 export class FrameScene {
   constructor(readonly look: PaperLook) {}
 
-  /** The space inside the frame line (pad) and the frame line itself. */
-  static measure(frame: FrameStyle): { pad: number; line: number } {
+  /** The space inside the frame line (pad), the frame line itself, and extra space under the photo (foot). */
+  static measure(frame: FrameStyle): { pad: number; line: number; foot: number } {
     const band = BANDED_FRAMES[frame]
 
-    if (band) return { pad: band + 2.6, line: 0 }
+    if (band) return { pad: band + 2.6, line: 0, foot: 0 }
+    if (frame === 'instant') return { pad: 2.4, line: 0, foot: 7 }
 
+    return { ...FrameScene.edges(frame), foot: 0 }
+  }
+
+  private static edges(frame: FrameStyle): { pad: number; line: number } {
     switch (frame) {
       case 'hairline':
         return { pad: 1.6, line: 0.22 }
@@ -86,6 +118,14 @@ export class FrameScene {
         return { pad: 1.5, line: 0.22 }
       case 'botanical':
         return { pad: 5, line: 0 }
+      case 'arch':
+        return { pad: 1.5, line: 0.22 }
+      case 'tape':
+        return { pad: 4.3, line: 0 }
+      case 'film':
+        return { pad: 4.2, line: 0 }
+      case 'deco':
+        return { pad: 3.4, line: 0 }
       default:
         return { pad: 0, line: 0 }
     }
@@ -95,20 +135,20 @@ export class FrameScene {
   static fit(slot: Box, frame: FrameStyle, fit: 'cover' | 'contain', photo: FlipbookPhoto | null): Box {
     if (fit === 'cover') return slot
 
-    const { pad, line } = FrameScene.measure(frame)
+    const { pad, line, foot } = FrameScene.measure(frame)
     const edge = pad + line
     const ratio = photo?.width && photo.height ? photo.width / photo.height : 4 / 3
-    const width = Math.min(slot.width, (slot.height - 2 * edge) * ratio + 2 * edge)
-    const height = (width - 2 * edge) / ratio + 2 * edge
+    const width = Math.min(slot.width, (slot.height - 2 * edge - foot) * ratio + 2 * edge)
+    const height = (width - 2 * edge) / ratio + 2 * edge + foot
 
     return { x: slot.x + (slot.width - width) / 2, y: slot.y + (slot.height - height) / 2, width, height }
   }
 
   nodes(photo: FlipbookPhoto | null, frame: FrameStyle, box: Box): SceneNode[] {
-    const { pad, line } = FrameScene.measure(frame)
-    const inner = inset(box, pad + line)
+    const { pad, line, foot } = FrameScene.measure(frame)
+    const inner = { ...inset(box, pad + line), height: box.height - 2 * (pad + line) - foot }
 
-    return [...this.backing(frame, box, line), this.photo(photo, frame, inner), ...this.trim(frame, box, inner)]
+    return [...this.backing(frame, box, line, inner), this.photo(photo, frame, inner), ...this.trim(frame, box, inner)]
   }
 
   private ink(alpha?: number) {
@@ -117,12 +157,12 @@ export class FrameScene {
 
   private photo(photo: FlipbookPhoto | null, frame: FrameStyle, box: Box): SceneNode {
     const clip = frame === 'oval' ? 'ellipse' : 'rect'
+    const shape = FrameScene.photoShape(frame, box)
 
-    if (!photo) return { kind: 'fill', shape: clip === 'ellipse' ? { type: 'ellipse', box } : rect(box), paint: this.ink(0.15) }
+    if (!photo) return { kind: 'fill', shape, paint: this.ink(0.15) }
 
     const { x, y, zoom } = PhotoCrop.of(photo.position)
-
-    return {
+    const node: SceneNode = {
       kind: 'photo',
       photo: { src: photo.src, width: photo.width, height: photo.height },
       box,
@@ -131,9 +171,31 @@ export class FrameScene {
       tone: this.look.tone,
       ...(frame === 'feather' ? { fade: 0.08 } : {}),
     }
+
+    return frame === 'arch' || frame === 'rounded' ? { kind: 'group', clip: shape, children: [node] } : node
   }
 
-  private backing(frame: FrameStyle, box: Box, line: number): SceneNode[] {
+  /** The shape a frame cuts its photo to. */
+  static photoShape(frame: FrameStyle, box: Box): Shape {
+    switch (frame) {
+      case 'oval':
+        return { type: 'ellipse', box }
+      case 'arch': {
+        const r = archRadius(box)
+
+        return { type: 'roundrect', box, radii: [r, r, 0, 0] }
+      }
+      case 'rounded': {
+        const r = Math.min(ROUNDED_RADIUS, box.width / 2, box.height / 2)
+
+        return { type: 'roundrect', box, radii: [r, r, r, r] }
+      }
+      default:
+        return rect(box)
+    }
+  }
+
+  private backing(frame: FrameStyle, box: Box, line: number, inner: Box): SceneNode[] {
     const band = BANDED_FRAMES[frame]
 
     if (band) return [{ kind: 'fill', shape: rect(box), paint: this.look.frameTint }, this.band(frame, box, band)]
@@ -157,8 +219,112 @@ export class FrameScene {
         return [this.deckle(box)]
       case 'oval':
         return [{ kind: 'stroke', shape: { type: 'ellipse', box: inset(box, line / 2) }, color: this.ink(0.7), width: line }]
+      case 'arch': {
+        const rule = inset(box, line / 2)
+        const r = archRadius(inner) + (inner.x - rule.x)
+
+        return [{ kind: 'stroke', shape: { type: 'roundrect', box: rule, radii: [r, r, 0, 0] }, color: this.ink(0.7), width: line }]
+      }
+      case 'instant':
+        return [
+          { kind: 'fill', shape: rect(box), paint: PRINT_WHITE },
+          { kind: 'stroke', shape: rect(inset(box, 0.075)), color: this.ink(0.16), width: 0.15 },
+        ]
+      case 'film':
+        return [this.film(box, inner)]
+      case 'deco':
+        return [this.deco(box)]
       default:
         return []
+    }
+  }
+
+  /** A dark film frame with sprocket holes along the top and bottom, cut through to the paper. */
+  private film(box: Box, inner: Box): SceneNode {
+    const band = inner.y - box.y
+    const holes = sprockets(box.width).flatMap((x): Shape[] =>
+      [box.y + (band - SPROCKET.height) / 2, box.y + box.height - (band + SPROCKET.height) / 2].map((y) => ({
+        type: 'rect',
+        box: { x: box.x + x, y, width: SPROCKET.width, height: SPROCKET.height },
+      })),
+    )
+
+    return { kind: 'fill', shape: { type: 'cutout', outer: rect(box), inner: { type: 'union', shapes: holes } }, paint: '#1d1b19' }
+  }
+
+  /** Gold outer and inner rules with a fan in each corner, printed in the paper's ink blend. */
+  private deco(box: Box): SceneNode {
+    const { x, y, width: w, height: h } = box
+    const corners: [number, number, number, number][] = [
+      [x, y, 1, 1],
+      [x + w, y, -1, 1],
+      [x, y + h, 1, -1],
+      [x + w, y + h, -1, -1],
+    ]
+    const quarter = (cx: number, cy: number, sx: number, sy: number, r: number): Shape => ({
+      type: 'path',
+      d: `M0 0 H${r * sx} A${r} ${r} 0 0 ${sx * sy > 0 ? 1 : 0} 0 ${r * sy} Z`,
+      transform: [1, 0, 0, 1, cx, cy],
+    })
+    const arc = (cx: number, cy: number, sx: number, sy: number, r: number): Shape => ({
+      type: 'path',
+      d: `M${r * sx} 0 A${r} ${r} 0 0 ${sx * sy > 0 ? 1 : 0} 0 ${r * sy}`,
+      transform: [1, 0, 0, 1, cx, cy],
+    })
+
+    return {
+      kind: 'group',
+      blend: this.look.inkBlend,
+      children: [
+        { kind: 'stroke', shape: rect(inset(box, 0.225)), color: GOLD, width: 0.45 },
+        { kind: 'stroke', shape: rect(inset(box, 1.4)), color: GOLD, width: 0.25 },
+        ...corners.flatMap(([cx, cy, sx, sy]): SceneNode[] => [
+          { kind: 'fill', shape: quarter(cx, cy, sx, sy, 2.2), paint: GOLD },
+          { kind: 'stroke', shape: arc(cx, cy, sx, sy, 2.9), color: GOLD, width: 0.25 },
+        ]),
+      ],
+    }
+  }
+
+  /** Two strips of see-through tape across the photo's top corners. */
+  private tape(photo: Box): SceneNode {
+    const { length, width, inset: by, colors } = TAPE
+    const strip = (cx: number, cy: number, angle: number, color: string): SceneNode => {
+      const turn = (angle * Math.PI) / 180
+      const along = { x: (Math.cos(turn) * length) / 2, y: (Math.sin(turn) * length) / 2 }
+      const across = { x: (-Math.sin(turn) * width) / 2, y: (Math.cos(turn) * width) / 2 }
+      const points: Point[] = [
+        { x: cx - along.x - across.x, y: cy - along.y - across.y },
+        { x: cx + along.x - across.x, y: cy + along.y - across.y },
+        { x: cx + along.x + across.x, y: cy + along.y + across.y },
+        { x: cx - along.x + across.x, y: cy - along.y + across.y },
+      ]
+      const shape: Shape = { type: 'polygon', points }
+
+      return {
+        kind: 'group',
+        blend: this.look.inkBlend,
+        children: [
+          { kind: 'fill', shape, paint: withAlpha(color, 0.6) },
+          {
+            kind: 'fill',
+            shape,
+            paint: {
+              type: 'tile',
+              width: 1,
+              height: 1,
+              origin: { x: cx, y: cy },
+              rotate: angle + 90,
+              nodes: [{ kind: 'fill', shape: rect({ x: 0, y: 0, width: 0.5, height: 1 }), paint: 'rgba(255,255,255,0.35)' }],
+            },
+          },
+        ],
+      }
+    }
+
+    return {
+      kind: 'group',
+      children: [strip(photo.x + by, photo.y + by, -45, colors[0]), strip(photo.x + photo.width - by, photo.y + by, 45, colors[1])],
     }
   }
 
@@ -170,6 +336,8 @@ export class FrameScene {
         return [this.keyline(inner, 0.25, this.ink(0.18))]
       case 'botanical':
         return [this.keyline(inner, 0.18, this.ink(0.6), 1.6), ...this.sprigs(box)]
+      case 'tape':
+        return [this.tape(inner)]
       case 'corners': {
         const s = 5.5
         const { x, y, width: w, height: h } = box

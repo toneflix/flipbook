@@ -573,6 +573,7 @@
 .fb-print-frame {
   --frame-pad: 0em;
   --frame-line: 0px;
+  --frame-foot: 0em;
   --frame-edge: calc(var(--frame-pad) + var(--frame-line));
   position: relative;
   width: 100%;
@@ -580,15 +581,15 @@
   border: var(--frame-line) solid transparent;
 }
 .fb-print-frame.is-contained {
-  --frame-width: min(100cqw, (100cqh - 2 * var(--frame-edge)) * var(--ratio) + 2 * var(--frame-edge));
+  --frame-width: min(100cqw, (100cqh - 2 * var(--frame-edge) - var(--frame-foot)) * var(--ratio) + 2 * var(--frame-edge));
   width: var(--frame-width);
-  height: calc((var(--frame-width) - 2 * var(--frame-edge)) / var(--ratio) + 2 * var(--frame-edge));
+  height: calc((var(--frame-width) - 2 * var(--frame-edge)) / var(--ratio) + 2 * var(--frame-edge) + var(--frame-foot));
 }
 .fb-print-frame-photo {
   position: absolute;
   inset: var(--frame-pad);
   width: calc(100% - 2 * var(--frame-pad));
-  height: calc(100% - 2 * var(--frame-pad));
+  height: calc(100% - 2 * var(--frame-pad) - var(--frame-foot));
   overflow: hidden;
 }
 
@@ -758,6 +759,92 @@
     ),
     #cfa874;
   opacity: 0.85;
+}
+
+/* A white instant print, deeper along the bottom. */
+.fb-frame-instant {
+  --frame-pad: 2.4em;
+  --frame-foot: 7em;
+  background: rgb(255 255 255 / 0.92);
+  box-shadow: inset 0 0 0 max(1px, 0.15em) color-mix(in srgb, currentColor 16%, transparent);
+}
+/* Radii far larger than the box shrink to half its width, which makes the top a half circle. */
+.fb-frame-arch {
+  --frame-pad: 1.5em;
+  --frame-line: max(1px, 0.22em);
+  border-color: color-mix(in srgb, currentColor 70%, transparent);
+  border-radius: 100vmax 100vmax 0 0;
+}
+.fb-frame-arch .fb-print-frame-photo {
+  border-radius: 100vmax 100vmax 0 0;
+}
+.fb-frame-rounded .fb-print-frame-photo {
+  border-radius: 2.2em;
+}
+.fb-frame-tape {
+  --frame-pad: 4.3em;
+}
+.fb-print-frame-tape {
+  position: absolute;
+  top: 4.5em;
+  width: 14em;
+  height: 4em;
+  background: repeating-linear-gradient(180deg, rgb(255 255 255 / 0.35) 0 0.5em, transparent 0.5em 1em) 0 2em / 100% 1em;
+  mix-blend-mode: var(--ink-blend);
+}
+.fb-print-frame-tape.is-tl {
+  left: -0.5em;
+  background-color: rgb(233 150 122 / 0.6);
+  transform: rotate(-45deg);
+}
+.fb-print-frame-tape.is-tr {
+  right: -0.5em;
+  background-color: rgb(126 167 216 / 0.6);
+  transform: rotate(45deg);
+}
+/* Film: a dark frame with sprocket holes cut through to the paper, spaced out evenly along the top and bottom. */
+.fb-frame-film {
+  --frame-pad: 4.2em;
+}
+.fb-print-frame-film {
+  --hole: linear-gradient(90deg, transparent 0.7em, #000 0.7em 2.3em, transparent 2.3em);
+  position: absolute;
+  inset: 0;
+  padding: 0 0.6em;
+  background: #1d1b19;
+  mask:
+    var(--hole) left 1.15em / 3em 1.9em,
+    var(--hole) left bottom 1.15em / 3em 1.9em,
+    linear-gradient(#000 0 0);
+  mask-repeat:
+    space no-repeat,
+    space no-repeat,
+    no-repeat;
+  mask-origin: content-box, content-box, border-box;
+  mask-clip: content-box, content-box, border-box;
+  mask-composite: exclude, exclude, add;
+}
+/* Art deco: gold outer and inner rules with a fan in each corner. */
+.fb-frame-deco {
+  --frame-pad: 3.4em;
+}
+.fb-print-frame-deco {
+  --fan: #b48a32 0 2.2em, transparent 2.2em 2.775em, #b48a32 2.775em 3.025em, transparent 3.025em;
+  position: absolute;
+  inset: 0;
+  border: 0.45em solid #b48a32;
+  background:
+    radial-gradient(circle at 0 0, var(--fan)) left top / 3.1em 3.1em no-repeat border-box,
+    radial-gradient(circle at 100% 0, var(--fan)) right top / 3.1em 3.1em no-repeat border-box,
+    radial-gradient(circle at 0 100%, var(--fan)) left bottom / 3.1em 3.1em no-repeat border-box,
+    radial-gradient(circle at 100% 100%, var(--fan)) right bottom / 3.1em 3.1em no-repeat border-box;
+  mix-blend-mode: var(--ink-blend);
+}
+.fb-print-frame-deco::after {
+  content: '';
+  position: absolute;
+  inset: 0.825em;
+  border: 0.25em solid #b48a32;
 }
 
 /* Lighting over a whole page, photos included: grain, the curve into the spine and a soft sheen where the page rises. */
