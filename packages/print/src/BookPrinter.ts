@@ -1,12 +1,12 @@
-import { BookLayout, PageScene, type Face, type FlipbookBook, type Scene } from '@toneflix/flipbook-core'
+import { BookLayout, PageScene, pageMillimetres, type Face, type FlipbookBook, type Scene } from '@toneflix/flipbook-core'
 import { Canvas } from 'skia-canvas'
 import { PrintFonts, type PrintFontOptions } from './fonts'
 import { SkiaPainter, type PhotoLoader } from './SkiaPainter'
 import { SkiaText } from './SkiaText'
 
 export interface BookPrinterOptions {
-  /** Page width in millimetres. The height follows the book's 3:4 page. Defaults to 210. */
-  width?: number
+  /** The short side of each page in millimetres; the long side follows the book's page shape. Defaults to 210. */
+  shortSide?: number
   /** Include the front and back covers. Defaults to true. */
   covers?: boolean
   /** Resolution of page images. Defaults to 300. */
@@ -30,7 +30,9 @@ const POINTS_PER_MM = 72 / 25.4
  * the same scenes the reader lays out, in reading order from the front cover to the back.
  */
 export class BookPrinter {
+  /** Page width and height in millimetres. */
   readonly width: number
+  readonly height: number
   readonly dpi: number
   readonly covers: boolean
   readonly scenes: PageScene
@@ -40,11 +42,13 @@ export class BookPrinter {
 
   constructor(
     readonly book: FlipbookBook,
-    { width = 210, covers = true, dpi = 300, load, fonts }: BookPrinterOptions = {},
+    { shortSide = 210, covers = true, dpi = 300, load, fonts }: BookPrinterOptions = {},
   ) {
     const printFonts = new PrintFonts(fonts)
+    const size = pageMillimetres(book.pageShape, shortSide)
 
-    this.width = width
+    this.width = size.width
+    this.height = size.height
     this.dpi = dpi
     this.covers = covers
     this.scenes = new PageScene(book, new SkiaText(printFonts))
@@ -87,11 +91,16 @@ export class BookPrinter {
     return Math.round((this.width / 25.4) * this.dpi)
   }
 
+  /** Page images are this many pixels down. */
+  get pixelHeight(): number {
+    return Math.round((this.pixelWidth * this.height) / this.width)
+  }
+
   /** One page drawn at the print resolution. */
   async canvas(face: Face): Promise<Canvas> {
     const scene = this.scene(face)
     const scale = this.pixelWidth / scene.width
-    const canvas = new Canvas(this.pixelWidth, Math.round(scene.height * scale))
+    const canvas = new Canvas(this.pixelWidth, this.pixelHeight)
 
     await this.painter.paint(canvas.getContext('2d'), scene, scale)
     this.painter.release()
@@ -111,12 +120,11 @@ export class BookPrinter {
 
   /** The whole book as one PDF, text and rules kept as vectors and photos embedded at their own resolution. */
   async pdf(): Promise<Buffer> {
-    const points = this.width * POINTS_PER_MM
+    const [width, height] = [this.width * POINTS_PER_MM, this.height * POINTS_PER_MM]
     const scenes = this.faces.map((face) => this.scene(face))
-    const scale = points / 100
-    const document = new Canvas(points, scenes[0].height * scale)
+    const document = new Canvas(width, height)
 
-    for (const scene of scenes) await this.painter.paint(document.newPage(points, scene.height * scale), scene, scale)
+    for (const scene of scenes) await this.painter.paint(document.newPage(width, height), scene, width / scene.width)
 
     const pdf = await document.toBuffer('pdf')
 

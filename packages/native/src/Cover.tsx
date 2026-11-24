@@ -3,18 +3,19 @@ import { Image, StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'r
 import Svg, { ClipPath, Defs, Ellipse, Image as SvgImage, Path, RadialGradient, Rect, Stop } from 'react-native-svg'
 import {
   COVER_THEMES,
-  DECO,
   FLEURON,
   PhotoCrop,
   coverHasText,
+  decoArt,
+  printBeside,
   type CoverArt,
   type FlipbookBook,
   type FlipbookPhoto,
   type Size,
 } from '@toneflix/flipbook-core'
 import { Gradient } from './Gradient'
-import { PAPERS, useSerif } from './look'
-import { Ornament, PAGE_RATIO } from './pages'
+import { PAPERS, pageMetrics, useBookLook, useSerif } from './look'
+import { Ornament } from './pages'
 import { CroppedImage, useNaturalSize } from './position'
 
 type Side = 'left' | 'right'
@@ -131,6 +132,24 @@ function ShapedPhoto({
   )
 }
 
+/**
+ * A shaped photo `width` × `height` page units, `gap` units below what is above it, that shrinks in
+ * proportion when its column runs short.
+ */
+function FittedPhoto({ width, height, gap, ...rest }: Parameters<typeof ShapedPhoto>[0] & { gap: number }) {
+  const [room, setRoom] = useState<number | null>(null)
+  const scale = room === null ? 1 : Math.min(1, room / height)
+
+  return (
+    <View
+      style={{ marginTop: gap, height, flexShrink: 1, minHeight: 0, alignSelf: 'stretch', alignItems: 'center' }}
+      onLayout={(e) => setRoom(e.nativeEvent.layout.height)}
+    >
+      {room !== null && <ShapedPhoto {...rest} width={width * scale} height={height * scale} />}
+    </View>
+  )
+}
+
 /** A photo covering its parent, cropped by its position. */
 function Photo({ photo, show }: { photo: FlipbookPhoto; show: boolean }) {
   const [box, setBox] = useState<Size | null>(null)
@@ -146,13 +165,25 @@ function Photo({ photo, show }: { photo: FlipbookPhoto; show: boolean }) {
 }
 
 /** Cover board: cloth, light, the hinge shadow along the spine and a grain finish. */
-function Board({ book, width, hinge, children }: { book: Pick<FlipbookBook, 'theme'>; width: number; hinge: Side; children?: ReactNode }) {
+function Board({
+  book,
+  width,
+  height,
+  hinge,
+  children,
+}: {
+  book: Pick<FlipbookBook, 'theme'>
+  width: number
+  height: number
+  hinge: Side
+  children?: ReactNode
+}) {
   const theme = COVER_THEMES[book.theme ?? 'classic']
   const id = useId().replace(/[^a-zA-Z0-9]/g, '')
   const shade = (a: number, offset: number) => ({ offset, color: '#000', opacity: a })
 
   return (
-    <View style={[styles.board, { width, height: width / PAGE_RATIO, backgroundColor: theme.cloth }]}>
+    <View style={[styles.board, { width, height, backgroundColor: theme.cloth }]}>
       {children}
       <Svg style={StyleSheet.absoluteFill} width="100%" height="100%" pointerEvents="none">
         <Defs>
@@ -176,7 +207,7 @@ function Board({ book, width, hinge, children }: { book: Pick<FlipbookBook, 'the
       />
       <Gradient
         to={hinge === 'left' ? 'right' : 'left'}
-        style={[styles.hinge, hinge === 'left' ? styles.left : styles.right, { width: width * 0.04 }]}
+        style={[styles.hinge, hinge === 'left' ? styles.left : styles.right, { width: Math.min(width, height) * 0.04 }]}
         stops={[shade(0.35, 0), shade(0.1, 0.5), shade(0, 1)]}
       />
     </View>
@@ -184,7 +215,7 @@ function Board({ book, width, hinge, children }: { book: Pick<FlipbookBook, 'the
 }
 
 export interface CoverViewProps {
-  book: Pick<FlipbookBook, 'title' | 'subtitle' | 'theme' | 'cover' | 'kicker' | 'coverDesign' | 'coverText'>
+  book: Pick<FlipbookBook, 'title' | 'subtitle' | 'theme' | 'cover' | 'kicker' | 'coverDesign' | 'coverText' | 'pageShape'>
   width: number
   showImages?: boolean
 }
@@ -193,8 +224,13 @@ export interface CoverViewProps {
 export function CoverView({ book, width, showImages = true }: CoverViewProps) {
   const color = COVER_THEMES[book.theme ?? 'classic'].ink
   const serif = useSerif()
-  const unit = width / 100
+  const lookShape = useBookLook().shape
+  const metrics = pageMetrics(width, book.pageShape ?? lookShape)
+  const { unit, size, across, measure } = metrics
   const text = coverHasText(book)
+  const beside = across && !!book.cover && text
+  const band = (100 / 3) * Math.min(1, size.height / (133 + 1 / 3))
+  const windowHeight = size.height - 24 - band
   const stamped: TextStyle = {
     textShadowColor: 'rgba(0,0,0,0.35)',
     textShadowOffset: { width: 0, height: 0.15 * unit },
@@ -231,30 +267,79 @@ export function CoverView({ book, width, showImages = true }: CoverViewProps) {
       </Text>
     ) : null
 
-  const designs = {
-    classic: () => (
-      <View style={[styles.panel, { margin: 6 * unit, paddingVertical: 8 * unit, paddingHorizontal: 6 * unit, borderColor: color }]}>
-        {text && kicker()}
-        {text && title(9)}
-        {book.cover ? (
-          <View style={[styles.coverPhoto, { marginTop: 7 * unit, borderWidth: 0.8 * unit, borderColor: color }]}>
-            <Photo photo={book.cover} show={showImages} />
-          </View>
-        ) : (
-          text && subtitle()
-        )}
+  const words = (
+    <View style={[styles.words, { width: '42%' }]}>
+      {kicker()}
+      {title(9)}
+      {subtitle()}
+    </View>
+  )
+  const print = (style: ViewStyle) =>
+    book.cover && (
+      <View style={[styles.print, { padding: 2.4 * unit }, style]}>
+        <View style={[styles.flex, styles.clip]}>
+          <Photo photo={book.cover} show={showImages} />
+        </View>
+        <Svg style={StyleSheet.absoluteFill} viewBox="0 0 100 100" preserveAspectRatio="none" pointerEvents="none">
+          <Path d="M0 0H9L0 9Z M100 0V9L91 0Z M0 100V91L9 100Z M100 100H91L100 91Z" fill="#1f1b18" />
+        </Svg>
       </View>
-    ),
+    )
+  const label = (style: ViewStyle) =>
+    text && (
+      <View style={[styles.label, { padding: 4 * unit }, style]}>
+        <View
+          pointerEvents="none"
+          style={[styles.fill, { margin: 1.2 * unit, borderWidth: 0.2 * unit, borderColor: 'rgba(60,45,30,0.5)' }]}
+        />
+        {kicker('#3a2f25')}
+        {title(6.4, '#3a2f25', { marginTop: 1 * unit, textShadowColor: 'transparent' })}
+        {subtitle(3, '#3a2f25')}
+      </View>
+    )
+  const at = ({ x, y, width: w, height: h }: { x: number; y: number; width: number; height: number }): ViewStyle => ({
+    left: x * unit,
+    top: y * unit,
+    width: w * unit,
+    height: h * unit,
+  })
+
+  const designs = {
+    classic: () =>
+      beside ? (
+        <View
+          style={[
+            styles.panel,
+            styles.across,
+            { margin: 6 * unit, paddingVertical: 8 * unit, paddingHorizontal: 6 * unit, borderColor: color },
+          ]}
+        >
+          {words}
+          <View style={[styles.flex, styles.clip, { marginLeft: 7 * unit, borderWidth: 0.8 * unit, borderColor: color }]}>
+            <Photo photo={book.cover!} show={showImages} />
+          </View>
+        </View>
+      ) : (
+        <View style={[styles.panel, { margin: 6 * unit, paddingVertical: 8 * unit, paddingHorizontal: 6 * unit, borderColor: color }]}>
+          {text && kicker()}
+          {text && title(9)}
+          {book.cover ? (
+            <View style={[styles.coverPhoto, { marginTop: 7 * unit, borderWidth: 0.8 * unit, borderColor: color }]}>
+              <Photo photo={book.cover} show={showImages} />
+            </View>
+          ) : (
+            text && subtitle()
+          )}
+        </View>
+      ),
     gilt: () => (
       <>
         <GiltFrame unit={unit} color={color} />
-        <View style={[styles.stack, { top: 14 * unit, bottom: 14 * unit, left: 12 * unit, right: 12 * unit }]}>
-          {text && kicker()}
-          {text && title(8)}
-          {book.cover && (
-            <View style={{ marginTop: 6 * unit }}>
+        {beside ? (
+          <View style={[styles.stack, styles.across, { top: 14 * unit, bottom: 14 * unit, left: 12 * unit, right: 12 * unit }]}>
+            <View style={[styles.centered, { width: '50%' }]}>
               <ShapedPhoto
-                photo={book.cover}
+                photo={book.cover!}
                 shape="oval"
                 width={52 * unit}
                 height={64 * unit}
@@ -263,14 +348,41 @@ export function CoverView({ book, width, showImages = true }: CoverViewProps) {
                 show={showImages}
               />
             </View>
-          )}
-          {text && subtitle()}
-        </View>
+            <View style={[styles.words, { flex: 1, marginLeft: 4 * unit }]}>
+              {kicker()}
+              {title(8)}
+              {subtitle()}
+            </View>
+          </View>
+        ) : (
+          <View style={[styles.stack, { top: 14 * unit, bottom: 14 * unit, left: 12 * unit, right: 12 * unit }]}>
+            {text && kicker()}
+            {text && title(8)}
+            {book.cover && (
+              <FittedPhoto
+                photo={book.cover}
+                shape="oval"
+                width={52 * unit}
+                height={64 * unit}
+                gap={6 * unit}
+                unit={unit}
+                color={color}
+                show={showImages}
+              />
+            )}
+            {text && subtitle()}
+          </View>
+        )}
       </>
     ),
     window: () => (
       <>
-        <View style={[styles.window, { top: 10 * unit, left: 12 * unit, right: 12 * unit, height: 76 * unit, borderRadius: 0.6 * unit }]}>
+        <View
+          style={[
+            styles.window,
+            { top: 10 * unit, left: 12 * unit, right: 12 * unit, height: windowHeight * unit, borderRadius: 0.6 * unit },
+          ]}
+        >
           {book.cover ? (
             <Photo photo={book.cover} show={showImages} />
           ) : (
@@ -304,7 +416,7 @@ export function CoverView({ book, width, showImages = true }: CoverViewProps) {
           />
         </View>
         {text && (
-          <View style={[styles.stack, { top: 90 * unit, bottom: 8 * unit, left: 10 * unit, right: 10 * unit }]}>
+          <View style={[styles.stack, { top: (14 + windowHeight) * unit, bottom: 8 * unit, left: measure(10), right: measure(10) }]}>
             {kicker()}
             {title(7.5, color, { textShadowColor: 'rgba(0,0,0,0.45)', textShadowOffset: { width: 0, height: -0.15 * unit } })}
             {subtitle(3.4)}
@@ -312,50 +424,61 @@ export function CoverView({ book, width, showImages = true }: CoverViewProps) {
         )}
       </>
     ),
-    label: () => (
-      <>
-        {book.cover && (
-          <View style={[styles.print, { top: 11 * unit, left: 16 * unit, right: 16 * unit, height: 62 * unit, padding: 2.4 * unit }]}>
-            <View style={[styles.flex, styles.clip]}>
-              <Photo photo={book.cover} show={showImages} />
-            </View>
-            <Svg style={StyleSheet.absoluteFill} viewBox="0 0 100 100" preserveAspectRatio="none" pointerEvents="none">
-              <Path d="M0 0H9L0 9Z M100 0V9L91 0Z M0 100V91L9 100Z M100 100H91L100 91Z" fill="#1f1b18" />
-            </Svg>
+    label: () => {
+      if (book.cover && across) {
+        const place = printBeside(size, text)
+
+        return (
+          <>
+            {print({ position: 'absolute', ...at(place.print) })}
+            {label({
+              position: 'absolute',
+              left: place.label.x * unit,
+              width: place.label.width * unit,
+              top: 0,
+              bottom: 0,
+              justifyContent: 'center',
+            })}
+          </>
+        )
+      }
+
+      if (book.cover && size.width === size.height)
+        return (
+          <View style={[styles.mount, { top: 11 * unit, bottom: 6 * unit, gap: 11 * unit }]}>
+            {print({ position: 'relative', height: 62 * unit, aspectRatio: 68 / 62, flexShrink: 1, minHeight: 0 })}
+            {label({ position: 'relative', width: 64 * unit })}
           </View>
-        )}
-        {text && (
-          <View style={[styles.label, { top: (book.cover ? 84 : 44) * unit, left: 18 * unit, right: 18 * unit, padding: 4 * unit }]}>
-            <View
-              pointerEvents="none"
-              style={[styles.fill, { margin: 1.2 * unit, borderWidth: 0.2 * unit, borderColor: 'rgba(60,45,30,0.5)' }]}
-            />
-            {kicker('#3a2f25')}
-            {title(6.4, '#3a2f25', { marginTop: 1 * unit, textShadowColor: 'transparent' })}
-            {subtitle(3, '#3a2f25')}
-          </View>
-        )}
-      </>
-    ),
+        )
+
+      if (!book.cover && size.height < 133)
+        return <View style={[styles.fill, styles.centered]}>{label({ position: 'relative', width: 64 * unit })}</View>
+
+      return (
+        <>
+          {print({ position: 'absolute', top: 11 * unit, left: 16 * unit, right: 16 * unit, height: 62 * unit })}
+          {label({ position: 'absolute', top: (book.cover ? 84 : 44) * unit, left: 18 * unit, right: 18 * unit })}
+        </>
+      )
+    },
     deco: () => (
       <>
-        <Art art={DECO} color={color} style={StyleSheet.absoluteFill as ViewStyle} />
+        <Art art={decoArt(size)} color={color} style={StyleSheet.absoluteFill as ViewStyle} />
         <View
-          style={[styles.stack, { top: 17 * unit, bottom: 10 * unit, left: 14 * unit, right: 14 * unit, justifyContent: 'flex-start' }]}
+          style={[styles.stack, { top: 17 * unit, bottom: 15 * unit, left: measure(14), right: measure(14), justifyContent: 'flex-start' }]}
         >
           {text && kicker()}
           {book.cover && (
-            <View style={{ marginTop: 4 * unit }}>
-              <ShapedPhoto
-                photo={book.cover}
-                shape="arch"
-                width={56 * unit}
-                height={62 * unit}
-                unit={unit}
-                color={color}
-                show={showImages}
-              />
-            </View>
+            <FittedPhoto
+              photo={book.cover}
+              shape="arch"
+              width={56 * unit}
+              height={62 * unit}
+              gap={4 * unit}
+              unit={unit}
+              color={color}
+              show={showImages}
+            />
           )}
           {text && title(6.6, color, { marginTop: 7 * unit, fontWeight: '400', letterSpacing: 0.8 * unit, textTransform: 'uppercase' })}
           {text && subtitle(3.4)}
@@ -373,7 +496,7 @@ export function CoverView({ book, width, showImages = true }: CoverViewProps) {
         )}
         {text &&
           (book.cover ? (
-            <View style={[styles.caption, { paddingTop: 26 * unit, paddingHorizontal: 10 * unit, paddingBottom: 10 * unit }]}>
+            <View style={[styles.caption, { paddingTop: 26 * unit, paddingHorizontal: measure(10), paddingBottom: 10 * unit }]}>
               <Gradient
                 to="top"
                 stops={[
@@ -387,7 +510,7 @@ export function CoverView({ book, width, showImages = true }: CoverViewProps) {
               {subtitle(4, '#fff')}
             </View>
           ) : (
-            <View style={[styles.fill, styles.centered, { padding: 10 * unit }]}>
+            <View style={[styles.fill, styles.centered, { paddingVertical: 10 * unit, paddingHorizontal: measure(10) }]}>
               {kicker()}
               {title(9)}
               {subtitle()}
@@ -398,19 +521,26 @@ export function CoverView({ book, width, showImages = true }: CoverViewProps) {
   }
 
   return (
-    <Board book={book} width={width} hinge="left">
+    <Board book={book} width={width} height={metrics.height} hinge="left">
       {designs[book.coverDesign ?? 'classic']()}
     </Board>
   )
 }
 
 /** The back cover: the same board, with the brand and imprint. */
-export function BackCoverView({ book, width }: { book: Pick<FlipbookBook, 'theme' | 'imprint' | 'brand' | 'coverDesign'>; width: number }) {
+export function BackCoverView({
+  book,
+  width,
+}: {
+  book: Pick<FlipbookBook, 'theme' | 'imprint' | 'brand' | 'coverDesign' | 'pageShape'>
+  width: number
+}) {
   const color = COVER_THEMES[book.theme ?? 'classic'].ink
-  const unit = width / 100
+  const lookShape = useBookLook().shape
+  const { unit, height } = pageMetrics(width, book.pageShape ?? lookShape)
 
   return (
-    <Board book={book} width={width} hinge="right">
+    <Board book={book} width={width} height={height} hinge="right">
       {book.coverDesign === 'gilt' && <GiltFrame unit={unit} color={color} />}
       <View style={[styles.imprint, { bottom: 10 * unit }]}>
         <Ornament size={9 * unit} color={color} />
@@ -443,6 +573,9 @@ const styles = StyleSheet.create({
   kicker: { textAlign: 'center', opacity: 0.7 },
   coverPhoto: { width: '100%', flex: 1, maxHeight: '62%', overflow: 'hidden' },
   stack: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
+  across: { flexDirection: 'row', alignItems: 'stretch' },
+  words: { justifyContent: 'center', alignItems: 'center' },
+  mount: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   window: { position: 'absolute', overflow: 'hidden', backgroundColor: 'rgba(0,0,0,0.12)' },
   edge: { position: 'absolute', left: 0, right: 0 },
   edgeV: { position: 'absolute', top: 0, bottom: 0 },

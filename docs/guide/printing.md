@@ -92,15 +92,15 @@ The paper textures ship next to the stylesheet. Bundlers like Vite and webpack p
 import { FlipbookPrint } from '@toneflix/flipbook'
 import '@toneflix/flipbook/style.css'
 
-const print = new FlipbookPrint(document.querySelector('#print'), book, { width: 210 })
+const print = new FlipbookPrint(document.querySelector('#print'), book, { shortSide: 210 })
 
 await print.print()
 ```
 
-| Option   |                                                                                |
-| -------- | ------------------------------------------------------------------------------ |
-| `width`  | Page width in millimetres. The height follows the 3:4 page. Defaults to `210`. |
-| `covers` | Include the front and back covers. Defaults to `true`.                         |
+| Option      |                                                                                                              |
+| ----------- | ------------------------------------------------------------------------------------------------------------ |
+| `shortSide` | The short side of each sheet in millimetres. The long side follows the book's page shape. Defaults to `210`. |
+| `covers`    | Include the front and back covers. Defaults to `true`.                                                       |
 
 `ready()` resolves once fonts and photos have loaded, `print()` waits for it and opens the print dialog, and `destroy()` removes the sheets. The print page size is set to match the sheets with no margins. In a headless browser, call `ready()` and then save the page as a PDF with the page's own size.
 
@@ -111,19 +111,19 @@ await print.print()
 ```ts
 import { BookPrinter } from '@toneflix/flipbook-print'
 
-const printer = new BookPrinter(book, { width: 210, dpi: 300 })
+const printer = new BookPrinter(book, { shortSide: 210, dpi: 300 })
 
 const pdf = await printer.pdf()
 
 for (const [index, face] of printer.faces.entries()) await save(`${printer.names[index]}.png`, await printer.png(face))
 ```
 
-| Option   |                                                                                          |
-| -------- | ---------------------------------------------------------------------------------------- |
-| `width`  | Page width in millimetres. The height follows the 3:4 page. Defaults to `210`.           |
-| `covers` | Print the front and back covers too. Defaults to `true`.                                 |
-| `dpi`    | Resolution of page images. Defaults to `300`.                                            |
-| `load`   | `(src) => Promise<string \| Buffer>`: a file path, URL or the bytes for a photo's `src`. |
-| `fonts`  | `{ sans }`: font files for sans text. Left out, it is set in the serif.                  |
+| Option      |                                                                                                             |
+| ----------- | ----------------------------------------------------------------------------------------------------------- |
+| `shortSide` | The short side of each page in millimetres. The long side follows the book's page shape. Defaults to `210`. |
+| `covers`    | Print the front and back covers too. Defaults to `true`.                                                    |
+| `dpi`       | Resolution of page images. Defaults to `300`.                                                               |
+| `load`      | `(src) => Promise<string \| Buffer>`: a file path, URL or the bytes for a photo's `src`.                    |
+| `fonts`     | `{ sans }`: font files for sans text. Left out, it is set in the serif.                                     |
 
 The printer covers the front cover, the title page, every page, the colophon and the back cover, in every cover design and theme. `pixels(face)` hands over raw RGBA pixels for an encoder of your own, such as sharp.

@@ -6,6 +6,7 @@ import {
   type FlipbookPage,
   type FrameStyle,
   type PageHalf,
+  type PageShape,
   type PaperColor,
   type PhotoPosition,
   type Side,
@@ -37,6 +38,7 @@ export const PageView = defineComponent({
     page: { type: Object as PropType<FlipbookPage>, required: true },
     paper: { type: String as PropType<PaperColor>, default: 'ivory' },
     frame: { type: String as PropType<FrameStyle>, default: 'none' },
+    shape: { type: String as PropType<PageShape>, default: 'portrait' },
     number: Number,
     side: String as PropType<Side>,
     /** The half of a panorama on this page. Left out, the whole panorama is set on the page. */
@@ -54,7 +56,7 @@ export const PageView = defineComponent({
       () =>
         renderPage(
           props.page,
-          { paper: props.paper, frame: props.frame },
+          { paper: props.paper, frame: props.frame, shape: props.shape },
           {
             number: props.number,
             side: props.side,

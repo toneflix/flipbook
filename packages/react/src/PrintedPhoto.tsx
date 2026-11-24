@@ -18,7 +18,7 @@ export function PrintedPhoto({ photo, frame, fit = 'cover', show = true, scale =
   const style = fit === 'contain' ? ({ '--ratio': ratio } as CSSProperties) : undefined
 
   return (
-    <div className="fb-print-frame-box" style={{ fontSize: `${scale}cqw` }}>
+    <div className="fb-print-frame-box" style={{ fontSize: `${scale}cqmin` }}>
       <div className={`fb-print-frame fb-frame-${frame} ${fit === 'contain' ? 'is-contained' : ''}`} style={style}>
         {BANDED_FRAMES[frame] && <span className="fb-print-frame-band" aria-hidden />}
         {(frame === 'film' || frame === 'deco') && <span className={`fb-print-frame-${frame}`} aria-hidden />}

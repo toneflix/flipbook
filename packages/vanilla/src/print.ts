@@ -1,10 +1,10 @@
-import { BookLayout, type Face, type FlipbookBook } from '@toneflix/flipbook-core'
+import { BookLayout, pageMillimetres, type Face, type FlipbookBook } from '@toneflix/flipbook-core'
 import { h } from './dom'
 import { renderFace, type Side } from './pages'
 
 export interface FlipbookPrintOptions {
-  /** Page width in millimetres. The height follows the book's 3:4 page. Defaults to 210. */
-  width?: number
+  /** The short side of each sheet in millimetres; the long side follows the book's page shape. Defaults to 210. */
+  shortSide?: number
   /** Include the front and back covers. Defaults to true. */
   covers?: boolean
 }
@@ -16,6 +16,7 @@ export interface FlipbookPrintOptions {
  */
 export class FlipbookPrint {
   readonly element: HTMLElement
+  /** Sheet width and height in millimetres. */
   readonly width: number
   readonly height: number
 
@@ -24,13 +25,16 @@ export class FlipbookPrint {
   constructor(
     readonly container: HTMLElement,
     readonly book: FlipbookBook,
-    { width = 210, covers = true }: FlipbookPrintOptions = {},
+    { shortSide = 210, covers = true }: FlipbookPrintOptions = {},
   ) {
-    this.width = width
-    this.height = Math.round(((width * 4) / 3) * 10) / 10
+    const size = pageMillimetres(book.pageShape, shortSide)
+
+    this.width = size.width
+    this.height = size.height
     this.rule = h('style', {}, FlipbookPrint.pageRule(this.width, this.height))
     this.element = h('div', { class: 'fb-print-book' })
     this.element.style.setProperty('--fb-print-width', `${this.width}mm`)
+    this.element.style.setProperty('--fb-print-height', `${this.height}mm`)
     this.element.append(this.rule, ...BookLayout.sheets(book.pages, covers).map(({ face, side }) => this.sheet(face, side)))
     container.append(this.element)
   }

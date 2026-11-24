@@ -14,11 +14,23 @@
 | `coverText`   | `boolean`                                     | Whether the title is printed on the cover. On by default, off for the `image` design. |
 | `paper`       | `'ivory' \| 'white' \| 'kraft' \| 'charcoal'` | The paper of every page.                                                              |
 | `frame`       | `FrameStyle`                                  | How photos are framed on pages that don't choose their own.                           |
+| `pageShape`   | `PageShape`                                   | The shape of every page and both covers, `portrait` by default. See below.            |
 | `pages`       | `FlipbookPage[]`                              | The pages, in order.                                                                  |
 | `kicker`      | `string`                                      | Small capitals above the title on the cover, like "A photo book".                     |
 | `colophon`    | `string`                                      | A closing line inside the back cover.                                                 |
 | `imprint`     | `string`                                      | The name printed on the back cover.                                                   |
 | `brand`       | `string`                                      | A brand name printed on the back cover, above the imprint.                            |
+
+## Page shapes
+
+| Shape       | Ratio | Printed at   |
+| ----------- | ----- | ------------ |
+| `portrait`  | 3:4   | 210 × 280 mm |
+| `landscape` | 4:3   | 280 × 210 mm |
+| `wide`      | 3:2   | 315 × 210 mm |
+| `square`    | 1:1   | 210 × 210 mm |
+
+Every shape keeps the same short side, so type, frames and margins are the same size in all of them. Layouts and covers rearrange to suit the shape: on pages wider than tall a pair sits side by side, a contact sheet runs three across, and the cover photo moves beside the title. `PAGE_SHAPES` lists them with labels for a picker, and `pageSize(shape)` and `pageAspect(shape)` give a page's size in page units and its width over height.
 
 The viewer adds the cover, a title page, a blank page when a spread needs one, the colophon and the back cover around your pages.
 
@@ -73,7 +85,7 @@ interface FlipbookPage {
 
 `PAGE_LAYOUTS` lists them with their labels and slot counts, handy for a layout picker. A `null` photo leaves its slot blank.
 
-The newer layouts are drawn from fixed boxes in `PLACED_LAYOUTS`, measured in page units (1 unit is 1% of the page width, so a page is 100 × 133⅓). Every renderer places them the same way, and a custom renderer can read them too.
+The newer layouts are drawn from boxes in `PLACED_LAYOUTS`, worked out from the page's size in page units: 1 unit is 1% of the page's short side, so a portrait page is 100 × 133⅓ and a wide one 150 × 100. `placedLayout(layout, pageSize(shape))` gives the boxes for a shape. Every renderer places them the same way, and a custom renderer can read them too.
 
 ## Panoramas
 

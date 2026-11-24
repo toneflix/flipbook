@@ -7,6 +7,8 @@ export {
   renderBlank,
   renderFace,
   printedPhoto,
+  shapeClass,
+  measurePadding,
   type PageLook,
   type PageOptions,
   type Side,

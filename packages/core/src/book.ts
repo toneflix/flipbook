@@ -1,4 +1,5 @@
 import type { PhotoPosition } from './position'
+import { pageSize, type PageShape, type PageSize } from './shape'
 
 /**
  * How photos are set on a page.
@@ -63,8 +64,8 @@ export const PAGE_LAYOUTS: Record<PageLayout, { label: string; slots: number }> 
 }
 
 /**
- * A box on a page in page units: 1 unit is 1% of the page width, so a 3:4 page is 100 × 133⅓.
- * `rotate` is in degrees.
+ * A box on a page in page units: 1 unit is 1% of the page's short side, so a portrait page is
+ * 100 × 133⅓. `rotate` is in degrees.
  */
 export interface PageBox {
   x: number
@@ -85,70 +86,162 @@ export interface PlacedLayout {
   bleed?: boolean
 }
 
-const column = (x: number, width: number, count: number, top = 7, height = 108, gap = 3) => {
+/** The outer margin of placed layouts, in page units. */
+const MARGIN = 7
+
+/** `count` boxes stacked down a column. */
+const column = (x: number, width: number, count: number, top: number, height: number, gap = 3) => {
   const each = (height - gap * (count - 1)) / count
 
   return Array.from({ length: count }, (_, i) => ({ x, y: top + i * (each + gap), width, height: each }))
 }
 
-const BELOW: PageBox = { x: 7, y: 118, width: 86, height: 10 }
+/** `count` boxes side by side along a row. */
+const row = (x: number, width: number, count: number, top: number, height: number, gap = 3) =>
+  column(top, height, count, x, width, gap).map(({ x, y, width, height }) => ({ x: y, y: x, width: height, height: width }))
 
-/** `count` boxes side by side across the page margins, `gap` apart. */
-const row = (y: number, height: number, count: number, gap = 3) => {
-  const each = (86 - gap * (count - 1)) / count
+/** The area photos fill above a caption line, and that caption line. */
+const frameOfPage = ({ width, height }: PageSize) => ({
+  content: { x: MARGIN, y: MARGIN, width: width - 2 * MARGIN, height: height - 25 - 1 / 3 },
+  below: { x: MARGIN, y: height - 15 - 1 / 3, width: width - 2 * MARGIN, height: 10 },
+})
 
-  return Array.from({ length: count }, (_, i) => ({ x: 7 + i * (each + gap), y, width: each, height }))
+/** Layouts drawn from boxes worked out from the page's size, which every renderer places the same way. */
+export const PLACED_LAYOUTS: Partial<Record<PageLayout, (page: PageSize) => PlacedLayout>> = {
+  triptych: (page) => {
+    const { content, below } = frameOfPage(page)
+    const height = page.height - 39 - 1 / 3
+
+    return { slots: row(content.x, content.width, 3, 14, height), caption: { ...below, y: page.height - 19 - 1 / 3 } }
+  },
+  mosaic: (page) => {
+    const { content, below } = frameOfPage(page)
+    const big = ((content.width - 3) * 51) / 83
+
+    return {
+      slots: [{ ...content, width: big }, ...column(content.x + big + 3, content.width - big - 3, 2, content.y, content.height)],
+      caption: below,
+    }
+  },
+  strip: (page) => {
+    const { content, below } = frameOfPage(page)
+
+    if (page.width <= page.height) return { slots: column(content.x, content.width, 3, content.y, content.height), caption: below }
+
+    const each = (content.width - 6) / 3
+    const height = Math.min(content.height, each * 0.75)
+
+    return { slots: row(content.x, content.width, 3, content.y + (content.height - height) / 2, height), caption: below }
+  },
+  contact: (page) => {
+    const { content, below } = frameOfPage(page)
+    const [across, down] = page.width < page.height ? [2, 3] : [3, 2]
+    const columns = row(content.x, content.width, across, content.y, content.height)
+    const rows = column(content.x, content.width, down, content.y, content.height)
+
+    return { slots: rows.flatMap((r) => columns.map((c) => ({ ...c, y: r.y, height: r.height }))), caption: below }
+  },
+  scatter: ({ width, height }) => {
+    const tall = height / width
+    const scale = Math.min(1, (height - 2 * MARGIN) / 119)
+    const print = (x: number, y: number, w: number, h: number, rotate: number) => ({
+      x: x * (width / 100),
+      y: y * (height / (tall > 1 ? 133 + 1 / 3 : 100)),
+      width: w * scale,
+      height: h * scale,
+      rotate,
+    })
+
+    if (tall > 1)
+      return {
+        slots: [print(9, 9, 54, 41, -4), print(38, 43, 54, 41, 3), print(11, 80, 48, 35, -2)],
+        caption: { x: 63 * (width / 100), y: height - 41 - 1 / 3, width: 30, height: 28 },
+        loose: true,
+      }
+
+    return {
+      slots: [print(8, 9, 54, 41, -4), print(38, 30, 54, 41, 3), print(12, 52, 48, 35, -2)],
+      caption: { x: width - 37, y: height - 38, width: 30, height: 28 },
+      loose: true,
+    }
+  },
+  story: (page) => {
+    if (page.width > page.height) {
+      const photo = { x: MARGIN, y: MARGIN, width: (page.width - 2 * MARGIN) * 0.58, height: page.height - 2 * MARGIN - 3 }
+      const x = photo.x + photo.width + 6
+
+      return { slots: [photo], caption: { x, y: MARGIN + 2, width: page.width - MARGIN - 2 - x, height: photo.height - 4 }, prose: true }
+    }
+
+    const photo = { x: MARGIN, y: MARGIN, width: page.width - 2 * MARGIN, height: page.height * 0.495 }
+    const y = photo.y + photo.height + 7
+
+    return { slots: [photo], caption: { x: 9, y, width: page.width - 18, height: page.height - y - 8 - 1 / 3 }, prose: true }
+  },
+  duo: (page) => {
+    const { content, below } = frameOfPage(page)
+    const height = page.height - 45 - 1 / 3
+    const top = 16 * (page.height / (133 + 1 / 3))
+
+    return { slots: row(content.x, content.width, 2, top, height), caption: { ...below, y: top + height + 4 } }
+  },
+  feature: (page) => {
+    const { content, below } = frameOfPage(page)
+
+    if (page.width > page.height) {
+      const big = (content.width - 3) * 0.66
+
+      return {
+        slots: [{ ...content, width: big }, ...column(content.x + big + 3, content.width - big - 3, 3, content.y, content.height)],
+        caption: below,
+      }
+    }
+
+    const height = page.height - 61 - 1 / 3
+
+    return {
+      slots: [{ ...content, height }, ...row(content.x, content.width, 3, MARGIN + height + 3, 30)],
+      caption: { ...below, y: MARGIN + height + 3 + 30 + 3 },
+    }
+  },
+  squares: (page) => {
+    const { below } = frameOfPage(page)
+    const tall = page.width < page.height
+    const top = tall ? 14 : MARGIN
+    const cell = tall ? (page.width - 20) / 3 : Math.min((page.width - 20) / 3, (page.height - top - 29) / 3)
+    const block = 3 * cell + 6
+    const x = (page.width - block) / 2
+
+    return {
+      slots: [0, 1, 2].flatMap((i) => row(x, block, 3, top + i * (cell + 3), cell)),
+      caption: { ...below, y: top + block + 6 },
+    }
+  },
+  aside: (page) => {
+    const height = page.height - 2 * MARGIN
+    const photo = ((page.width - 2 * MARGIN - 4) * 52) / 82
+
+    return {
+      slots: [{ x: MARGIN, y: MARGIN, width: photo, height }],
+      caption: { x: MARGIN + photo + 4, y: MARGIN, width: page.width - 2 * MARGIN - photo - 4, height },
+      prose: true,
+    }
+  },
+  opener: (page) => {
+    const height = page.height * 0.63
+
+    return {
+      slots: [{ x: 0, y: 0, width: page.width, height }],
+      caption: { x: 9, y: height + 8, width: page.width - 18, height: page.height - height - 15 - 1 / 3 },
+      prose: true,
+      bleed: true,
+    }
+  },
 }
 
-/** Layouts drawn from fixed boxes, which every renderer places the same way. */
-export const PLACED_LAYOUTS: Partial<Record<PageLayout, PlacedLayout>> = {
-  triptych: {
-    slots: [7, 36.67, 66.33].map((x) => ({ x, y: 14, width: 26.67, height: 94 })),
-    caption: { ...BELOW, y: 114 },
-  },
-  mosaic: {
-    slots: [{ x: 7, y: 7, width: 51, height: 108 }, ...column(61, 32, 2)],
-    caption: BELOW,
-  },
-  strip: { slots: column(7, 86, 3), caption: BELOW },
-  contact: {
-    slots: column(7, 41.5, 3).flatMap((left, row) => [left, column(51.5, 41.5, 3)[row]]),
-    caption: BELOW,
-  },
-  scatter: {
-    slots: [
-      { x: 9, y: 9, width: 54, height: 41, rotate: -4 },
-      { x: 38, y: 43, width: 54, height: 41, rotate: 3 },
-      { x: 11, y: 80, width: 48, height: 35, rotate: -2 },
-    ],
-    caption: { ...BELOW, x: 63, y: 92, width: 30, height: 28 },
-    loose: true,
-  },
-  story: {
-    slots: [{ x: 7, y: 7, width: 86, height: 66 }],
-    caption: { x: 9, y: 80, width: 82, height: 45 },
-    prose: true,
-  },
-  duo: { slots: row(16, 88, 2), caption: { ...BELOW, y: 108 } },
-  feature: {
-    slots: [{ x: 7, y: 7, width: 86, height: 72 }, ...row(82, 30, 3)],
-    caption: { ...BELOW, y: 115 },
-  },
-  squares: {
-    slots: [14, 43.67, 73.33].flatMap((y) => row(y, 26.67, 3)),
-    caption: { ...BELOW, y: 106 },
-  },
-  aside: {
-    slots: [{ x: 7, y: 7, width: 52, height: 119.33 }],
-    caption: { x: 63, y: 7, width: 30, height: 119.33 },
-    prose: true,
-  },
-  opener: {
-    slots: [{ x: 0, y: 0, width: 100, height: 84 }],
-    caption: { x: 9, y: 92, width: 82, height: 34 },
-    prose: true,
-    bleed: true,
-  },
+/** A placed layout's boxes on a page of this size, or nothing for layouts that flow down the page. */
+export function placedLayout(layout: PageLayout, page: PageSize = pageSize()): PlacedLayout | null {
+  return PLACED_LAYOUTS[layout]?.(page) ?? null
 }
 
 /** The cloth of the cover, which also tints the stage behind the book. */
@@ -280,6 +373,8 @@ export interface FlipbookBook {
   paper?: PaperColor
   /** How photos are framed on pages that don't choose their own. */
   frame?: FrameStyle
+  /** The shape of every page and both covers. Defaults to `portrait`. */
+  pageShape?: PageShape
   pages: FlipbookPage[]
   /** Small capitals above the title on the cover, e.g. "A photo book". */
   kicker?: string | null
@@ -312,7 +407,7 @@ export function frameOf(page: Pick<FlipbookPage, 'layout' | 'frame'>, bookFrame:
 
 /** Layouts whose photos run off the page edge, which are never framed. */
 export function bleeds(layout: PageLayout): boolean {
-  return layout === 'single' || layout === 'panorama' || !!PLACED_LAYOUTS[layout]?.bleed
+  return layout === 'single' || layout === 'panorama' || !!placedLayout(layout)?.bleed
 }
 
 /** Which page of a spread a face sits on. */
@@ -335,17 +430,16 @@ export interface PanoramaView {
 
 /**
  * A panorama seen on one half of its spread, or whole on a single page: then the photo keeps the
- * spread's shape across the page with its caption below.
+ * spread's shape across the page, a little above the middle, with its caption below.
  */
-export function panoramaView(half?: PageHalf | null): PanoramaView {
-  const height = 400 / 3
+export function panoramaView(half?: PageHalf | null, page: PageSize = pageSize()): PanoramaView {
+  const { width, height } = page
 
-  switch (half) {
-    case 'left':
-      return { photo: { x: 0, y: 0, width: 200, height }, caption: 'shade' }
-    case 'right':
-      return { photo: { x: -100, y: 0, width: 200, height }, caption: 'over' }
-    default:
-      return { photo: { x: 0, y: 30, width: 100, height: 200 / 3 }, caption: { x: 9, y: 103.67, width: 82, height: 22 } }
-  }
+  if (half)
+    return { photo: { x: half === 'left' ? 0 : -width, y: 0, width: 2 * width, height }, caption: half === 'left' ? 'shade' : 'over' }
+
+  const photo = { x: 0, y: height / 4 - 10 / 3, width, height: height / 2 }
+  const top = photo.y + photo.height + 7
+
+  return { photo, caption: { x: 9, y: top, width: width - 18, height: height - 7.67 - top } }
 }

@@ -1,9 +1,11 @@
 import type { CSSProperties, DragEvent } from 'react'
+import { measurePadding, shapeClass } from '@toneflix/flipbook'
 import {
-  PLACED_LAYOUTS,
   PhotoCrop,
+  pageSize,
   panoramaView,
   photoFrame,
+  placedLayout,
   type FlipbookBook,
   type FlipbookPage,
   type FlipbookPhoto,
@@ -20,13 +22,18 @@ export const PHOTO_DRAG_TYPE = 'application/x-flipbook-photo'
 
 type Side = 'left' | 'right'
 
-const usePaper = () => `fb-paper fb-paper-${useBookLook().paper}`
+/** The paper and shape classes of a page. */
+const usePaper = () => {
+  const { paper, shape } = useBookLook()
+
+  return `fb-paper fb-paper-${paper} ${shapeClass(shape)}`
+}
 
 const boxStyle = ({ x, y, width, height, rotate }: PageBox): CSSProperties => ({
-  left: `${x}cqw`,
-  top: `${y}cqw`,
-  width: `${width}cqw`,
-  height: `${height}cqw`,
+  left: `${x}cqmin`,
+  top: `${y}cqmin`,
+  width: `${width}cqmin`,
+  height: `${height}cqmin`,
   transform: rotate ? `rotate(${rotate}deg)` : undefined,
 })
 
@@ -50,7 +57,7 @@ export interface PageViewProps {
 }
 
 /**
- * The inside of one book page. Sizes use container units (cqw), so the same page looks right as
+ * The inside of one book page. Sizes use container units (cqmin), so the same page looks right as
  * a thumbnail and as a full-screen spread. The parent must have `container-type: size`.
  */
 export function PageView({
@@ -66,9 +73,11 @@ export function PageView({
 }: PageViewProps) {
   const { layout, caption, photos } = page
   const paper = usePaper()
-  const bookFrame = useBookLook().frame
-  const placed = PLACED_LAYOUTS[layout]
-  const panorama = layout === 'panorama' ? panoramaView(half) : null
+  const { frame: bookFrame, shape } = useBookLook()
+  const size = pageSize(shape)
+  const across = size.width > size.height
+  const placed = placedLayout(layout, size)
+  const panorama = layout === 'panorama' ? panoramaView(half, size) : null
   const editable = !!onSlotClick
   const positioning = activeSlot != null && showImages && onPhotoPosition && photos[activeSlot] ? activeSlot : null
   const positioner = usePhotoPositioner(
@@ -128,7 +137,7 @@ export function PageView({
   }
 
   const smallCaption = caption && (
-    <p className="fb-serif fb-italic fb-center" style={{ fontSize: '3.8cqw' }}>
+    <p className="fb-serif fb-italic fb-center" style={{ fontSize: '3.8cqmin' }}>
       {caption}
     </p>
   )
@@ -159,11 +168,11 @@ export function PageView({
       )}
 
       {layout === 'framed' && (
-        <div className="fb-column" style={{ padding: '10cqw 9cqw 6cqw' }}>
+        <div className="fb-column" style={{ padding: '10cqmin 9cqmin 6cqmin' }}>
           <div className="fb-grow">{slot(0, 'fb-fill', true)}</div>
           <p
             className="fb-serif fb-italic fb-center"
-            style={{ marginTop: '5cqw', fontSize: '4.2cqw', minHeight: '6cqw', lineHeight: 1.35 }}
+            style={{ marginTop: '5cqmin', fontSize: '4.2cqmin', minHeight: '6cqmin', lineHeight: 1.35 }}
           >
             {caption}
           </p>
@@ -171,16 +180,25 @@ export function PageView({
       )}
 
       {layout === 'pair' && (
-        <div className="fb-column" style={{ padding: '7cqw', gap: '4cqw' }}>
-          {slot(0, 'fb-grow')}
-          {slot(1, 'fb-grow')}
+        <div className="fb-column" style={{ padding: '7cqmin', gap: '4cqmin' }}>
+          {across ? (
+            <div className="fb-row fb-grow" style={{ gap: '4cqmin' }}>
+              {slot(0, 'fb-grow')}
+              {slot(1, 'fb-grow')}
+            </div>
+          ) : (
+            <>
+              {slot(0, 'fb-grow')}
+              {slot(1, 'fb-grow')}
+            </>
+          )}
           {smallCaption}
         </div>
       )}
 
       {layout === 'grid' && (
-        <div className="fb-column" style={{ padding: '7cqw', gap: '3cqw' }}>
-          <div className="fb-grid fb-grow" style={{ gap: '3cqw' }}>
+        <div className="fb-column" style={{ padding: '7cqmin', gap: '3cqmin' }}>
+          <div className="fb-grid fb-grow" style={{ gap: '3cqmin' }}>
             {[0, 1, 2, 3].map((i) => slot(i))}
           </div>
           {smallCaption}
@@ -188,12 +206,24 @@ export function PageView({
       )}
 
       {layout === 'collage' && (
-        <div className="fb-column" style={{ padding: '7cqw', gap: '3cqw' }}>
-          {slot(0, 'fb-grow-large')}
-          <div className="fb-row fb-grow" style={{ gap: '3cqw' }}>
-            {slot(1, 'fb-grow')}
-            {slot(2, 'fb-grow')}
-          </div>
+        <div className="fb-column" style={{ padding: '7cqmin', gap: '3cqmin' }}>
+          {across ? (
+            <div className="fb-row fb-grow" style={{ gap: '3cqmin' }}>
+              {slot(0, 'fb-grow-large')}
+              <div className="fb-column fb-grow" style={{ gap: '3cqmin' }}>
+                {slot(1, 'fb-grow')}
+                {slot(2, 'fb-grow')}
+              </div>
+            </div>
+          ) : (
+            <>
+              {slot(0, 'fb-grow-large')}
+              <div className="fb-row fb-grow" style={{ gap: '3cqmin' }}>
+                {slot(1, 'fb-grow')}
+                {slot(2, 'fb-grow')}
+              </div>
+            </>
+          )}
           {smallCaption}
         </div>
       )}
@@ -210,11 +240,14 @@ export function PageView({
       )}
 
       {layout === 'text' && (
-        <div className="fb-column fb-center" style={{ alignItems: 'center', justifyContent: 'center', padding: '14cqw 12cqw' }}>
-          <span className="fb-serif" style={{ fontSize: '18cqw', lineHeight: 0.6, opacity: 0.3 }} aria-hidden>
+        <div
+          className="fb-column fb-center"
+          style={{ alignItems: 'center', justifyContent: 'center', padding: `14cqmin ${measurePadding(12)}` }}
+        >
+          <span className="fb-serif" style={{ fontSize: '18cqmin', lineHeight: 0.6, opacity: 0.3 }} aria-hidden>
             “
           </span>
-          <p className="fb-serif fb-italic" style={{ marginTop: '4cqw', fontSize: '6cqw', lineHeight: 1.4, textWrap: 'balance' }}>
+          <p className="fb-serif fb-italic" style={{ marginTop: '4cqmin', fontSize: '6cqmin', lineHeight: 1.4, textWrap: 'balance' }}>
             {caption || (editable ? 'Write something in the caption box below.' : '')}
           </p>
         </div>
@@ -259,18 +292,21 @@ export function TitlePageView({ book, side }: { book: Pick<FlipbookBook, 'title'
   const credit = [book.author, book.year].filter(Boolean).join(' · ')
 
   return (
-    <div className={`${usePaper()} fb-page fb-center`} style={{ alignItems: 'center', justifyContent: 'center', padding: '12cqw' }}>
+    <div
+      className={`${usePaper()} fb-page fb-center`}
+      style={{ alignItems: 'center', justifyContent: 'center', padding: `12cqmin ${measurePadding(12)}` }}
+    >
       <Ornament />
-      <h2 className="fb-serif" style={{ marginTop: '6cqw', fontSize: '7.5cqw', fontWeight: 400, lineHeight: 1.1, textWrap: 'balance' }}>
+      <h2 className="fb-serif" style={{ marginTop: '6cqmin', fontSize: '7.5cqmin', fontWeight: 400, lineHeight: 1.1, textWrap: 'balance' }}>
         {book.title}
       </h2>
       {book.subtitle && (
-        <p className="fb-serif fb-italic" style={{ marginTop: '4cqw', fontSize: '4cqw', lineHeight: 1.45 }}>
+        <p className="fb-serif fb-italic" style={{ marginTop: '4cqmin', fontSize: '4cqmin', lineHeight: 1.45 }}>
           {book.subtitle}
         </p>
       )}
-      <div style={{ marginTop: '7cqw', height: 1, width: '20cqw', background: 'currentColor', opacity: 0.3 }} />
-      {credit && <p style={{ margin: '5cqw 0 0', fontSize: '2.6cqw', letterSpacing: '0.2em', textTransform: 'uppercase' }}>{credit}</p>}
+      <div style={{ marginTop: '7cqmin', height: 1, width: '20cqmin', background: 'currentColor', opacity: 0.3 }} />
+      {credit && <p style={{ margin: '5cqmin 0 0', fontSize: '2.6cqmin', letterSpacing: '0.2em', textTransform: 'uppercase' }}>{credit}</p>}
       <PageSurface side={side} />
     </div>
   )
@@ -281,10 +317,10 @@ export function ColophonView({ book, side }: { book: Pick<FlipbookBook, 'colopho
   return (
     <div
       className={`${usePaper()} fb-page fb-center`}
-      style={{ alignItems: 'center', justifyContent: 'flex-end', padding: '12cqw', opacity: 0.9 }}
+      style={{ alignItems: 'center', justifyContent: 'flex-end', padding: `12cqmin ${measurePadding(12)}`, opacity: 0.9 }}
     >
       {book.colophon && (
-        <p className="fb-serif fb-italic" style={{ fontSize: '3.6cqw' }}>
+        <p className="fb-serif fb-italic" style={{ fontSize: '3.6cqmin' }}>
           {book.colophon}
         </p>
       )}

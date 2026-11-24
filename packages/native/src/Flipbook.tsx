@@ -31,6 +31,7 @@ import {
   COVER_THEMES,
   DEFAULT_LABELS,
   FlipbookReader,
+  pageAspect,
   type Face,
   type FlipbookBook,
   type FlipbookLabels,
@@ -42,7 +43,7 @@ import { FoldLayout, type Band, type Role } from './geometry'
 import { Gradient } from './Gradient'
 import { BookLookProvider, type BookFonts } from './look'
 import { BackCoverView, CoverView } from './Cover'
-import { BlankPageView, ColophonView, PAGE_RATIO, PageView, TitlePageView } from './pages'
+import { BlankPageView, ColophonView, PageView, TitlePageView } from './pages'
 import { lockLandscape } from './orientation'
 
 export interface FlipbookPlace {
@@ -216,8 +217,9 @@ export const Flipbook = forwardRef<FlipbookHandle, FlipbookProps>(function Flipb
   // Page size: as large as fits, keeping the page shape, with room for the controls.
   const across = spread ? 2 : 1
   const marginY = !controls || stage.height < 500 ? 16 : Math.min(150, stage.height * 0.16)
-  const pageW = Math.floor(Math.max(0, Math.min((stage.height - marginY) * PAGE_RATIO, (stage.width - (spread ? 48 : 16)) / across)))
-  const pageH = Math.floor(pageW / PAGE_RATIO)
+  const aspect = pageAspect(book.pageShape)
+  const pageW = Math.floor(Math.max(0, Math.min((stage.height - marginY) * aspect, (stage.width - (spread ? 48 : 16)) / across)))
+  const pageH = Math.floor(pageW / aspect)
 
   const handlers = useRef({ onFlip })
   handlers.current = { onFlip }
@@ -393,7 +395,7 @@ export const Flipbook = forwardRef<FlipbookHandle, FlipbookProps>(function Flipb
   const tint = COVER_THEMES[book.theme ?? 'classic'].stage
 
   return (
-    <BookLookProvider paper={book.paper} frame={book.frame} fonts={fonts}>
+    <BookLookProvider paper={book.paper} frame={book.frame} fonts={fonts} shape={book.pageShape}>
       <View style={[styles.root, { backgroundColor: background ?? tint[2] }, style]}>
         {!background && <StageGlow colors={tint} />}
 
@@ -525,7 +527,7 @@ function PageStrip({
   flipped: number
   onPick: (flipped: number) => void
 }) {
-  const width = 54
+  const width = Math.round(72 * pageAspect(book.pageShape))
 
   return (
     <View style={styles.strip}>

@@ -1,13 +1,15 @@
 import {
-  PLACED_LAYOUTS,
   panoramaView,
+  placedLayout,
   photoFrame,
   type FlipbookBook,
   type FlipbookPage,
   type FrameStyle,
   type PageBox,
   type PageHalf,
+  type PlacedLayout,
 } from '../book'
+import { pageSize, type PageSize } from '../shape'
 import type { Face } from '../layout'
 import { CoverScene } from './cover'
 import { FrameScene, farthestCorner, rect, withAlpha } from './frame'
@@ -16,7 +18,7 @@ import { PAPER_LOOKS, inkOf, type PaperLook } from './paper'
 import { Typesetter, type TextBlock } from './text'
 import type { Box, FontSpec, Scene, SceneNode, TextMeasure } from './types'
 
-/** Page height in page units: pages are 3:4. */
+/** The height of a portrait page in page units. */
 export const PAGE_HEIGHT = 400 / 3
 
 export type Side = 'left' | 'right'
@@ -47,8 +49,6 @@ interface SlotOptions {
 
 const serif = (size: number, style: FontSpec['style'] = 'normal', weight = 400): FontSpec => ({ family: 'serif', style, weight, size })
 
-const PAGE: Box = { x: 0, y: 0, width: 100, height: PAGE_HEIGHT }
-
 /** Splits `space` between flexible children in proportion to their `grow`, like CSS flex with no basis. */
 const flex = (space: number, grows: number[]) => {
   const total = grows.reduce((sum, grow) => sum + grow, 0)
@@ -66,8 +66,11 @@ export class PageScene {
   readonly text: Typesetter
 
   readonly covers: CoverScene
+  /** The page's size in page units. */
+  readonly size: PageSize
 
   private readonly frames: FrameScene
+  private readonly area: Box
 
   constructor(
     readonly book: FlipbookBook,
@@ -76,6 +79,8 @@ export class PageScene {
     this.look = PAPER_LOOKS[book.paper ?? 'ivory'] ?? PAPER_LOOKS.ivory
     this.frame = book.frame ?? 'none'
     this.text = new Typesetter(measure)
+    this.size = pageSize(book.pageShape)
+    this.area = { x: 0, y: 0, ...this.size }
     this.frames = new FrameScene(this.look)
     this.covers = new CoverScene(book, this.text)
   }
@@ -114,21 +119,21 @@ export class PageScene {
 
   title(options: PageSceneOptions = {}): Scene {
     const { book } = this
-    const width = 100 - 24
+    const { x, width } = this.measure()
     const credit = [book.author, book.year].filter(Boolean).join(' · ').toUpperCase()
     const heading = this.text.set(book.title, serif(7.5), { width, lineHeight: 1.1, wrap: 'balance' })
     const subtitle = book.subtitle ? this.text.set(book.subtitle, serif(4, 'italic'), { width, lineHeight: 1.45 }) : null
     const creditFont: FontSpec = { family: 'sans', style: 'normal', weight: 400, size: 2.6, letterSpacing: 0.52 }
     const creditText = credit ? this.text.set(credit, creditFont, { width }) : null
     const rows: { height: number; gap: number; draw: (y: number) => SceneNode[] }[] = [
-      { height: 9, gap: 0, draw: (y) => ornament({ x: 50 - 4.5, y, width: 9, height: 9 }, this.ink()) },
-      { height: heading.height, gap: 6, draw: (y) => [this.lines(heading, { x: 12, y, width, height: heading.height }, 'center')] },
+      { height: 9, gap: 0, draw: (y) => ornament({ x: this.size.width / 2 - 4.5, y, width: 9, height: 9 }, this.ink()) },
+      { height: heading.height, gap: 6, draw: (y) => [this.lines(heading, { x, y, width, height: heading.height }, 'center')] },
       ...(subtitle
         ? [
             {
               height: subtitle.height,
               gap: 4,
-              draw: (y: number) => [this.lines(subtitle, { x: 12, y, width, height: subtitle.height }, 'center')],
+              draw: (y: number) => [this.lines(subtitle, { x, y, width, height: subtitle.height }, 'center')],
             },
           ]
         : []),
@@ -136,7 +141,12 @@ export class PageScene {
         height: 1 / 7.937,
         gap: 7,
         draw: (y) => [
-          { kind: 'fill', shape: rect({ x: 40, y, width: 20, height: 1 / 7.937 }), paint: this.ink(), opacity: 0.3 } as SceneNode,
+          {
+            kind: 'fill',
+            shape: rect({ x: this.size.width / 2 - 10, y, width: 20, height: 1 / 7.937 }),
+            paint: this.ink(),
+            opacity: 0.3,
+          } as SceneNode,
         ],
       },
       ...(creditText
@@ -144,13 +154,13 @@ export class PageScene {
             {
               height: creditText.height,
               gap: 5,
-              draw: (y: number) => [this.lines(creditText, { x: 12, y, width, height: creditText.height }, 'center')],
+              draw: (y: number) => [this.lines(creditText, { x, y, width, height: creditText.height }, 'center')],
             },
           ]
         : []),
     ]
     const total = rows.reduce((sum, row) => sum + row.gap + row.height, 0)
-    let y = 12 + (PAGE_HEIGHT - 24 - total) / 2
+    let y = 12 + (this.size.height - 24 - total) / 2
 
     return this.sheet(
       rows.flatMap((row) => {
@@ -167,21 +177,30 @@ export class PageScene {
 
   colophon(options: PageSceneOptions = {}): Scene {
     const { colophon } = this.book
-    const block = colophon ? this.text.set(colophon, serif(3.6, 'italic'), { width: 76 }) : null
+    const { x, width } = this.measure()
+    const block = colophon ? this.text.set(colophon, serif(3.6, 'italic'), { width }) : null
     const nodes: SceneNode[] = block
-      ? [{ ...this.lines(block, { x: 12, y: PAGE_HEIGHT - 12 - block.height, width: 76, height: block.height }, 'center'), opacity: 0.9 }]
+      ? [{ ...this.lines(block, { x, y: this.size.height - 12 - block.height, width, height: block.height }, 'center'), opacity: 0.9 }]
       : []
 
     return this.sheet(nodes, options)
   }
 
   page(page: FlipbookPage, options: PageSceneOptions = {}): Scene {
-    const nodes = PLACED_LAYOUTS[page.layout] ? this.placed(page) : this.flowed(page, options.half)
+    const placed = placedLayout(page.layout, this.size)
+    const nodes = placed ? this.placed(page, placed) : this.flowed(page, options.half)
 
     if (options.number !== undefined && page.layout !== 'single' && page.layout !== 'panorama')
       nodes.push(this.pageNumber(options.number, options.side ?? 'right'))
 
     return this.sheet(nodes, options)
+  }
+
+  /** The measure of centred writing: the page less its margins, never wider than a portrait page's. */
+  private measure() {
+    const width = Math.min(this.size.width, 100) - 24
+
+    return { x: (this.size.width - width) / 2, width }
   }
 
   private ink(alpha?: number) {
@@ -224,13 +243,13 @@ export class PageScene {
   }
 
   private single(page: FlipbookPage): SceneNode[] {
-    return [this.slot(page, 0, PAGE), ...this.captionOver(page)]
+    return [this.slot(page, 0, this.area), ...this.captionOver(page)]
   }
 
   /** One photo across a spread: each half draws its side of it, and a single page sets it whole. */
   private panorama(page: FlipbookPage, half?: PageHalf): SceneNode[] {
-    const view = panoramaView(half)
-    const photo: SceneNode = { kind: 'group', clip: rect(PAGE), children: [this.slot(page, 0, view.photo)] }
+    const view = panoramaView(half, this.size)
+    const photo: SceneNode = { kind: 'group', clip: rect(this.area), children: [this.slot(page, 0, view.photo)] }
 
     if (!page.caption) return [photo]
     if (typeof view.caption === 'string') return [photo, ...this.captionOver(page, view.caption === 'over')]
@@ -245,16 +264,16 @@ export class PageScene {
   private captionOver(page: FlipbookPage, words = true): SceneNode[] {
     if (!page.caption) return []
 
-    const block = this.text.set(page.caption, serif(4.2, 'italic'), { width: 86, lineHeight: 1.35 })
+    const { width, height: pageHeight } = this.size
+    const block = this.text.set(page.caption, serif(4.2, 'italic'), { width: width - 14, lineHeight: 1.35 })
     const height = 14 + block.height + 7
-    const shade: Box = { x: 0, y: PAGE_HEIGHT - height, width: 100, height }
-
+    const shade: Box = { x: 0, y: pageHeight - height, width, height }
     const fill: SceneNode = {
       kind: 'fill',
       shape: rect(shade),
       paint: {
         type: 'linear',
-        from: { x: 0, y: PAGE_HEIGHT },
+        from: { x: 0, y: pageHeight },
         to: { x: 0, y: shade.y },
         stops: [
           { offset: 0, color: 'rgba(0,0,0,0.7)' },
@@ -266,11 +285,11 @@ export class PageScene {
 
     if (!words) return [fill]
 
-    return [fill, this.lines(block, { x: 7, y: shade.y + 14, width: 86, height: block.height }, 'left', '#fff')]
+    return [fill, this.lines(block, { x: 7, y: shade.y + 14, width: width - 14, height: block.height }, 'left', '#fff')]
   }
 
   private framed(page: FlipbookPage): SceneNode[] {
-    const content = { x: 9, y: 10, width: 82, height: PAGE_HEIGHT - 16 }
+    const content = { x: 9, y: 10, width: this.size.width - 18, height: this.size.height - 16 }
     const block = this.text.set(page.caption ?? '', serif(4.2, 'italic'), { width: content.width, lineHeight: 1.35 })
     const captionHeight = Math.max(6, block.height)
     const slot = { ...content, height: content.height - 5 - captionHeight }
@@ -282,65 +301,66 @@ export class PageScene {
   }
 
   private words(page: FlipbookPage): SceneNode[] {
-    const width = 100 - 24
+    const { x, width } = this.measure()
     const mark = this.text.set('“', serif(18), { width, lineHeight: 0.6 })
     const block = this.text.set(page.caption ?? '', serif(6, 'italic'), { width, lineHeight: 1.4, wrap: 'balance' })
     const total = mark.height + 4 + block.height
-    const top = 14 + (PAGE_HEIGHT - 28 - total) / 2
+    const top = 14 + (this.size.height - 28 - total) / 2
 
     return [
-      { ...this.lines(mark, { x: 12, y: top, width, height: mark.height }, 'center'), opacity: 0.3 },
-      this.lines(block, { x: 12, y: top + mark.height + 4, width, height: block.height }, 'center'),
+      { ...this.lines(mark, { x, y: top, width, height: mark.height }, 'center'), opacity: 0.3 },
+      this.lines(block, { x, y: top + mark.height + 4, width, height: block.height }, 'center'),
     ]
   }
 
-  /** Pair, grid and collage: rows of photos over a caption. */
+  /**
+   * Pair, grid and collage: rows of photos over a caption. On pages wider than tall, the pair sits
+   * side by side and the collage's large photo stands beside the other two.
+   */
   private column(page: FlipbookPage): SceneNode[] {
     const pad = 7
     const gap = page.layout === 'pair' ? 4 : 3
-    const content = { x: pad, y: pad, width: 100 - 2 * pad, height: PAGE_HEIGHT - 2 * pad }
+    const across = this.size.width > this.size.height && page.layout !== 'grid'
+    const content = { x: pad, y: pad, width: this.size.width - 2 * pad, height: this.size.height - 2 * pad }
     const caption = this.caption(page, content.width)
-    const grows = page.layout === 'pair' ? [1, 1] : page.layout === 'collage' ? [1.4, 1] : [1]
     const fixed = caption ? caption.height + gap : 0
-    const heights = flex(content.height - fixed - gap * (grows.length - 1), grows)
-    const rows: Box[] = []
-    let y = content.y
+    const area = { ...content, height: content.height - fixed }
+    const grows = page.layout === 'pair' ? [1, 1] : page.layout === 'collage' ? [1.4, 1] : [1]
+    const lengths = flex((across ? area.width : area.height) - gap * (grows.length - 1), grows)
+    const tracks: Box[] = []
+    let at = across ? area.x : area.y
 
-    for (const height of heights) {
-      rows.push({ ...content, y, height })
-      y += height + gap
+    for (const length of lengths) {
+      tracks.push(across ? { ...area, x: at, width: length } : { ...area, y: at, height: length })
+      at += length + gap
     }
 
-    const half = (row: Box, column: number, rowGap = gap): Box => ({
-      ...row,
-      x: row.x + column * ((row.width + rowGap) / 2),
-      width: (row.width - rowGap) / 2,
-    })
+    const half = (track: Box, index: number, stacked = false): Box =>
+      stacked
+        ? { ...track, y: track.y + index * ((track.height + gap) / 2), height: (track.height - gap) / 2 }
+        : { ...track, x: track.x + index * ((track.width + gap) / 2), width: (track.width - gap) / 2 }
     const boxes = (() => {
       switch (page.layout) {
         case 'grid': {
-          const [grid] = rows
-          const top = { ...grid, height: (grid.height - gap) / 2 }
-          const bottom = { ...top, y: top.y + top.height + gap }
+          const [grid] = tracks
 
-          return [half(top, 0), half(top, 1), half(bottom, 0), half(bottom, 1)]
+          return [half(half(grid, 0, true), 0), half(half(grid, 0, true), 1), half(half(grid, 1, true), 0), half(half(grid, 1, true), 1)]
         }
         case 'collage':
-          return [rows[0], half(rows[1], 0), half(rows[1], 1)]
+          return [tracks[0], half(tracks[1], 0, across), half(tracks[1], 1, across)]
         default:
-          return rows
+          return tracks
       }
     })()
     const nodes = boxes.map((box, i) => this.slot(page, i, box))
 
-    if (caption) nodes.push(this.lines(caption, { ...content, y, height: caption.height }, 'center'))
+    if (caption) nodes.push(this.lines(caption, { ...content, y: area.y + area.height + gap, height: caption.height }, 'center'))
 
     return nodes
   }
 
-  /** Layouts drawn from the fixed boxes in `PLACED_LAYOUTS`. */
-  private placed(page: FlipbookPage): SceneNode[] {
-    const placed = PLACED_LAYOUTS[page.layout]!
+  /** Layouts drawn from the boxes in `PLACED_LAYOUTS`. */
+  private placed(page: FlipbookPage, placed: PlacedLayout): SceneNode[] {
     const nodes = placed.slots.map((slot, i) => this.placedSlot(page, i, slot, !!placed.loose))
 
     if (!page.caption) return nodes
@@ -373,12 +393,13 @@ export class PageScene {
   }
 
   private pageNumber(number: number, side: Side): SceneNode {
-    const block = this.text.set(String(number), serif(2.8), { width: 90 })
+    const width = this.size.width - 10
+    const block = this.text.set(String(number), serif(2.8), { width })
 
     return {
       ...this.lines(
         block,
-        { x: 5, y: PAGE_HEIGHT - 2.6 - block.height, width: 90, height: block.height },
+        { x: 5, y: this.size.height - 2.6 - block.height, width, height: block.height },
         side === 'left' ? 'left' : 'right',
       ),
       opacity: 0.6,
@@ -387,8 +408,10 @@ export class PageScene {
 
   /** The paper under `nodes`, with its grain over them. */
   private sheet(nodes: SceneNode[], { bound, side }: PageSceneOptions): Scene {
-    const look = this.look
-    const centre = { x: 50, y: PAGE_HEIGHT / 2 }
+    const { look, area } = this
+    const { width, height } = this.size
+    const centre = { x: width / 2, y: height / 2 }
+    const light = { x: width * 0.3, y: height * 0.2 }
     const spine: SceneNode[] =
       bound && side
         ? [
@@ -411,23 +434,23 @@ export class PageScene {
         : []
 
     return {
-      width: 100,
-      height: PAGE_HEIGHT,
+      width,
+      height,
       nodes: [
-        { kind: 'fill', shape: rect(PAGE), paint: look.background },
+        { kind: 'fill', shape: rect(area), paint: look.background },
         {
           kind: 'fill',
-          shape: rect(PAGE),
+          shape: rect(area),
           paint: { type: 'texture', texture: look.texture, size: TEXTURE_TILE },
           blend: look.textureBlend,
         },
         {
           kind: 'fill',
-          shape: rect(PAGE),
+          shape: rect(area),
           paint: {
             type: 'radial',
             center: centre,
-            radius: farthestCorner(centre),
+            radius: farthestCorner(centre, area),
             stops: [
               { offset: look.vignetteFrom, color: withAlpha(look.vignette, 0) },
               { offset: 1, color: look.vignette },
@@ -436,11 +459,11 @@ export class PageScene {
         },
         {
           kind: 'fill',
-          shape: rect(PAGE),
+          shape: rect(area),
           paint: {
             type: 'radial',
-            center: { x: 30, y: PAGE_HEIGHT * 0.2 },
-            radius: farthestCorner({ x: 30, y: PAGE_HEIGHT * 0.2 }),
+            center: light,
+            radius: farthestCorner(light, area),
             stops: [
               { offset: 0, color: look.light },
               { offset: 0.55, color: withAlpha(look.light, 0) },
@@ -450,7 +473,7 @@ export class PageScene {
         ...nodes,
         {
           kind: 'fill',
-          shape: rect(PAGE),
+          shape: rect(area),
           paint: { type: 'texture', texture: look.grain, size: TEXTURE_TILE },
           opacity: look.grainOpacity,
         },
@@ -460,11 +483,11 @@ export class PageScene {
   }
 
   private edgeGradient(side: Side, stops: [number, string][]): SceneNode {
-    const [from, to] = side === 'right' ? [0, 100] : [100, 0]
+    const [from, to] = side === 'right' ? [0, this.size.width] : [this.size.width, 0]
 
     return {
       kind: 'fill',
-      shape: rect(PAGE),
+      shape: rect(this.area),
       paint: { type: 'linear', from: { x: from, y: 0 }, to: { x: to, y: 0 }, stops: stops.map(([offset, color]) => ({ offset, color })) },
     }
   }
