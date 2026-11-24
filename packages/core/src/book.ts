@@ -206,6 +206,12 @@ export type FrameStyle =
   | 'arcs'
   | 'gilt'
   | 'woodgrain'
+  | 'instant'
+  | 'arch'
+  | 'rounded'
+  | 'tape'
+  | 'film'
+  | 'deco'
 
 export const FRAME_STYLES: Record<FrameStyle, { label: string; description: string }> = {
   none: { label: 'Plain', description: 'The photo printed straight onto the page' },
@@ -222,6 +228,12 @@ export const FRAME_STYLES: Record<FrameStyle, { label: string; description: stri
   arcs: { label: 'Rainbow arcs', description: 'A printed border of little rainbow arcs around a mat' },
   gilt: { label: 'Gilt', description: 'An engraved border printed in gold ink' },
   woodgrain: { label: 'Woodgrain', description: 'A printed woodgrain border around a mat' },
+  instant: { label: 'Instant print', description: 'A white print border, deeper along the bottom' },
+  arch: { label: 'Arch', description: 'An arched window inside a fine printed rule' },
+  rounded: { label: 'Rounded', description: 'The photo with softly rounded corners' },
+  tape: { label: 'Washi tape', description: 'Strips of coloured tape across the top corners' },
+  film: { label: 'Film', description: 'A dark film frame with sprocket holes' },
+  deco: { label: 'Art deco', description: 'Gold rules with fan corners' },
 }
 
 /** Frames printed as a patterned band around a mat, with the band's width in page units. */

@@ -15,7 +15,7 @@ Photos aren't pasted on top of the page. They take on the paper's ink, sit under
 
 ## Frames
 
-Every frame is printed into the paper: rules, tints, a pressed plate, never a raised border. A photo's `frame` wins over its page's, a page's wins over the book's, and full-bleed pages are never framed. `photoFrame(page, photo, book.frame)` gives the frame a photo ends up with.
+Every frame is printed into the paper: rules, tints, a pressed plate, never a raised border. A photo's `frame` wins over its page's, a page's wins over the book's, and full-bleed and opener pages are never framed. `photoFrame(page, photo, book.frame)` gives the frame a photo ends up with.
 
 | `frame`      |                                                 |
 | ------------ | ----------------------------------------------- |
@@ -33,6 +33,12 @@ Every frame is printed into the paper: rules, tints, a pressed plate, never a ra
 | `arcs`       | A border of little rainbow arcs.                |
 | `gilt`       | An engraved border in gold ink.                 |
 | `woodgrain`  | A printed woodgrain border.                     |
+| `instant`    | A white print border, deeper along the bottom.  |
+| `arch`       | An arched window inside a fine rule.            |
+| `rounded`    | Softly rounded corners.                         |
+| `tape`       | Strips of coloured tape across the top corners. |
+| `film`       | A dark film frame with sprocket holes.          |
+| `deco`       | Gold rules with fan corners.                    |
 
 `FRAME_STYLES` has a label and a one-line description for each.
 

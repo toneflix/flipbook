@@ -7,6 +7,7 @@ import {
   PAGE_LAYOUTS,
   PageScene,
   farthestCorner,
+  sprockets,
   withAlpha,
   Typesetter,
   type CoverDesign,
@@ -73,6 +74,30 @@ describe('PageScene', () => {
     const drawn = flatten(scene.nodes).find((node) => node.kind === 'photo')
 
     expect(drawn?.kind === 'photo' && drawn.box.width / drawn.box.height).toBeCloseTo(1.5)
+  })
+
+  it('leaves room under an instant print', () => {
+    const scene = new PageScene(book('framed', 'instant'), measure).page(book('framed', 'instant').pages[0])
+    const drawn = flatten(scene.nodes).find((node) => node.kind === 'photo')
+
+    expect(drawn?.kind === 'photo' && drawn.box.width / drawn.box.height).toBeCloseTo(1.5)
+  })
+
+  it('cuts an arch to a half circle on top', () => {
+    const scene = new PageScene(book('framed', 'arch'), measure).page(book('framed', 'arch').pages[0])
+    const arch = flatten(scene.nodes).find((node) => node.kind === 'group' && node.clip?.type === 'roundrect')
+    const clip = arch?.kind === 'group' && arch.clip?.type === 'roundrect' ? arch.clip : null
+
+    expect(clip?.radii[0]).toBeCloseTo(clip!.box.width / 2)
+    expect(clip?.radii[2]).toBe(0)
+  })
+
+  it('spaces sprocket holes evenly along the band', () => {
+    const holes = sprockets(30)
+
+    expect(holes).toHaveLength(9)
+    expect(holes[0]).toBeCloseTo(0.6 + 0.7)
+    expect(holes.at(-1)! + 1.6).toBeCloseTo(30 - 0.6 - 0.7)
   })
 
   it('draws every layout in every frame', () => {
