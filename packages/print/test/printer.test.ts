@@ -41,6 +41,14 @@ describe('BookPrinter', () => {
     expect(pixels.data.length).toBe(595 * 793 * 4)
   })
 
+  it('sizes pages by the book shape, keeping the short side', async () => {
+    const wide = new BookPrinter({ ...book, pageShape: 'wide' }, { dpi: 72, load: photo })
+    const pixels = await wide.pixels(wide.faces[2])
+
+    expect([wide.width, wide.height]).toEqual([315, 210])
+    expect([pixels.width, pixels.height]).toEqual([893, 595])
+  })
+
   it('prints the whole book as one PDF, a page per face', async () => {
     const pdf = (await printer.pdf()).toString('latin1')
 

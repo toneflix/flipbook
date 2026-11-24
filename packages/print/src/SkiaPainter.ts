@@ -27,10 +27,10 @@ export type PhotoLoader = (src: string) => Promise<string | Buffer>
 
 const require = createRequire(import.meta.url)
 
-/** Pixels per page unit for pattern tiles, sharper than 300 DPI on a 210 mm page. */
+/** Pixels per page unit for pattern tiles, sharper than 300 DPI on a page with a 210 mm short side. */
 const TILE_SCALE = 40
 
-/** The least pixels per page unit for layers drawn off the page: 300 DPI on a 210 mm page. */
+/** The least pixels per page unit for layers drawn off the page: 300 DPI on a page with a 210 mm short side. */
 const LAYER_SCALE = 24.8
 
 /** How far past the page a layer may reach, in page units. */
@@ -58,6 +58,8 @@ const toneFilter = ({ sepia, saturate, contrast, brightness }: PhotoTone) =>
 export class SkiaPainter {
   private readonly images = new Map<string, Image>()
   private readonly textures = new Map<TextureName, Image>()
+  /** The size of the scene being painted, in page units. */
+  private page = { width: 100, height: 400 / 3 }
 
   constructor(
     readonly fonts: PrintFonts,
@@ -90,6 +92,7 @@ export class SkiaPainter {
 
   async paint(ctx: CanvasRenderingContext2D, scene: Scene, scale: number): Promise<void> {
     await this.prepare(scene)
+    this.page = { width: scene.width, height: scene.height }
     ctx.imageSmoothingQuality = 'high'
     this.nodes(ctx, scene.nodes, scale)
   }
@@ -401,13 +404,13 @@ export class SkiaPainter {
         case 'group':
           return [node.clip ? SkiaPainter.shapeBounds(node.clip) : this.bounds(node.children)]
         default:
-          return [{ x: -BLEED, y: -BLEED, width: 100 + 2 * BLEED, height: 400 / 3 + 2 * BLEED }]
+          return [{ x: -BLEED, y: -BLEED, width: this.page.width + 2 * BLEED, height: this.page.height + 2 * BLEED }]
       }
     })
     const x = Math.max(-BLEED, Math.min(...boxes.map((b) => b.x)))
     const y = Math.max(-BLEED, Math.min(...boxes.map((b) => b.y)))
-    const right = Math.min(100 + BLEED, Math.max(...boxes.map((b) => b.x + b.width)))
-    const bottom = Math.min(400 / 3 + BLEED, Math.max(...boxes.map((b) => b.y + b.height)))
+    const right = Math.min(this.page.width + BLEED, Math.max(...boxes.map((b) => b.x + b.width)))
+    const bottom = Math.min(this.page.height + BLEED, Math.max(...boxes.map((b) => b.y + b.height)))
 
     return { x, y, width: Math.max(0, right - x), height: Math.max(0, bottom - y) }
   }
