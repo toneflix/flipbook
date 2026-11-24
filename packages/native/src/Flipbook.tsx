@@ -119,7 +119,7 @@ const FaceContent = memo(function FaceContent({
     case 'blank':
       return <BlankPageView width={width} side={side} />
     case 'page':
-      return <PageView page={book.pages[face.index]} width={width} number={face.index + 1} side={side} />
+      return <PageView page={book.pages[face.index]} width={width} number={face.index + 1} side={side} half={face.half} />
   }
 })
 
@@ -208,8 +208,10 @@ export const Flipbook = forwardRef<FlipbookHandle, FlipbookProps>(function Flipb
   const narrow = stage.width > 0 && stage.width / stage.height < 0.95
   const spread = layoutMode === 'auto' ? !(portrait && portraitChoice === 'single') && !narrow : layoutMode === 'spread'
 
+  // The layout only changes with the page count and where panoramas fall.
   const pageCount = book.pages.length
-  const layout = useMemo(() => new BookLayout(pageCount, { spread, stiffCovers }), [pageCount, spread, stiffCovers])
+  const panoramas = BookLayout.panoramas(book.pages).join()
+  const layout = useMemo(() => new BookLayout(book.pages, { spread, stiffCovers }), [pageCount, panoramas, spread, stiffCovers])
 
   // Page size: as large as fits, keeping the page shape, with room for the controls.
   const across = spread ? 2 : 1

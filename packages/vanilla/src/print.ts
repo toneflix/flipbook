@@ -31,15 +31,13 @@ export class FlipbookPrint {
     this.rule = h('style', {}, FlipbookPrint.pageRule(this.width, this.height))
     this.element = h('div', { class: 'fb-print-book' })
     this.element.style.setProperty('--fb-print-width', `${this.width}mm`)
-    this.element.append(this.rule, ...FlipbookPrint.faces(book, covers).map((face) => this.sheet(face)))
+    this.element.append(this.rule, ...BookLayout.sheets(book.pages, covers).map(({ face, side }) => this.sheet(face, side)))
     container.append(this.element)
   }
 
-  /** The faces printed for a book, in reading order. */
+  /** The faces printed for a book, in reading order. A panorama prints as its two halves. */
   static faces(book: FlipbookBook, covers = true): Face[] {
-    const faces = new BookLayout(book.pages.length, { spread: false }).faces
-
-    return covers ? faces : faces.filter((face) => face.kind !== 'cover' && face.kind !== 'back')
+    return BookLayout.sheets(book.pages, covers).map(({ face }) => face)
   }
 
   /** The print page rule for sheets of this size, in millimetres. */
@@ -67,9 +65,9 @@ export class FlipbookPrint {
     this.element.remove()
   }
 
-  /** Pages carry their number on the outer corner: page 1 is a right-hand page. */
-  private sheet(face: Face) {
-    const side: Side | undefined = face.kind === 'page' ? (face.index % 2 === 0 ? 'right' : 'left') : undefined
+  /** Pages carry their number on the outer corner of the side they bind on. */
+  private sheet(face: Face, binding: Side) {
+    const side = face.kind === 'page' ? binding : undefined
 
     return h('section', { class: `fb-print-sheet is-${face.kind}` }, renderFace(face, this.book, side))
   }

@@ -1,4 +1,13 @@
-import { PLACED_LAYOUTS, photoFrame, type FlipbookBook, type FlipbookPage, type FrameStyle, type PageBox } from '../book'
+import {
+  PLACED_LAYOUTS,
+  panoramaView,
+  photoFrame,
+  type FlipbookBook,
+  type FlipbookPage,
+  type FrameStyle,
+  type PageBox,
+  type PageHalf,
+} from '../book'
 import type { Face } from '../layout'
 import { CoverScene } from './cover'
 import { FrameScene, farthestCorner, rect, withAlpha } from './frame'
@@ -19,6 +28,8 @@ export interface PageSceneOptions {
   side?: Side
   /** Draw the curve into the spine and the light where the page rises, as on an open book. */
   bound?: boolean
+  /** The half of a panorama on this page. Left out, the whole panorama is set on the page. */
+  half?: PageHalf
 }
 
 /**
@@ -69,9 +80,12 @@ export class PageScene {
     this.covers = new CoverScene(book, this.text)
   }
 
-  /** Any face of the book, covers included. Pages are numbered from 1, the first on the right. */
-  face(face: Face, options: Omit<PageSceneOptions, 'number' | 'side'> & { numbered?: boolean } = {}): Scene {
-    const { numbered = true, ...rest } = options
+  /**
+   * Any face of the book, covers included. Pages are numbered from 1, the first on the right. `side`
+   * says which side of the spine a page sits on when blanks before panoramas move it.
+   */
+  face(face: Face, options: Omit<PageSceneOptions, 'number' | 'half'> & { numbered?: boolean } = {}): Scene {
+    const { numbered = true, side, ...rest } = options
 
     switch (face.kind) {
       case 'cover':
@@ -88,7 +102,8 @@ export class PageScene {
         return this.page(this.book.pages[face.index], {
           ...rest,
           number: numbered ? face.index + 1 : undefined,
-          side: face.index % 2 === 0 ? 'right' : 'left',
+          side: face.half ?? side ?? (face.index % 2 === 0 ? 'right' : 'left'),
+          half: face.half,
         })
     }
   }
@@ -161,9 +176,10 @@ export class PageScene {
   }
 
   page(page: FlipbookPage, options: PageSceneOptions = {}): Scene {
-    const nodes = PLACED_LAYOUTS[page.layout] ? this.placed(page) : this.flowed(page)
+    const nodes = PLACED_LAYOUTS[page.layout] ? this.placed(page) : this.flowed(page, options.half)
 
-    if (options.number !== undefined && page.layout !== 'single') nodes.push(this.pageNumber(options.number, options.side ?? 'right'))
+    if (options.number !== undefined && page.layout !== 'single' && page.layout !== 'panorama')
+      nodes.push(this.pageNumber(options.number, options.side ?? 'right'))
 
     return this.sheet(nodes, options)
   }
@@ -192,10 +208,12 @@ export class PageScene {
   }
 
   /** Layouts that flow down the page in a column. */
-  private flowed(page: FlipbookPage): SceneNode[] {
+  private flowed(page: FlipbookPage, half?: PageHalf): SceneNode[] {
     switch (page.layout) {
       case 'single':
         return this.single(page)
+      case 'panorama':
+        return this.panorama(page, half)
       case 'framed':
         return this.framed(page)
       case 'text':
@@ -206,32 +224,49 @@ export class PageScene {
   }
 
   private single(page: FlipbookPage): SceneNode[] {
-    const nodes: SceneNode[] = [this.slot(page, 0, PAGE)]
+    return [this.slot(page, 0, PAGE), ...this.captionOver(page)]
+  }
 
-    if (!page.caption) return nodes
+  /** One photo across a spread: each half draws its side of it, and a single page sets it whole. */
+  private panorama(page: FlipbookPage, half?: PageHalf): SceneNode[] {
+    const view = panoramaView(half)
+    const photo: SceneNode = { kind: 'group', clip: rect(PAGE), children: [this.slot(page, 0, view.photo)] }
+
+    if (!page.caption) return [photo]
+    if (typeof view.caption === 'string') return [photo, ...this.captionOver(page, view.caption === 'over')]
+
+    const block = this.text.set(page.caption, serif(3.8, 'italic'), { width: view.caption.width, lineHeight: 1.35 })
+    const top = view.caption.y + (view.caption.height - block.height) / 2
+
+    return [photo, this.lines(block, { ...view.caption, y: top }, 'center')]
+  }
+
+  /** The caption set in white over a shade at the foot of a photo that fills the page, or just the shade. */
+  private captionOver(page: FlipbookPage, words = true): SceneNode[] {
+    if (!page.caption) return []
 
     const block = this.text.set(page.caption, serif(4.2, 'italic'), { width: 86, lineHeight: 1.35 })
     const height = 14 + block.height + 7
     const shade: Box = { x: 0, y: PAGE_HEIGHT - height, width: 100, height }
 
-    return [
-      ...nodes,
-      {
-        kind: 'fill',
-        shape: rect(shade),
-        paint: {
-          type: 'linear',
-          from: { x: 0, y: PAGE_HEIGHT },
-          to: { x: 0, y: shade.y },
-          stops: [
-            { offset: 0, color: 'rgba(0,0,0,0.7)' },
-            { offset: 0.5, color: 'rgba(0,0,0,0.3)' },
-            { offset: 1, color: 'rgba(0,0,0,0)' },
-          ],
-        },
+    const fill: SceneNode = {
+      kind: 'fill',
+      shape: rect(shade),
+      paint: {
+        type: 'linear',
+        from: { x: 0, y: PAGE_HEIGHT },
+        to: { x: 0, y: shade.y },
+        stops: [
+          { offset: 0, color: 'rgba(0,0,0,0.7)' },
+          { offset: 0.5, color: 'rgba(0,0,0,0.3)' },
+          { offset: 1, color: 'rgba(0,0,0,0)' },
+        ],
       },
-      this.lines(block, { x: 7, y: shade.y + 14, width: 86, height: block.height }, 'left', '#fff'),
-    ]
+    }
+
+    if (!words) return [fill]
+
+    return [fill, this.lines(block, { x: 7, y: shade.y + 14, width: 86, height: block.height }, 'left', '#fff')]
   }
 
   private framed(page: FlipbookPage): SceneNode[] {

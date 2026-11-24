@@ -165,8 +165,10 @@ export const Flipbook = forwardRef<FlipbookHandle, FlipbookProps>(function Flipb
   const narrow = stage.width > 0 && stage.width / stage.height < 0.95
   const spread = layoutMode === 'auto' ? !(mobilePortrait && portraitChoice === 'single') && !narrow : layoutMode === 'spread'
 
+  // The layout only changes with the page count and where panoramas fall.
   const pageCount = book.pages.length
-  const layout = useMemo(() => new BookLayout(pageCount, { spread, stiffCovers }), [pageCount, spread, stiffCovers])
+  const panoramas = BookLayout.panoramas(book.pages).join()
+  const layout = useMemo(() => new BookLayout(book.pages, { spread, stiffCovers }), [pageCount, panoramas, spread, stiffCovers])
 
   // Page size: as large as fits, keeping the page aspect, with room for the controls.
   const pagesAcross = spread ? 2 : 1
@@ -463,7 +465,7 @@ export const Flipbook = forwardRef<FlipbookHandle, FlipbookProps>(function Flipb
       case 'blank':
         return <BlankPageView side={side} />
       case 'page':
-        return <PageView page={book.pages[face.index]} number={face.index + 1} side={side} />
+        return <PageView page={book.pages[face.index]} number={face.index + 1} side={side} half={face.half} />
     }
   }
 
@@ -735,7 +737,7 @@ function PageStrip({
       ) : face.kind === 'colophon' ? (
         <ColophonView book={book} />
       ) : face.kind === 'page' ? (
-        <PageView page={book.pages[face.index]} />
+        <PageView page={book.pages[face.index]} half={face.half} />
       ) : (
         <BlankPageView />
       )}

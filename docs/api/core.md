@@ -17,10 +17,10 @@
 
 ## BookLayout
 
-The physical leaves of a book: cover, title page, pages, colophon and back cover.
+The physical leaves of a book: cover, title page, pages, colophon and back cover. Pass the pages so panoramas take a spread of their own; a page count works for books without them.
 
 ```ts
-const layout = new BookLayout(book.pages.length, { spread: true, stiffCovers: true })
+const layout = new BookLayout(book.pages, { spread: true, stiffCovers: true })
 ```
 
 | Member                   |                                                          |
@@ -33,8 +33,11 @@ const layout = new BookLayout(book.pages.length, { spread: true, stiffCovers: tr
 | `flippedForPage(page)`   | Where a page (1-based) is visible.                       |
 | `convert(flipped, from)` | The same place in another layout, e.g. spread to single. |
 | `isStiff(leaf)`          | Whether a leaf is a board cover.                         |
+| `panoramas`              | Indexes of the pages printed across a spread.            |
 
-A `Face` has a `kind` of `'cover'`, `'title'`, `'page'`, `'blank'`, `'colophon'` or `'back'`; page faces also carry their `index` in `book.pages`.
+A `Face` has a `kind` of `'cover'`, `'title'`, `'page'`, `'blank'`, `'colophon'` or `'back'`; page faces also carry their `index` in `book.pages`, and the two faces of a panorama on a spread carry a `half` of `'left'` or `'right'`.
+
+`BookLayout.sheets(pages, covers)` lists the faces printed one per sheet, with the `side` of the spine each binds on. Panoramas print as their two halves, after a blank when they would open on a right-hand page. `panoramaView(half)` gives where a panorama's photo and caption sit on a page.
 
 ## FlipbookReader
 

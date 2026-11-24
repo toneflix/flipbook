@@ -19,6 +19,7 @@ import type { PhotoPosition } from './position'
  * - squares: nine square photos in a 3×3 grid.
  * - aside: one tall photo with writing beside it.
  * - opener: one photo printed to the top and side edges over writing.
+ * - panorama: one photo printed across both pages of a spread.
  */
 export type PageLayout =
   | 'single'
@@ -38,6 +39,7 @@ export type PageLayout =
   | 'squares'
   | 'aside'
   | 'opener'
+  | 'panorama'
 
 export const PAGE_LAYOUTS: Record<PageLayout, { label: string; slots: number }> = {
   single: { label: 'Full bleed', slots: 1 },
@@ -57,6 +59,7 @@ export const PAGE_LAYOUTS: Record<PageLayout, { label: string; slots: number }> 
   squares: { label: 'Squares', slots: 9 },
   aside: { label: 'Side story', slots: 1 },
   opener: { label: 'Opener', slots: 1 },
+  panorama: { label: 'Panorama', slots: 1 },
 }
 
 /**
@@ -309,5 +312,40 @@ export function frameOf(page: Pick<FlipbookPage, 'layout' | 'frame'>, bookFrame:
 
 /** Layouts whose photos run off the page edge, which are never framed. */
 export function bleeds(layout: PageLayout): boolean {
-  return layout === 'single' || !!PLACED_LAYOUTS[layout]?.bleed
+  return layout === 'single' || layout === 'panorama' || !!PLACED_LAYOUTS[layout]?.bleed
+}
+
+/** Which page of a spread a face sits on. */
+export type PageHalf = 'left' | 'right'
+
+/** Layouts printed across both pages of a spread, which always open on a left-hand page. */
+export function spans(layout: PageLayout): boolean {
+  return layout === 'panorama'
+}
+
+/** Where a panorama's photo and caption sit on one page of it. */
+export interface PanoramaView {
+  photo: PageBox
+  /**
+   * `over` sets the caption over a shade at the foot of the photo, as on a full-bleed page; `shade`
+   * draws the same shade without the words, which the facing page carries. A box sets it below the photo.
+   */
+  caption: 'over' | 'shade' | PageBox
+}
+
+/**
+ * A panorama seen on one half of its spread, or whole on a single page: then the photo keeps the
+ * spread's shape across the page with its caption below.
+ */
+export function panoramaView(half?: PageHalf | null): PanoramaView {
+  const height = 400 / 3
+
+  switch (half) {
+    case 'left':
+      return { photo: { x: 0, y: 0, width: 200, height }, caption: 'shade' }
+    case 'right':
+      return { photo: { x: -100, y: 0, width: 200, height }, caption: 'over' }
+    default:
+      return { photo: { x: 0, y: 30, width: 100, height: 200 / 3 }, caption: { x: 9, y: 103.67, width: 82, height: 22 } }
+  }
 }
