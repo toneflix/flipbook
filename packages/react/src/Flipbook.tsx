@@ -24,6 +24,7 @@ import {
   type FlipbookBook,
   type FlipbookLabels,
   type GripOptions,
+  pageAspect,
   type TurnFrame,
   type TurnPhysics,
   type Vec,
@@ -34,8 +35,6 @@ import { BlankPageView, ColophonView, PageView, TitlePageView } from './PageView
 import { enterLandscape, playPageTurn } from '@toneflix/flipbook'
 import { useElementSize, useOrientation } from './viewport'
 
-/** Width / height of one page. */
-const PAGE_ASPECT = 3 / 4
 const SOUND_KEY = 'flipbook:sound'
 
 export interface FlipbookPlace {
@@ -173,8 +172,9 @@ export const Flipbook = forwardRef<FlipbookHandle, FlipbookProps>(function Flipb
   const marginY = !controls || stage.height < 500 ? 16 : Math.min(150, stage.height * 0.16)
   const availW = Math.max(0, stage.width - (spread ? 64 : 24))
   const availH = Math.max(0, stage.height - marginY)
-  const pageW = Math.floor(Math.min(availH * PAGE_ASPECT, availW / pagesAcross))
-  const pageH = Math.floor(pageW / PAGE_ASPECT)
+  const aspect = pageAspect(book.pageShape)
+  const pageW = Math.floor(Math.min(availH * aspect, availW / pagesAcross))
+  const pageH = Math.floor(pageW / aspect)
 
   // ------------------------------------------------- Turning pages
   const faceRefs = useRef(new Map<string, HTMLDivElement>())
@@ -560,7 +560,7 @@ export const Flipbook = forwardRef<FlipbookHandle, FlipbookProps>(function Flipb
   const rightEdge = layout.spread && flipped < leaves.length - 1 ? edge(leaves.length - flipped - 1) : 0
 
   return (
-    <BookLookProvider paper={book.paper} frame={book.frame}>
+    <BookLookProvider paper={book.paper} frame={book.frame} shape={book.pageShape}>
       <div
         ref={rootRef}
         className={`fb-root ${className ?? ''}`}
@@ -725,7 +725,7 @@ function PageStrip({
   }, [])
 
   const mini = (face: Face, key: number) => (
-    <div key={key} className="fb-strip-face">
+    <div key={key} className="fb-strip-face" style={{ aspectRatio: pageAspect(book.pageShape) }}>
       {face.kind === 'cover' ? (
         <CoverView book={book} />
       ) : face.kind === 'back' ? (

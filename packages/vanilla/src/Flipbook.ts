@@ -4,6 +4,7 @@ import {
   DEFAULT_LABELS,
   FlipbookReader,
   Fold,
+  pageAspect,
   type ActiveTurn,
   type Face,
   type FlipbookBook,
@@ -18,8 +19,6 @@ import { enterLandscape, watchOrientation } from './landscape'
 import { renderFace } from './pages'
 import { playPageTurn } from './sound'
 
-/** Width / height of one page. */
-const PAGE_ASPECT = 3 / 4
 const SOUND_KEY = 'flipbook:sound'
 
 export interface FlipbookPlace {
@@ -491,8 +490,9 @@ export class Flipbook {
     const marginY = !controls || stage.height < 500 ? 16 : Math.min(150, stage.height * 0.16)
     const availW = Math.max(0, stage.width - (spread ? 64 : 24))
     const availH = Math.max(0, stage.height - marginY)
-    const pageW = Math.floor(Math.min(availH * PAGE_ASPECT, availW / across))
-    const pageH = Math.floor(pageW / PAGE_ASPECT)
+    const aspect = pageAspect(book.pageShape)
+    const pageW = Math.floor(Math.min(availH * aspect, availW / across))
+    const pageH = Math.floor(pageW / aspect)
 
     this.size = { width: pageW, height: pageH }
     reader.configure({ layout: this.layout, width: pageW, height: pageH })
@@ -757,7 +757,14 @@ export class Flipbook {
         'aria-label': `Go to ${BookLayout.describe(stop.faces)}`,
       })
 
-      for (const face of stop.faces) button.append(h('div', { class: 'fb-strip-face' }, renderFace(face, book, undefined, false)))
+      for (const face of stop.faces)
+        button.append(
+          h(
+            'div',
+            { class: 'fb-strip-face', style: { aspectRatio: String(pageAspect(book.pageShape)) } },
+            renderFace(face, book, undefined, false),
+          ),
+        )
       button.addEventListener('click', () => {
         this.stripOpen = false
         this.reader.go(stop.flipped)

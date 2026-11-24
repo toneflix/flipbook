@@ -1,6 +1,6 @@
-import { DECO, FLEURON, coverHasText, type CoverArt, type FlipbookBook } from '@toneflix/flipbook-core'
+import { FLEURON, coverHasText, decoArt, pageSize, printBeside, type CoverArt, type FlipbookBook } from '@toneflix/flipbook-core'
 import { h, svg } from './dom'
-import { image, ornament } from './pages'
+import { boxStyle, image, ornament, shapeClass } from './pages'
 
 type Corner = 'tl' | 'tr' | 'bl' | 'br'
 
@@ -28,12 +28,47 @@ const title = (book: FlipbookBook) => h('h1', { class: 'fb-serif fb-cover-title'
 const kicker = (book: FlipbookBook) => book.kicker && h('p', { class: 'fb-kicker' }, book.kicker)
 const subtitle = (book: FlipbookBook) => book.subtitle && h('p', { class: 'fb-serif fb-italic fb-cover-subtitle' }, book.subtitle)
 
+const words = (book: FlipbookBook) => h('div', { class: 'fb-cover-words' }, kicker(book), title(book), subtitle(book))
+
+/** The tipped-in print and its label, side by side on a cover wider than tall. */
+function labelBeside(book: FlipbookBook, print: HTMLElement, text: boolean) {
+  const place = printBeside(pageSize(book.pageShape), text)
+
+  Object.assign(print.style, boxStyle(place.print), { right: 'auto' })
+
+  return [
+    print,
+    text &&
+      h(
+        'div',
+        { class: 'fb-cover-label is-beside', style: { left: `${place.label.x}cqmin`, width: `${place.label.width}cqmin` } },
+        kicker(book),
+        title(book),
+        subtitle(book),
+      ),
+  ]
+}
+
 /** The design's own layout, between the hinge and the finish. */
 function design(book: FlipbookBook, showImages: boolean): (Node | null | undefined | false | '')[] {
   const text = coverHasText(book)
+  const size = pageSize(book.pageShape)
+  const beside = size.width > size.height && !!book.cover && text
 
   switch (book.coverDesign ?? 'classic') {
     case 'gilt':
+      if (beside)
+        return [
+          h('div', { class: 'fb-cover-frame' }),
+          ...fleurons(),
+          h(
+            'div',
+            { class: 'fb-cover-stack is-beside' },
+            h('div', { class: 'fb-cover-side' }, photo(book, 'fb-cover-photo is-oval', showImages)),
+            words(book),
+          ),
+        ]
+
       return [
         h('div', { class: 'fb-cover-frame' }),
         ...fleurons(),
@@ -51,20 +86,25 @@ function design(book: FlipbookBook, showImages: boolean): (Node | null | undefin
         photo(book, 'fb-cover-window', showImages) || h('div', { class: 'fb-cover-window is-empty' }, ornament()),
         text && h('div', { class: 'fb-cover-stamp' }, kicker(book), title(book), subtitle(book)),
       ]
-    case 'label':
-      return [
+    case 'label': {
+      const print =
         book.cover &&
-          h(
-            'div',
-            { class: 'fb-cover-print' },
-            photo(book, 'fb-cover-print-photo', showImages),
-            ...CORNERS.map((corner) => h('span', { class: `fb-print-frame-corner is-${corner}`, 'aria-hidden': 'true' })),
-          ),
-        text && h('div', { class: `fb-cover-label ${book.cover ? '' : 'is-alone'}` }, kicker(book), title(book), subtitle(book)),
-      ]
+        h(
+          'div',
+          { class: 'fb-cover-print' },
+          photo(book, 'fb-cover-print-photo', showImages),
+          ...CORNERS.map((corner) => h('span', { class: `fb-print-frame-corner is-${corner}`, 'aria-hidden': 'true' })),
+        )
+      const label = text && h('div', { class: `fb-cover-label ${book.cover ? '' : 'is-alone'}` }, kicker(book), title(book), subtitle(book))
+
+      if (print && size.width > size.height) return labelBeside(book, print, text)
+      if (book.cover && size.width === size.height) return [h('div', { class: 'fb-cover-mount' }, print, label)]
+
+      return [print, label]
+    }
     case 'deco':
       return [
-        svg(coverArtMarkup(DECO, 'fb-cover-rays')),
+        svg(coverArtMarkup(decoArt(size), 'fb-cover-rays')),
         h(
           'div',
           { class: 'fb-cover-stack is-deco' },
@@ -82,6 +122,8 @@ function design(book: FlipbookBook, showImages: boolean): (Node | null | undefin
         text && h('div', { class: `fb-cover-caption ${book.cover ? '' : 'is-plain'}` }, kicker(book), title(book), subtitle(book)),
       ]
     default:
+      if (beside) return [h('div', { class: 'fb-cover-panel is-beside' }, words(book), photo(book, 'fb-cover-photo', showImages))]
+
       return [
         h(
           'div',
@@ -97,7 +139,7 @@ function design(book: FlipbookBook, showImages: boolean): (Node | null | undefin
 const shell = (book: FlipbookBook, hinge: 'left' | 'right', ...children: (Node | null | undefined | false | '')[]) =>
   h(
     'div',
-    { class: `fb-cover fb-cover-${book.theme ?? 'classic'} fb-design-${book.coverDesign ?? 'classic'}` },
+    { class: `fb-cover fb-cover-${book.theme ?? 'classic'} fb-design-${book.coverDesign ?? 'classic'} ${shapeClass(book.pageShape)}` },
     ...children,
     h('div', { class: `fb-hinge is-${hinge}` }),
     h('div', { class: 'fb-cover-finish', 'aria-hidden': 'true' }),
@@ -121,8 +163,8 @@ export function renderBackCover(book: FlipbookBook) {
       'div',
       { class: 'fb-imprint' },
       ornament(),
-      book.brand && h('p', { class: 'fb-kicker', style: { marginTop: '2cqw', fontSize: '3cqw' } }, book.brand),
-      book.imprint && h('p', { class: 'fb-kicker', style: { marginTop: '2cqw', fontSize: '2.4cqw', opacity: '0.6' } }, book.imprint),
+      book.brand && h('p', { class: 'fb-kicker', style: { marginTop: '2cqmin', fontSize: '3cqmin' } }, book.brand),
+      book.imprint && h('p', { class: 'fb-kicker', style: { marginTop: '2cqmin', fontSize: '2.4cqmin', opacity: '0.6' } }, book.imprint),
     ),
   )
 }
